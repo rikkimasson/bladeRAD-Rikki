@@ -13,11 +13,20 @@ clock=${10}
 tx_rx=${11}
 
 #Create trigger message
-if [ $trigger='master' ]; then triggerctrl="trigger j51-1 $tx_rx fire";
-else triggerctrl=''
+if [ "$trigger" = 'master' ]
+then 
+	triggerctrl="j51-1";
+	fire="fire"
+	chain=$tx_rx
+	echo "Trigger Control : " $triggerctrl
+else 	
+	triggerctrl=""
+	fire=""
+	chain=""
+	echo "Trigger Control : " $triggerctrl
 fi	
 
-echo $triggerctrl
+export triggerctrl
 
 #creatr clock ref message
 if [ $clock=1 ]; then clock_ref='set clock_sel external';
@@ -26,7 +35,7 @@ else clock_ref='set clock_ref enable'; fi
 
 
 # if Transmission required run the following
-if [ $tx_rx='tx' ]
+if [ $tx_rx="tx" ]
 then 
 	bladeRF-cli -d "*:serial=$sdr_serial" -e ' set frequency tx '$center_freq'M;
 			set samplerate tx '$bw'M;
@@ -38,9 +47,8 @@ then
 			trigger j51-1 tx '$trigger';
 
 			tx start;
-			'$triggerctrl';
-			tx wait;
-			print'
+			trigger '$triggerctrl' '$chain' '$fire';
+			tx wait'
 fi
 
 
