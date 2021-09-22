@@ -71,7 +71,7 @@ then
 			set agc off; 
 			set gain rx1'$rx_gain' ; 
 			
-			rx config file=/tmp/'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
+			rx config file=/tmp/fmcw_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
 			
     			'$clock_ref';
 			trigger j51-1 rx '$trigger';
@@ -85,7 +85,7 @@ fi
 
 
 # if Reception on Rx1 & Rx2 channels are required run the following
-if [ "$tx_rx" = 'rx' ]
+if [ "$tx_rx" = 'pass' ]
 then 
 	bladeRF-cli -d "*:serial=$sdr_serial" -e '
 
@@ -96,7 +96,7 @@ then
 			set gain rx1 '$rx1_gain'; 
 			set gain rx2 '$rx2_gain'; 
 
-			rx config file=/tmp/'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=30s;
+			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=30s;
 
     			'$clock_ref';
 			trigger j51-1 rx '$trigger';

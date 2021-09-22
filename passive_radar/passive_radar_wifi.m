@@ -1,50 +1,69 @@
-%% Capture Parameters
-C = physconst('LightSpeed');
-Bw = 30e6;         
-Fs=2*Bw;
-Cap_dur = 5
-Samp_dur = 1 / Bw
-Num_cap_samps = Cap_dur * 2 / Samp_dur
-f_size = Num_cap_samps * 16 
+addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
+        '/home/piers/repos/bladeRAD/generic_scripts',...
+        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
 
-%% Radar Parameters 1
-Fc = 5.22e9;
-Rx1_gain = 50;
-Rx2_gain = 50;
+%% Parameters - Configurable by User
 
-Test_id = 1211;
+% Capture parameters 
+Experiment_ID = 5;       % Expeiment Name
+capture_duration = 1;    % capture duration
+Bw = 40e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+pulse_duration = 1e-3;   % Desired Pulse Duration 
+save_directory = "/home/piers/Documents/Captures/"; % each experiment will save as a new folder in this directory
 
-RF_freq = Fc/1e6; %in MHz 
-Bw_M = Bw/1e6;
+% Radar Parameters 
+Fc = 500e6;   % Central RF    
+Ref_gain = 36;
+Sur_gain = 60;
+Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 
-save_directory = "/media/piers/PassiveRadar/15-04-21/" + Test_id;
-sys_command = "mkdir " + save_directory;
-system(sys_command)
+% Parameters not configurable by user 
+    C = physconst('LightSpeed');
+    Fs = Bw;
+    sample_duration = 1/Fs;
+    number_cap_samps = capture_duration/sample_duration;
+    RF_freq = Fc/1e6;   % RF in MHz 
+    Bw_M = Bw/1e6;      % BW in MHz
+    file_size = Num_cap_samps * 16 
 
-%SDR 2
-command = "/home/piers/Documents/bladeRF_Code/PassiveRadar/Shell_Scripts/PassiveRadar.sh " + Num_cap_samps + " " + Rx1_gain + " " + " " + Rx2_gain + " " + RF_freq + " " + Bw_M + " " + Test_id; 
-
-status = system(command);
-
-
-r_max = 10;
-
-%% Load Signal    
-    %load rx file
-        tic
-%         rx_file= "/media/piers/data_drive/BladeRF_Experiments/Captures/Passive/" + Test_id + "/" + Test_id + ".sc16q11"
-%         rx_file = "/Volumes/data_drive/BladeRF_Experiments/Captures/Passive/" + Test_id + "/" + Test_id + ".sc16q11"
-        rx_file = "/media/piers/PassiveRadar/14-04-21/" + Test_id + "/" + Test_id + ".sc16q11"
-%         rx_file= Test_id + "\" + Test_id + ".sc16q11"
-        
-        raw_data= load_sc16q11(rx_file); 
-        loading_rx_file = toc 
     
-    % De-interleave data 
-        ref_channel  = raw_data(1:2:end,:);
-        sur_channel  = raw_data(2:2:end,:);
-        clear raw_data
-%         save 5701.mat ref_channel sur_channel Fs Test_id -v7.3
+%% Setup Radar
+    % 1 'set clock_sel external'; 2 'set clock_out enable; 3 'set clock_ref enable'
+
+    % Setup Tx SDR 
+    passive_command = create_shell_command(Experiment_ID,...
+                                   number_cap_samps,... 
+                                   0,...
+                                   0,...
+                                   Rx1_gain,...
+                                   Rx2_gain,...
+                                   RF_freq,...
+                                   Bw_M,...
+                                   Pass_SDR,...
+                                   'slave',...
+                                   2,...
+                                   'pass');
+    %passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
+    status = system(passive_command);
+    pause(5);
+
+%% Save Raw Data and create header file for directory 
+    exp_dir = save_directory + Experiment_ID + '/';
+    make_dir = 'mkdir ' + exp_dir;
+    system(make_dir); % Blocking system command execution
+    move_file = 'cp /tmp/passive' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+    rtn = system(move_file);
+    if rtn == 0
+        "Rx Data Copyied to Save directory"
+    else 
+        "Rx Copy Failed"
+    end
+    save(exp_dir + 'Passive Experimental Configuration') 
+
+
+%% Load Data 
+    file_location = exp_dir + Experiment_ID;
+    [ref_channel, sur_channel]  = load_passive_data(file_location);
     % Plot time domain signals
          figure
          plot(real(ref_channel))
@@ -53,16 +72,6 @@ r_max = 10;
          plot(real(sur_channel))
          title("Sur channel time series");
 
-
-
-
-%% Psuedo Wi-Fi signal
-        %     ps_sur_channel = ref_channel;
-        %     ps_sur_channel = circshift(ps_sur_channel,10); % shift by 10 range bins
-        %     for i=1:Num_cap_samps/2
-        %             ps_sur_channel(i) = ps_sur_channel(i) * exp(i * 1j * 2 * pi * 200 / Fs);
-        %             % Range loop 
-        %     end
 
 %% Reshape capture into segments
     %Details: segement size determines the limmit of non-ambigious Doppler
