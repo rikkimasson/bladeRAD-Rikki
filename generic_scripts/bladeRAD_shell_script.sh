@@ -4,13 +4,14 @@ test_id=$1
 cap_samps=$2
 pulses=$3
 tx_gain=$4
-rx_gain=$5
-center_freq=$6
-bw=$7
-sdr_serial=$8
-trigger=$9
-clock=${10}
-tx_rx=${11}
+rx1_gain=$5
+rx2_gain=$6
+center_freq=$7
+bw=$8
+sdr_serial=$9
+trigger=$10
+clock=${11}
+tx_rx=${12}
 
 IFS=$''
 
@@ -35,7 +36,7 @@ else clock_ref='set clock_ref enable'; fi
 
 
 
-# if Transmission required run the following
+# if Transmission ONLY is required run the following
 if [ "$tx_rx" = 'tx' ]
 then 
 	bladeRF-cli -d "*:serial=$sdr_serial" -e ' 
@@ -59,7 +60,7 @@ fi
 
 
 
-# if Reception required run the following
+# if Reception on Rx1 channel is required run the following
 if [ "$tx_rx" = 'rx' ]
 then 
 	bladeRF-cli -d "*:serial=$sdr_serial" -e '
@@ -83,3 +84,26 @@ then
 fi
 
 
+# if Reception on Rx1 & Rx2 channels are required run the following
+if [ "$tx_rx" = 'rx' ]
+then 
+	bladeRF-cli -d "*:serial=$sdr_serial" -e '
+
+			set frequency rx '$center_freq'M;
+			set samplerate rx '$bw'M;
+			set bandwidth rx '$bw'M;
+			set agc off; 
+			set gain rx1 '$rx1_gain'; 
+			set gain rx2 '$rx2_gain'; 
+
+			rx config file=/tmp/'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=30s;
+
+    			'$clock_ref';
+			trigger j51-1 rx '$trigger';
+			print;
+            
+            
+			rx start;
+			trigger '$triggerctrl' '$chain' '$fire';
+			rx wait'
+fi
