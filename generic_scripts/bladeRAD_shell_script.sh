@@ -50,7 +50,6 @@ then
 	
     			'$clock_ref';
 			trigger j51-1 tx '$trigger';
-			print;
             
             
 			tx start;
@@ -75,7 +74,6 @@ then
 			
     			'$clock_ref';
 			trigger j51-1 rx '$trigger';
-			print;
             
             
 			rx start;
@@ -87,6 +85,7 @@ fi
 # if Reception on Rx1 & Rx2 channels are required run the following
 if [ "$tx_rx" = 'pass' ]
 then 
+	chain="rx";
 	bladeRF-cli -d "*:serial=$sdr_serial" -e '
 
 			set frequency rx '$center_freq'M;
@@ -100,7 +99,6 @@ then
 
     			'$clock_ref';
 			trigger j51-1 rx '$trigger';
-			print;
             
             
 			rx start;

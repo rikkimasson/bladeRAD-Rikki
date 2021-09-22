@@ -1,3 +1,4 @@
+clear all
 addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/home/piers/repos/bladeRAD/generic_scripts',...
         '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
@@ -5,18 +6,18 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 666;    % Expeiment Name
-capture_duration = 1;        % capture duration
+Experiment_ID = 10;    % Expeiment Name
+capture_duration = 10;        % capture duration
 Fs = 40e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 40e6;          % LFM Bandwidth 
 save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
 
 % Radar Parameters 
-Fc = 500e6;   % Central RF 
-Tx_gain = 10;       
+Fc = 2400e6;   % Central RF 
+Tx_gain = 40;       
 Rx1_gain = 36;
-Rx2_gain
+Rx2_gain = 0;
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
 
@@ -52,7 +53,7 @@ clear chirp
     % Setup Tx SDR 
     tx_command = create_shell_command(Experiment_ID,...
                                    number_cap_samps,... 
-                                   Num_pulses,...
+                                   number_pulses,...
                                    Tx_gain,...
                                    Rx1_gain,...
                                    Rx2_gain,...
@@ -69,7 +70,7 @@ clear chirp
     % Setup Rx SDR 
     rx_command = create_shell_command(Experiment_ID,...
                                    number_cap_samps,... 
-                                   Num_pulses,...
+                                   number_pulses,...
                                    Tx_gain,...
                                    Rx1_gain,...
                                    Rx2_gain,...
@@ -86,12 +87,14 @@ clear chirp
     exp_dir = save_directory + Experiment_ID + '/';
     make_dir = 'mkdir ' + exp_dir;
     system(make_dir); % Blocking system command execution
-    move_file = 'cp /tmp/fmcw' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+    move_file = 'mv /tmp/fmcw_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
     rtn = system(move_file);
     if rtn == 0
         "Rx Data Copyied to Save directory"
     else 
         "Rx Copy Failed"
+        return
+        
     end
     save(exp_dir + 'FMCW Experimental Configuration') 
 
@@ -105,7 +108,7 @@ clear chirp
     
     
 %% Load Signal, Mix and Dermap Signal  
-file_location = exp_dir + Experiment_ID;
+file_location = exp_dir + 'fmcw_' + Experiment_ID;
 [max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope);
 save(exp_dir + 'deramped_signal','processed_signal')
 
@@ -130,29 +133,29 @@ save(exp_dir + 'deramped_signal','processed_signal')
     % % % fig_name = "/home/piers/Desktop/FMCW/Experiments/Test_"+ Test_id + ".fig";
     % % % savefig(fig_name)
 
-    %% Coherent integration 
-    compressed_data = sum(Dec_Deramped,2);
-    figure
-    plot(Range_axis,abs(compressed_data))
-    xlim([0 1000])
-
-    %% Spectrogram 
-    spec_bin = 3;
-    l_fft = 512;
-    pad_factor = 4;
-    overlap_factor = 0.99;
-    [spect,f] = spectrogram(Final_Data(spec_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
-    % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
-    v=dop2speed(f,C/Fc)*2.237;
-    spect= 10*log10(abs(spect./max(spect(:))));
-    figure
-    fig = imagesc(time_axis,f,spect,[-50 0]);   
-    ylim([-100 100])
-    colorbar
-    xlabel('Time (Sec)')
-    % ylabel('Radial Velocity (mph)')   
-    ylabel('Doppler Frequency (Hz)')  
-    fig_title = "Monostatic Spectrogram - Test " + Test_id;
-    title(fig_title);
-    fig_name = save_directory + "/Spectrogram_" + Test_id + ".jpg";
-    saveas(fig,fig_name,'jpeg')
+%     %% Coherent integration 
+%     compressed_data = sum(Dec_Deramped,2);
+%     figure
+%     plot(Range_axis,abs(compressed_data))
+%     xlim([0 1000])
+% 
+%     %% Spectrogram 
+%     spec_bin = 3;
+%     l_fft = 512;
+%     pad_factor = 4;
+%     overlap_factor = 0.99;
+%     [spect,f] = spectrogram(Final_Data(spec_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
+%     % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+%     v=dop2speed(f,C/Fc)*2.237;
+%     spect= 10*log10(abs(spect./max(spect(:))));
+%     figure
+%     fig = imagesc(time_axis,f,spect,[-50 0]);   
+%     ylim([-100 100])
+%     colorbar
+%     xlabel('Time (Sec)')
+%     % ylabel('Radial Velocity (mph)')   
+%     ylabel('Doppler Frequency (Hz)')  
+%     fig_title = "Monostatic Spectrogram - Test " + Test_id;
+%     title(fig_title);
+%     fig_name = save_directory + "/Spectrogram_" + Test_id + ".jpg";
+%     saveas(fig,fig_name,'jpeg')
