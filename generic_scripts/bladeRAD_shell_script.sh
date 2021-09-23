@@ -31,8 +31,8 @@ export triggerctrl
 
 #creatr clock ref message
 if [ "$clock" = 1 ]; then clock_ref='set clock_sel external';
-elif [ "$clock" = 2 ]; then clock_ref='set clock_out enable';
-else clock_ref='set clock_ref enable'; fi
+elif [ "$clock" = 2 ]; then clock_ref='set clock_ref enable';
+else clock_ref=''; fi
 
 
 
@@ -49,6 +49,7 @@ then
 			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s;
 	
     			'$clock_ref';
+    			set clock_out enable;
 			trigger j51-1 tx '$trigger';
             
             
@@ -73,6 +74,7 @@ then
 			rx config file=/tmp/fmcw_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
 			
     			'$clock_ref';
+    			set clock_out enable;
 			trigger j51-1 rx '$trigger';
             
             
@@ -98,6 +100,7 @@ then
 			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=30s;
 
     			'$clock_ref';
+    			set clock_out enable;
 			trigger j51-1 rx '$trigger';
             
             

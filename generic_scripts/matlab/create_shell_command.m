@@ -4,6 +4,8 @@ function [trig_flag,command] = create_shell_command(test_id, cap_samps, pulses, 
 
 if trigger == "master"
     trig_flag = true;
+else 
+    trig_flag = false;
 end
 
 sdr_serial = select_SDR(SDR_No); % find SDR serial number
