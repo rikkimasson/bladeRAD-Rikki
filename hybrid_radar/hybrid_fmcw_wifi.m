@@ -22,7 +22,7 @@ Rx2_gain = 0;
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
 % Procesing Parameters
- max_range = 1000; %max range to LPF filter data to
+FMCW_max_range = 1000; %max range to LPF filter data to
 
 % Passive Radar Parameters
 passive_Fc = 5220e6;   % Central RF    
@@ -30,7 +30,7 @@ Ref_gain = 26; % 26dB seems good for C-Band Patch Antennas
 Sur_gain = 40; % 40dB seems good for C-Band Patch Antennas
 Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 passive_Bw = 20e6;
- 
+passive_max_range = 50; %max range to cross-correlate to
  
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
@@ -171,9 +171,12 @@ clear chirp
 %         RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
 %         figure
 %         imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-        
+%         ylabel('Time (Sec)')
+%         xlabel('Range Bin')
+%         title('FMCW RTI')
+
  %% Passsive Processing
-    %load signal and split ref and sur
+    % load signal and split ref and sur
         file_location = exp_dir + 'passive_' + Experiment_ID;
         [ref_channel, sur_channel]  = load_passive_data(file_location);
     % Plot time domain signals
@@ -182,4 +185,65 @@ clear chirp
          title("Ref channel time series");
          figure
          plot(real(sur_channel))
-         title("Sur channel time series");       
+         title("Sur channel time series");    
+   % Batch process data and cross correlate  
+         seg_s = 5000; % number of segments per second - analagos to PRF.
+         seg_percent = 20;  % percentage of segment used for cross coreclation of 
+                            % survallance and reference. Will affect SNR dramatically.
+         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range);
+     
+    % RTI Plot
+         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
+    
+        Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));
+        time_axis = linspace(0,capture_duration,size(cc_matrix,2));
+        figure
+        fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
+        % xlim([1 20])
+        %ylim([0 0.0005])
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range Bin')   
+        fig_title = "Passive RTI";
+        title(fig_title);
+        %fig_name = save_directory + "/RTI_" + Test_id + ".jpg";
+        %saveas(fig,fig_name,'jpeg')
+
+      % CAF of entire capture
+        f_axis = linspace(-seg_s/2,seg_s/2,size(cc_matrix,2));
+        t_cc_matrix = transpose(cc_matrix);
+        CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
+        figure
+        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
+        ylim([-500 500])     
+        % xlim([1 20])
+        colorbar
+        ylabel('Doppler Shift (Hz)')
+        xlabel('Range Bin')   
+        fig_title = "Passive CAF for entire capture";
+
+     % Spectrogram 
+        r_bin = 1;
+        l_fft = 1024;
+        pad_factor = 1;
+        overlap_factor = 0.99;
+        [spect,f] = spectrogram(cc_matrix(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,seg_s,'centered','yaxis');
+        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        v=dop2speed(f,C/Fc)*2.237;
+        spect= 10*log10(abs(spect./max(spect(:))));
+        figure
+        fig = imagesc(time_axis,f,spect,[-50 0]);   
+        ylim([-600 600])
+        colorbar
+        xlabel('Time (Sec)')
+        % ylabel('Radial Velocity (mph)')   
+        ylabel('Doppler Frequency (Hz)')  
+        fig_title = "Spectrogram - R Bin: " + r_bin + " - Test id: " + Test_id;
+        title(fig_title);
+        %fig_name = save_directory + "/Spectrogram_" + Test_id + ".jpg";
+        %saveas(fig,fig_name,'jpeg')
+
+
+
+         
