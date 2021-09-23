@@ -190,7 +190,7 @@ clear chirp
          seg_s = 5000; % number of segments per second - analagos to PRF.
          seg_percent = 20;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
-         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range);
+         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range);
      
     % RTI Plot
          RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
