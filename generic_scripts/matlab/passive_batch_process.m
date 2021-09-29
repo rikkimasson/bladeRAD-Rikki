@@ -30,7 +30,7 @@ function cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_per
         end
 
 %% Cross-Correlate segments of ref and sur
-        cc_matrix = complex(zeros((2*r_max)+1, (size(ref_channel,1)/seg_size)));
+        cc_matrix = complex(zeros((2*max_range)+1, (size(ref_channel,1)/seg_size)));
     % range limited Xcorr
         for i=1:size(seg_ref_channel,2)
             cc_matrix(:,i) = xcorr(dec_sur_channel(:,i),dec_ref_channel(:,i),max_range); %xcorr(sur_chan,ref_chan) in order to get posative r_bins
