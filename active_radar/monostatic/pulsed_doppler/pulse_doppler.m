@@ -1,201 +1,151 @@
-%% Capture Parameters
-C = physconst('LightSpeed');
+% clear all
+addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
+        '/home/piers/repos/bladeRAD/generic_scripts',...
+        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+
+%% Parameters - Configurable by User
+
+% Capture parameters 
+Experiment_ID = 3;    % Expeiment Name
+capture_duration = 20;        % capture duration
+save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
+% save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
+
+% Radar Parameters
+Fc = 2440e6;
 Fs = 40e6;          %Sample Rate of SDR per I & Q (in reality Fs is double this)
-Pulse_dur = 100e-6;   %Desired Pulse Duration 
+pulse_duration = 100e-6;   %Desired Pulse Duration 
 Bw = 40e6;          %LFM Bandwidth 
-Samp_dur = 1/Fs;
-Samps_per_pulse = Pulse_dur/Samp_dur;
+PRF = 1000;
+Tx_gain = 20;       
+Rx1_gain = 36;
+Rx2_gain = 0;
+Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
+Rx_SDR = 2;   % SDR to use for RX
 
-Num_pulses = 100
-PRF = 1000
-
-PRI = 1/PRF;
-Samps_per_PRI = PRI/Samp_dur;
-Cap_dur = Num_pulses / PRF
-Num_cap_samps = Cap_dur/Samp_dur;
-Tx_Delay = PRI - Pulse_dur % in seconds
-Tx_Delay_us = Tx_Delay * 10e5 % in micro seconds
-R_Max = PRI*C/2;
+% Parameters not configurable by user 
+    C = physconst('LightSpeed');
+    PRI = 1/PRF;
+    if PRI > pulse-duration
+        "pulse duration longer than PRI"
+        return
+    end
+    number_pulses = capture_duration/PRI;
+    sample_duration = 1/Fs;
+    samples_per_pulse = pulse_duration/sample_duration;
+    samples_per_PRI = PRI/sample_duration;
+    Num_cap_samps = capture_duration/sample_duration;
+    Tx_Delay = PRI - pulse_duration % in seconds
+    Tx_Delay_us = Tx_Delay * 10e5 % in micro seconds
+    R_Max = PRI*C/2;
+    Fc_M = Fc/1e6;      % RF in MHz 
+    Bw_M = Bw/1e6;      % BW in MHz
 
 %% Create Sawtooth Chirp for bladeRF
-  chirp = SAW_LFM_CHIRP(Bw,Pulse_dur,Fs);
-% spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
-% f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
-% figure
-% plot(f,20*log10(abs(fftshift(fft(chirp)))/Samps_per_pulse));%plot FFT of chirp to show entire spectral content
-save_sc16q11('/tmp/40MHz_chirp.sc16q11', chirp); %save chirp to binary file
-
-%% Radar Parameters 
-
-Tx_gain = 35;
-Rx_gain = 0;
-Test_id = 6;
-RF_freq = 500; %in MHz 
-Bw_M = Bw/1e6;
-
-%Transeiver Command Generation
-N0_command = "/home/piers/Documents/bladeRF_Code/PulseDoppler/Shell_Scripts/bi_N0_PD.sh " + Num_cap_samps + " " + Tx_Delay_us + " " + Num_pulses + " " + Tx_gain + " " + Rx_gain + " " + RF_freq + " " + Bw_M + " " + Test_id; 
-%Passive Receiver Command Generation 
-N1_command = "/home/piers/Documents/bladeRF_Code/PulseDoppler/Shell_Scripts/N1_PD.sh " + Num_cap_samps + " " + Rx_gain + " " + RF_freq + " " + Bw_M + " " + Test_id + " &"; 
-
-status = system(N1_command);
-pause(5);
-status = system(N0_command);
+ chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
+ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
+ clear chirp
 
 
+%% Setup Radar
+    % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
+ 
+    % Setup Tx SDR 
+    [trig_flag_1,tx_command] = create_shell_command(Experiment_ID,...
+                                   0,... 
+                                   number_pulses,...
+                                   Tx_gain,...
+                                   Rx1_gain,...
+                                   Rx2_gain,...
+                                   Fc_M,...
+                                   Bw_M,...
+                                   Tx_SDR,...
+                                   'slave',...
+                                   3,...
+                                   'tx');
+    tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
+    pause(5);    
+    status = system(tx_command);
+
+
+    % Setup Rx SDR 
+    [trig_flag_2,rx_command] = create_shell_command(Experiment_ID,...
+                                   FMCW_number_cap_samps,... 
+                                   0,...
+                                   0,...
+                                   Tx_gain,...
+                                   Rx1_gain,...
+                                   Rx2_gain,...
+                                   Fc_M,...
+                                   Bw_M,...
+                                   Rx_SDR,...
+                                   'slave',...
+                                   1,...
+                                   'rx'); 
+    if trig_flag_1 && trig_flag_2
+        "Trigger Conflict"
+        return
+    end
+    rx_command = rx_command + "&"; % uncomment for non-blocking system command execution                                                              
+    system(rx_command); % Blocking system command execution 
+    pause(5);
+ 
+%% Save Raw Data and create  header to directory 
+    exp_dir = save_directory + Experiment_ID + '/';
+    make_dir = 'mkdir ' + exp_dir;
+    system(make_dir); % Blocking system command execution
+    move_file = 'mv /tmp/fmcw_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+    rtn = system(move_file);
+    if rtn == 0
+        "Rx Data Copyied to Save directory"
+    else 
+        "Rx Copy Failed"
+        return
+        
+    end
+    save(exp_dir + 'FMCW Experimental Configuration') 
+
+  %% Load Reference Deramp Signal
+    refsig = load_refsig(Bw_M,Fc,pulse_duration);
+   
 %% Load Signals
-N0_rx_file = "/home/piers/Documents/bladeRF_Code/PulseDoppler/Experiments/N0_" + Test_id + ".sc16q11";
-N1_rx_file = "/home/piers/Documents/bladeRF_Code/PulseDoppler/Experiments/N1_" + Test_id + ".sc16q11";
-%rx_file= "/Users/piersbeasley/OneDrive - University College London/BladeRF System/FMCW/Experiments/" + Test_id + ".sc16q11";
-N0_raw_data = load_sc16q11(N0_rx_file); 
-N1_raw_data = load_sc16q11(N1_rx_file); 
+    file_location = exp_dir + 'active_' + Experiment_ID;
+    raw_data = load_sc16q11(file_location);
 
+    
 %% Reshape array into matrix of pulses
-N0_pulse_matrix = reshape(N0_raw_data,[length(N0_raw_data)/Num_pulses,Num_pulses]); %reshape array to individual pulses
-N1_pulse_matrix = reshape(N1_raw_data,[length(N1_raw_data)/Num_pulses,Num_pulses]); %reshape array to individual pulses
+pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
 
-spectrogram(N0_raw_data(1:4000),128,100,100,Fs,'centered','yaxis')
-
-
-% Load Reference Deramp Signal
-if RF_freq == 500
-   refsig = load_sc16q11("/home/piers/Documents/bladeRF_Code/PulseDoppler/MATLAB/ref_waveforms/100us_500MHz.sc16q11");
-else 
-    refsig = load_sc16q11("/home/piers/Documents/bladeRF_Code/PulseDoppler/MATLAB/ref_waveforms/1ms_2.4g.sc16q11");
-end
-
+spectrogram(raw_data(1:4000),128,100,100,Fs,'centered','yaxis')
 
 %% Range Limmited Signal Processing 
 
+zero_padding = 1;
+
 % Match Filter 
-% refsig = transpose(refsig);
-refsig = refsig(1:Samps_per_pulse);
+matched_filter = transpose(refsig);
+% refsig = refsig(1:samples_per_pulse);
 
 
-refsig_fft = conj(fft(refsig,Samps_per_PRI)); 
-N0_Data_matched = zeros(size(N0_pulse_matrix));
+matched_filter_fft = conj(fft(matched_filter,(samples_per_PRI*zero_padding))); 
+radar_matrix = zeros(size(pulse_matrix,1),size(matched_filter_fft,1));
 
-for i = 1:Num_pulses
-appo = fft(N0_pulse_matrix(1:end,i));
-N0_Data_matched(:,i) = ifft(appo.*refsig_fft); 
+for i = 1:number_pulses
+    appo = fft(pulse_matrix(1:end,i));
+    radar_matrix(:,i) = ifft(appo.*matched_filter_fft); 
 end
 
 %Range_bin = 1:size(Data_matched,1) * samp_dur * C;
-Range_bin = 1:size(N0_Data_matched,1);
-Range = 1:R_Max;
-time_axis = 1:Cap_dur;%linspace(0,PRI,size(N0_Data_matched,2));
-RTI_plot= transpose(10*log10(abs(N0_Data_matched./max(N0_Data_matched(:)))));
-figure
-imagesc(Range,time_axis,RTI_plot,[-50,0]); 
- xlim([0 300]);
-grid on            
-colorbar
-ylabel('Time (Sec)')
-xlabel('Range')      
-title('Monostatic RTI');
+    Range_bin = 1:size(radar_matrix,1);
+    Range = 1:R_Max;
+    time_axis = 1:capture_duration; %linspace(0,PRI,size(N0_Data_matched,2));
+    RTI_plot= transpose(10*log10(abs(radar_matrix./max(radar_matrix(:)))));
+    figure
+    imagesc(Range,time_axis,RTI_plot,[-50,0]); 
+    xlim([0 100]);
+    grid on            
+    colorbar
+    ylabel('Time (Sec)')
+    xlabel('Range')      
+    title('Monostatic RTI');
 
-
-
-%% bistatic capture
-
-
-N1_Data_matched = zeros(size(N1_pulse_matrix));
-
-for i = 1:Num_pulses
-appo = fft(N1_pulse_matrix(1:end,i));
-N1_Data_matched(:,i) = ifft(appo.*refsig_fft); 
-end
-
-Range_bin = 1:size(N1_Data_matched,1);
-Range = 1:R_Max;
-time_axis = 1:Cap_dur;%linspace(0,PRI,size(N1_Data_matched,2));
-RTI_plot= transpose(10*log10(abs(N1_Data_matched./max(N1_Data_matched(:)))));
-figure
-imagesc(Range_bin,time_axis,RTI_plot,[-50,0]); 
-xlim([0 300]);
-grid on            
-colorbar
-ylabel('Time (Sec)')
-xlabel('Range')      
-title('Bistatic RTI');
-
-f = linspace(-0.5 * PRF, 0.5 * PRF ,size(N1_Data_matched,2)-1);
-figure
-
-sum_rbins = sum(N1_Data_matched(40:55,2:end));
-
-plot(f,20*log10(abs(fftshift(fft(sum_rbins)))));
-ylabel('Relative Power (dB)')
-xlabel('Frequency Offset (Hz)')  
-title('RF Frequency Offset Between Monostatic and Bistatic Node');
-
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% 
-% % plot(real_rx)
-% 
-% % f = linspace(-0.5 * Fs, 0.5 * Fs, length(rx_signal));
-% % figure
-% % plot(f,20*log10(abs(fftshift(fft(rx_signal)))/NUM_CAP_SAMPLES));
-% % xlabel('Frequency (Hz)');
-% % ylabel('Power (dB)');
-% % title('Bi_20 MHz LFM; 20MHz Fs');
-% % figure
-% % spectrogram(rx_signal,128,100,100,Fs,'c-entered','yaxis')
-% % %xlim([50 60]);
-% % title('Bi_15 MHz LFM');
-% 
-% % Match filter results
-% % reshape array into matrix of pulses
-% raw_data = bi_rx_signal;
-% pulse_matrix = reshape(raw_data,[SAMPS_PER_PRI,NUM_PULSES]); %reshape array to individual pulses
-% figure
-% spectrogram(raw_data(1: 2000000),128,100,100,Fs,'centered','yaxis')
-% %spectrogram(pulse_matrix(:,15),128,100,100,Fs,'centered','yaxis')
-% 
-% % Match Filter the  
-% ref_sig = transpose(refsig);% load_sc16q11('mon_Rx_20MHz_chirp_1e-4.sc16q11');
-% ref_sig = Ref_sig(1:Samps_per_pulse);
-% % figure
-% %spectrogram(Ref_sig,128,100,100,Fs,'centered','yaxis')
-% refsig_fft = conj(fft(Ref_sig,SAMPS_PER_PRI)); 
-% Data_matched = zeros(size(pulse_matrix));
-% 
-% for i = 1:NUM_PULSES 
-% appo = fft(pulse_matrix(1:end,i));
-% Data_matched(:,i) = ifft(appo.*refsig_fft); 
-% end
-% %Range_bin = 1:size(Data_matched,1) * samp_dur * C;
-% Range_bin = 1:size(Data_matched,1);
-% time_axis = linspace(0,PRI,size(Data_matched,2));
-% RTI_plot= transpose(10*log10(abs(Data_matched./max(Data_matched(:)))));
-% figure
-% imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-% %xlim([8070 8100]);
-% grid on            
-% colorbar
-% ylabel('Time (Sec)')
-% xlabel('Range Bin')      
-% title('Bistatic RTI');
-% f = linspace(-0.5 * PRF, 0.5 * PRF, size(Data_matched,2)-1);
-% figure
-% plot(f,20*log10(abs(fftshift(fft(Data_matched(8084,2:end))))/size(Data_matched,2)-1));
-% ylabel('Relative Power (dB)')
-% xlabel('Frequency Offset (Hz)')  
-% title('RF Frequency Offset Between Monostatic and Bistatic Node');

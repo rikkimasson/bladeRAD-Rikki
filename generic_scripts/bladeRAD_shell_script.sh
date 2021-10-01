@@ -3,15 +3,16 @@
 test_id=$1
 cap_samps=$2
 pulses=$3
-tx_gain=$4
-rx1_gain=$5
-rx2_gain=$6
-center_freq=$7
-bw=$8
-sdr_serial=$9
-trigger=$10
-clock=${11}
-tx_rx=${12}
+delay=$4
+tx_gain=$5
+rx1_gain=$6
+rx2_gain=$7
+center_freq=$8
+bw=$9
+sdr_serial=${10}
+trigger=${11}
+clock=${12}
+tx_rx=${13}
 
 IFS=$''
 
@@ -46,7 +47,7 @@ then
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s;
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s delay='$delay';
 	
     			'$clock_ref';
     			set clock_out enable;
