@@ -1,4 +1,4 @@
-function [actual_max_range,Final_Data] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope)
+function [actual_max_range,Final_Data] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding)
 
 
 %MIX_AND_DERAMP Load receive file deramp and decimate
@@ -48,7 +48,7 @@ if capture_duration < 30
 
         %% FFT Signal
             tic
-            Final_Data = fft(decimated_signal,size(decimated_signal,1));
+            Final_Data = fft(decimated_signal,size(decimated_signal,1)*zero_padding);
             clear Dec_Deramped 
 end 
 

@@ -6,9 +6,10 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 5;    % Expeiment Name
+Experiment_ID = 3;    % Expeiment Name
 capture_duration = 20;        % capture duration
-save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
+save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
+% save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
 
 
 % FMCW Parameters 
@@ -29,7 +30,7 @@ passive_Fc = 5220e6;   % Central RF
 Ref_gain = 26; % 26dB seems good for C-Band Patch Antennas
 Sur_gain = 40; % 40dB seems good for C-Band Patch Antennas
 Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
-passive_Bw = 20e6;
+passive_Bw = 40e6;
 passive_max_range = 50; %max range to cross-correlate to
  
 % Parameters not configurable by user 
@@ -162,7 +163,8 @@ passive_max_range = 50; %max range to cross-correlate to
         refsig = load_refsig(FMCW_Bw_M,FMCW_Fc,pulse_duration);    
     % load Signal, Mix and Dermap Signal  
         file_location = exp_dir + 'fmcw_' + Experiment_ID;
-        [max_range_actual,processed_signal] = deramp_and_decimate(file_location,FMCW_max_range,refsig,capture_duration,FMCW_number_pulses,FMCW_Fs,slope);
+        zero_padding = 3; % 1 = none; 2 = 100%
+        [max_range_actual,processed_signal] = deramp_and_decimate(file_location,FMCW_max_range,refsig,capture_duration,FMCW_number_pulses,FMCW_Fs,slope,zero_padding);
         save(exp_dir + 'deramped_signal','processed_signal')
     % Plot RTI
         Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
@@ -197,8 +199,8 @@ passive_max_range = 50; %max range to cross-correlate to
          seg_s = 5000; % number of segments per second - analagos to PRF.
          seg_percent = 10;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
-         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range);
-     
+         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range,exp_dir);
+         save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
         Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));
