@@ -72,7 +72,7 @@ then
 			set agc off; 
 			set gain rx1'$rx_gain' ; 
 			
-			rx config file=/tmp/fmcw_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
+			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
 			
     			'$clock_ref';
     			set clock_out enable;
