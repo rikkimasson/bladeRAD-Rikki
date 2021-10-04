@@ -7,9 +7,9 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 3;    % Expeiment Name
-capture_duration = 20;        % capture duration
-save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
-% save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
+capture_duration = 1;        % capture duration
+% save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
+save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
 
 
 % FMCW Parameters 
@@ -172,12 +172,12 @@ passive_max_range = 50; %max range to cross-correlate to
         RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
         figure
         fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-        ylabel('Time (Sec)')
-        xlabel('Range Bin')
-        title("FMCW RTI - " + Experiment_ID)
-        xlim([0 100])
-        fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg')
+            ylabel('Time (Sec)')
+            xlabel('Range Bin')
+            title("FMCW RTI - " + Experiment_ID)
+            xlim([0 100])
+            fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
 
  %% Passive Processing
     % load signal and split ref and sur
@@ -186,14 +186,14 @@ passive_max_range = 50; %max range to cross-correlate to
     % Plot time domain signals
          figure
          fig = subplot(2,1,1);
-         plot(real(ref_channel(1:40000000)));
-         title("Ref channel time series");
+            plot(real(ref_channel(1:40000000)));
+            title("Ref channel time series");
          hold on
          subplot(2,1,2)
-         plot(real(sur_channel(1:40000000)))
-         title("Sur channel time series");    
-         fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
-         saveas(fig,fig_name,'jpeg')
+             plot(real(sur_channel(1:40000000)))
+             title("Sur channel time series");    
+             fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
+             saveas(fig,fig_name,'jpeg')
    % Batch process data and cross correlate  
          seg_s = 5000; % number of segments per second - analagos to PRF.
          seg_percent = 10;  % percentage of segment used for cross coreclation of 
@@ -206,16 +206,16 @@ passive_max_range = 50; %max range to cross-correlate to
         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
         figure
         fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-        % xlim([1 20])
-        %ylim([0 0.0005])
-        grid on            
-        colorbar
-        ylabel('Time (Sec)')
-        xlabel('Range Bin')   
-        fig_title = "Passive RTI - " + Experiment_ID;
-        title(fig_title);
-        fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg')
+            % xlim([1 20])
+            %ylim([0 0.0005])
+            grid on            
+            colorbar
+            ylabel('Time (Sec)')
+            xlabel('Range Bin')   
+            fig_title = "Passive RTI - " + Experiment_ID;
+            title(fig_title);
+            fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
 
       % CAF of entire capture
         f_axis = linspace(-seg_s/2,seg_s/2,size(cc_matrix,2));
@@ -244,15 +244,15 @@ passive_max_range = 50; %max range to cross-correlate to
         spect= 10*log10(abs(spect./max(spect(:))));
         figure
         fig = imagesc(time_axis,f,spect,[-30 0]);   
-        ylim([-600 600])
-        colorbar
-        xlabel('Time (Sec)')
-        % ylabel('Radial Velocity (mph)')   
-        ylabel('Doppler Frequency (Hz)')  
-        fig_title = "Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
-        title(fig_title);
-        fig_name = exp_dir + "Spectrogram_" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg')
+            ylim([-600 600])
+            colorbar
+            xlabel('Time (Sec)')
+            % ylabel('Radial Velocity (mph)')   
+            ylabel('Doppler Frequency (Hz)')  
+            fig_title = "Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
+            title(fig_title);
+            fig_name = exp_dir + "Spectrogram_" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
 
 
 

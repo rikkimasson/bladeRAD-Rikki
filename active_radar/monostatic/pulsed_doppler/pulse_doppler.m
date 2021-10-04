@@ -1,4 +1,4 @@
-% clear all
+clear all
 addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/home/piers/repos/bladeRAD/generic_scripts',...
         '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
@@ -6,19 +6,19 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 3;    % Expeiment Name
-capture_duration = 20;        % capture duration
-save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
-% save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
+Experiment_ID = 100;    % Expeiment Name
+capture_duration = 0.5;        % capture duration
+% save_directory = "/media/piers/data_drive/BladeRF_Experiments/Captures/Pulse_Doppler/"; % each experiment will save as a new folder in this directory
+save_directory = "/home/piers/Documents/Captures/Pulse_Doppler/"; % rach experiment will save as a new folder in this directory
 
 % Radar Parameters
-Fc = 2440e6;
+Fc = 500e6;
 Fs = 40e6;          %Sample Rate of SDR per I & Q (in reality Fs is double this)
-pulse_duration = 100e-6;   %Desired Pulse Duration 
+pulse_duration = 1e-3;  %Desired Pulse Duration 
 Bw = 40e6;          %LFM Bandwidth 
-PRF = 1000;
-Tx_gain = 20;       
-Rx1_gain = 36;
+PRF = 500;
+Tx_gain = 10;       
+Rx1_gain = 0;
 Rx2_gain = 0;
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -26,7 +26,7 @@ Rx_SDR = 2;   % SDR to use for RX
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
     PRI = 1/PRF;
-    if PRI > pulse-duration
+    if PRI < pulse_duration
         "pulse duration longer than PRI"
         return
     end
@@ -34,9 +34,9 @@ Rx_SDR = 2;   % SDR to use for RX
     sample_duration = 1/Fs;
     samples_per_pulse = pulse_duration/sample_duration;
     samples_per_PRI = PRI/sample_duration;
-    Num_cap_samps = capture_duration/sample_duration;
-    Tx_Delay = PRI - pulse_duration % in seconds
-    Tx_Delay_us = Tx_Delay * 10e5 % in micro seconds
+    number_cap_samps = capture_duration/sample_duration
+    Tx_Delay = PRI - pulse_duration; % in seconds
+    Tx_Delay_us = Tx_Delay * 1e6; % in micro seconds
     R_Max = PRI*C/2;
     Fc_M = Fc/1e6;      % RF in MHz 
     Bw_M = Bw/1e6;      % BW in MHz
@@ -52,8 +52,9 @@ Rx_SDR = 2;   % SDR to use for RX
  
     % Setup Tx SDR 
     [trig_flag_1,tx_command] = create_shell_command(Experiment_ID,...
-                                   0,... 
+                                   number_cap_samps,... 
                                    number_pulses,...
+                                   Tx_Delay_us,...
                                    Tx_gain,...
                                    Rx1_gain,...
                                    Rx2_gain,...
@@ -64,13 +65,12 @@ Rx_SDR = 2;   % SDR to use for RX
                                    3,...
                                    'tx');
     tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
-    pause(5);    
     status = system(tx_command);
-
+    pause(5);   
 
     % Setup Rx SDR 
     [trig_flag_2,rx_command] = create_shell_command(Experiment_ID,...
-                                   FMCW_number_cap_samps,... 
+                                   number_cap_samps,... 
                                    0,...
                                    0,...
                                    Tx_gain,...
@@ -79,22 +79,22 @@ Rx_SDR = 2;   % SDR to use for RX
                                    Fc_M,...
                                    Bw_M,...
                                    Rx_SDR,...
-                                   'slave',...
+                                   'master',...
                                    1,...
                                    'rx'); 
     if trig_flag_1 && trig_flag_2
         "Trigger Conflict"
         return
     end
-    rx_command = rx_command + "&"; % uncomment for non-blocking system command execution                                                              
+%     rx_command = rx_command + "&"; % uncomment for non-blocking system command execution                                                              
     system(rx_command); % Blocking system command execution 
-    pause(5);
+
  
 %% Save Raw Data and create  header to directory 
     exp_dir = save_directory + Experiment_ID + '/';
     make_dir = 'mkdir ' + exp_dir;
     system(make_dir); % Blocking system command execution
-    move_file = 'mv /tmp/fmcw_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+    move_file = 'mv /tmp/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
     rtn = system(move_file);
     if rtn == 0
         "Rx Data Copyied to Save directory"
@@ -109,43 +109,58 @@ Rx_SDR = 2;   % SDR to use for RX
     refsig = load_refsig(Bw_M,Fc,pulse_duration);
    
 %% Load Signals
-    file_location = exp_dir + 'active_' + Experiment_ID;
+    file_location = exp_dir + 'active_' + Experiment_ID + '.sc16q11';
     raw_data = load_sc16q11(file_location);
 
     
 %% Reshape array into matrix of pulses
 pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
+%figure
+%spectrogram(pulse_matrix(:,3),128,100,100,Fs,'centered','yaxis')
+figure
+fig = plot(abs(pulse_matrix(:,3)));
+    ylabel('ADC Value (0-1)')
+    xlabel('Samples')      
+    title("Pulse Doppler - Pulse Time Series - " + Experiment_ID);
+    fig_name = exp_dir + "Pulse_Time_Series_" + Experiment_ID + ".jpg";
+    saveas(fig,fig_name,'jpeg')
 
-spectrogram(raw_data(1:4000),128,100,100,Fs,'centered','yaxis')
+
 
 %% Range Limmited Signal Processing 
-
-zero_padding = 1;
-
+zero_padding = 2;
 % Match Filter 
-matched_filter = transpose(refsig);
-% refsig = refsig(1:samples_per_pulse);
-
-
+matched_filter = refsig;
 matched_filter_fft = conj(fft(matched_filter,(samples_per_PRI*zero_padding))); 
-radar_matrix = zeros(size(pulse_matrix,1),size(matched_filter_fft,1));
+radar_matrix = zeros(size(pulse_matrix,2),size(matched_filter_fft,1));
 
 for i = 1:number_pulses
-    appo = fft(pulse_matrix(1:end,i));
-    radar_matrix(:,i) = ifft(appo.*matched_filter_fft); 
+    pri = fft(pulse_matrix(:,i),size(matched_filter_fft,1));
+    radar_matrix(i,:) = ifft(pri.*matched_filter_fft); 
 end
 
-%Range_bin = 1:size(Data_matched,1) * samp_dur * C;
-    Range_bin = 1:size(radar_matrix,1);
-    Range = 1:R_Max;
-    time_axis = 1:capture_duration; %linspace(0,PRI,size(N0_Data_matched,2));
-    RTI_plot= transpose(10*log10(abs(radar_matrix./max(radar_matrix(:)))));
+
+    Range_bin = 1:size(radar_matrix,2);
+    Range = linspace(0,R_Max*2,size(radar_matrix,2));
+    time_axis = linspace(0,capture_duration,size(radar_matrix,1));
+    RTI_plot=10*log10(abs(radar_matrix./max(radar_matrix(:))));
     figure
-    imagesc(Range,time_axis,RTI_plot,[-50,0]); 
-    xlim([0 100]);
-    grid on            
-    colorbar
-    ylabel('Time (Sec)')
-    xlabel('Range')      
-    title('Monostatic RTI');
+    fig = imagesc(Range,time_axis,RTI_plot,[-50,0]); 
+        xlim([0 100]);
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range')      
+        title("Pulse Doppler - Monostatic RTI - " + Experiment_ID);
+        fig_name = exp_dir + "Monostatic_RTI_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg')
+    figure
+    plot(RTI_plot(100,:));
+        title("Single Pulse - " + Experiment_ID);
+        xlim([0 100])
+        grid on
+        ylabel('Relative Power (dB)')
+        xlabel('Range (m)')  
+        fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg') 
 

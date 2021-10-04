@@ -47,11 +47,12 @@ then
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s delay='$delay';
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s delay='$delay' ;
 	
     			'$clock_ref';
     			set clock_out enable;
 			trigger j51-1 tx '$trigger';
+			print;
             
             
 			tx start;
@@ -70,10 +71,10 @@ then
 			set samplerate rx '$bw'M;
 			set bandwidth rx '$bw'M;
 			set agc off; 
-			set gain rx1'$rx_gain' ; 
+			set gain rx1 '$rx1_gain' ; 
 			
-			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s;
-			
+			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s; 
+			print;
     			'$clock_ref';
     			set clock_out enable;
 			trigger j51-1 rx '$trigger';

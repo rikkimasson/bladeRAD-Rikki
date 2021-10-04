@@ -6,17 +6,17 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 15;    % Expeiment Name
-capture_duration = 30;        % capture duration
-Fs = 40e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
+Experiment_ID = 1;       % Expeiment Name
+capture_duration = 0.5;    % capture duration
+Fs = 40e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
-Bw = 40e6;          % LFM Bandwidth 
-save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
+Bw = 40e6;               % LFM Bandwidth 
+save_directory = "/home/piers/Documents/Captures/Ranging/"; % each experiment will save as a new folder in this directory
 
 % Radar Parameters 
-Fc = 5800e6;   % Central RF 
-Tx_gain = 66;  % [-23.75, 66]
-Rx1_gain = 36;
+Fc = 500e6;   % Central RF 
+Tx_gain = 10;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Rx1_gain = 0;
 Rx2_gain = 0;
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -31,9 +31,9 @@ Rx_SDR = 2;   % SDR to use for RX
     F_Max = Bw/2;
     R_Max = beat2range(F_Max,slope);
     sample_duration = 1/Fs;
-    samples_per_pulse = pulse_duration/sample_duration;
-    number_pulses = capture_duration / pulse_duration;
-    number_cap_samps = capture_duration/sample_duration;
+    samples_per_pulse = pulse_duration/sample_duration
+    number_pulses = capture_duration / pulse_duration
+    number_cap_samps = capture_duration/sample_duration
     Fc_M = Fc/1e6;   % RF in MHz 
     Bw_M = Bw/1e6;      % BW in MHz
 
@@ -41,7 +41,7 @@ Rx_SDR = 2;   % SDR to use for RX
 %% Create Sawtooth Chirp for bladeRF
 chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
-clear chirp
+% clear chirp
     % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
     % f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
     % figure
@@ -61,10 +61,10 @@ clear chirp
                                    Fc_M,...
                                    Bw_M,...
                                    Tx_SDR,...
-                                   'master',...
+                                   'slave',...
                                    3,...
                                    'tx');
-%     tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
+    tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
     status = system(tx_command);
     pause(5);
 
@@ -86,7 +86,7 @@ clear chirp
         "Trigger Conflict - FMCW Radar"
         return
     end                                                          
-    system(rx_command); % Blocking system command execution 
+    system(rx_command) % Blocking system command execution 
 
 
 %% Save Raw Data and create  header to directory 
@@ -107,14 +107,13 @@ clear chirp
     
 %% Load Reference Deramp Signal
     refsig = load_refsig(Bw_M,Fc,pulse_duration);
-    %figure 
-    %spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
-
-    
+%     figure 
+%     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
     
 %% Load Signal, Mix and Dermap Signal  
-file_location = exp_dir + 'fmcw_' + Experiment_ID;
-[max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope);
+zero_padding = 2;
+file_location = exp_dir + 'active_' + Experiment_ID;
+[max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
 save(exp_dir + 'deramped_signal','processed_signal')
 
 
@@ -125,19 +124,29 @@ save(exp_dir + 'deramped_signal','processed_signal')
     time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
     RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
     figure
-    imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-    % % % xlim([0 25])
-    % % %ylim([0 0.0005])
-    % % grid on            
-    % % colorbar
-    % % ylabel('Time (Sec)')
-    % % xlabel('Range (m)')   
-    % % fig_title = "Monostatic RTI - Test " + Test_id;
-    % % title(fig_title);fig_name = save_directory + "/RTI_" + Test_id + ".jpg";
-    % % saveas(fig,fig_name,'jpeg') 
-    % % % fig_name = "/home/piers/Desktop/FMCW/Experiments/Test_"+ Test_id + ".fig";
-    % % % savefig(fig_name)
+    fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
+        xlim([0 100])
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range (m)')   
+        title("FMCW RTI - " + Experiment_ID);
+        fig_name = exp_dir + "FMCW_RTI_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg') 
 
+
+    figure
+    plot(Range_axis,RTI_plot(10,:));
+        title("Single Pulse - " + Experiment_ID);
+        xlim([0 100])
+        grid on
+        ylabel('Relative Power (dB)')
+        xlabel('Range (m)')  
+        fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg') 
+        
+        
+        
 %     %% Coherent integration 
 %     compressed_data = sum(Dec_Deramped,2);
 %     figure
