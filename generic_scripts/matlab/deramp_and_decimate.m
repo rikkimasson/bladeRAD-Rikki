@@ -20,7 +20,7 @@ if capture_duration < 30
             plot(abs(pulse_matrix(:,3)));
                 ylabel('ADV Value (0-1)')
                 xlabel('Samples')      
-                title("Pulse Doppler - Pulse Time Series - ");
+                title("Pulse Time Series");
 
 
 

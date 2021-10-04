@@ -16,8 +16,8 @@ save_directory = "/home/piers/Documents/Captures/Ranging/"; % each experiment wi
 % Radar Parameters 
 Fc = 500e6;   % Central RF 
 Tx_gain = 10;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 0;
-Rx2_gain = 0;
+Rx1_gain = 0;  % [-16, 60]
+Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
 

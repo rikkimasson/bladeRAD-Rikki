@@ -17,11 +17,11 @@ Fs = 40e6;          %Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;  %Desired Pulse Duration 
 Bw = 40e6;          %LFM Bandwidth 
 PRF = 500;
-Tx_gain = 10;       
-Rx1_gain = 0;
-Rx2_gain = 0;
-Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
-Rx_SDR = 2;   % SDR to use for RX
+Tx_gain = 10;   % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)  
+Rx1_gain = 0;   % [-16, 60]
+Rx2_gain = 0;   % [-16, 60] 
+Tx_SDR = 1;     % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
+Rx_SDR = 2;     % SDR to use for RX
 
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
