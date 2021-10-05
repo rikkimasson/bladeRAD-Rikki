@@ -17,7 +17,7 @@ if capture_duration < 30
             pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
             clear raw_data
             figure
-            plot(abs(pulse_matrix(:,3)));
+            plot(real(pulse_matrix(:,10)));
                 ylabel('ADV Value (0-1)')
                 xlabel('Samples')      
                 title("Pulse Time Series");
