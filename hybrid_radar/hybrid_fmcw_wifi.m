@@ -8,7 +8,7 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 100;    % Expeiment Name
-capture_duration = 1;        % capture duration
+capture_duration = 10;        % capture duration
 % save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
 save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save as a new folder in this directory
 
@@ -17,8 +17,8 @@ save_directory = "/home/piers/Documents/Captures/"; % rach experiment will save 
 FMCW_Fs = 40e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 FMCW_Bw = 40e6;          % LFM Bandwidth 
-FMCW_Fc = 2400e6;   % Central RF 
-Tx_gain = 20;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+FMCW_Fc = 5.8e9;   % Central RF 
+Tx_gain = 45;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 Rx1_gain = 36;      % [-16, 60]
 Rx2_gain = 0;       % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
@@ -27,8 +27,8 @@ Rx_SDR = 2;   % SDR to use for RX
 FMCW_max_range = 1000; %max range to LPF filter data to
 
 % Passive Radar Parameters
-passive_Fc = 5220e6;   % Central RF    
-Ref_gain = 26; % 26dB seems good for C-Band Patch Antennas [-16, 60]
+passive_Fc = 2422e6;   % Central RF    
+Ref_gain = 10; % 26dB seems good for C-Band Patch Antennas [-16, 60]
 Sur_gain = 40; % 40dB seems good for C-Band Patch Antennas [-16, 60]
 Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 passive_Bw = 20e6;
@@ -125,6 +125,7 @@ clear chirp
                                    'master',...
                                    1,...
                                    'pass');
+                               
     if trig_flag_1 && trig_flag_3 || trig_flag_2 && trig_flag_3
         "Trigger Conflict - Passive"
         return
@@ -181,6 +182,31 @@ clear chirp
             xlim([0 100])
             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)    
+
+
+      % Spectrogram 
+        r_bin = 1;
+        l_fft = 2056;
+        pad_factor = 4;
+        overlap_factor = 0.99;
+        [spect,f] = spectrogram(processed_signal(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
+        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        v=dop2speed(f,C/passive_Fc)*2.237;
+        spect= 10*log10(abs(spect./max(spect(:))));
+        figure
+        fig = imagesc(time_axis,f,spect,[-30 0]);   
+            ylim([-600 600])
+            colorbar
+            xlabel('Time (Sec)')
+            % ylabel('Radial Velocity (mph)')   
+            ylabel('Doppler Frequency (Hz)')  
+            fig_title = "FMCW Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
+            title(fig_title);
+            fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
+
 
  %% Passive Processing
     % load signal and split ref and sur
@@ -219,6 +245,7 @@ clear chirp
             title(fig_title);
             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
 
       % CAF of entire capture
         f_axis = linspace(-seg_s/2,seg_s/2,size(cc_matrix,2));
@@ -234,6 +261,7 @@ clear chirp
             title("CAF for entire capture" + Experiment_ID)
             fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
         
 
      % Spectrogram 
@@ -252,10 +280,11 @@ clear chirp
             xlabel('Time (Sec)')
             % ylabel('Radial Velocity (mph)')   
             ylabel('Doppler Frequency (Hz)')  
-            fig_title = "Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
+            fig_title = "Passive Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
             title(fig_title);
-            fig_name = exp_dir + "Spectrogram_" + Experiment_ID + ".jpg";
+            fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
 
 
 

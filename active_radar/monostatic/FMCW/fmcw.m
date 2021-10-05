@@ -6,17 +6,17 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1;       % Expeiment Name
-capture_duration = 0.5;    % capture duration
+Experiment_ID = 100;       % Expeiment Name
+capture_duration = 10;    % capture duration
 Fs = 40e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 40e6;               % LFM Bandwidth 
 save_directory = "/home/piers/Documents/Captures/Ranging/"; % each experiment will save as a new folder in this directory
 
 % Radar Parameters 
-Fc = 500e6;   % Central RF 
-Tx_gain = 10;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 0;  % [-16, 60]
+Fc = 5.8e9;   % Central RF 
+Tx_gain = 45;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Rx1_gain = 36;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX

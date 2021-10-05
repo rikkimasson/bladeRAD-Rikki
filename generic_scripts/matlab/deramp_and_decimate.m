@@ -37,13 +37,13 @@ if capture_duration < 30
         %be non integer due to rounding
             if_max = (max_range * 2 * slope)/C; % if_max is the maximum frequency were intrested in
             decimation_factor = Fs/if_max; % dec_fac is the non integer ideal decimation factor
-            decimation_factor_rounded = round(size(deramped_signal,1)/decimation_factor); %dec_fac_rnd is the closest integer 
-            decimation_factor_actual = round(size(deramped_signal,1)/decimation_factor_rounded); %determines actual optmal decimation factor
+            decimation_factor_rounded = floor(size(deramped_signal,1)/decimation_factor); %dec_fac_rnd is the closest integer 
+            decimation_factor_actual = ceil(size(deramped_signal,1)/decimation_factor_rounded); %determines actual optmal decimation factor
             if_freq_actual = Fs/decimation_factor_actual; %determines subsequent maximum if frequency 
             actual_max_range = beat2range(if_freq_actual,slope); %translates if frequency to range
         
         %decimate signal
-            decimated_signal = zeros(decimation_factor_rounded,size(deramped_signal,2)); %initiate array
+            decimated_signal = zeros(decimation_factor_rounded-1,size(deramped_signal,2)); %initiate array
             tic
             for i=1:number_pulses
             decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
@@ -53,7 +53,7 @@ if capture_duration < 30
 
         %% FFT Signal
             tic
-            Final_Data = fft(decimated_signal,size(decimated_signal,1)*zero_padding);
+            Final_Data = fft(decimated_signal,(size(decimated_signal,1)*zero_padding));
             clear Dec_Deramped 
 end 
 
