@@ -145,7 +145,49 @@ save(exp_dir + 'deramped_signal','processed_signal')
         fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg') 
         
+
         
+%% MTI Filtering 
+    % Single Delay Line Filter 
+    MTI_Data = zeros(size(Final_Data));
+          for i=2:number_pulses
+                MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
+          end
+      
+    % Plot MTI RTI      
+    MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
+    figure
+    fig = imagesc(Range_bin,time_axis,MTI_RTI_plot,[-50,0]);
+        xlim([1 20])
+        %ylim([0 0.0005])
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range Bin')   
+        fig_title = "Monostatic Single Delay Line MTI  RTI - Test " + Test_id;
+        title(fig_title);
+        fig_name = save_directory + "/MTI_RTI_" + Test_id + ".jpg";
+        saveas(fig,fig_name,'jpeg')
+        plot_signal = toc     
+    
+    
+    %Plot MTI Spectrogram  
+    [spect,f] = spectrogram(MTI_Data(spec_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
+        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        v=dop2speed(f,C/Fc)*2.237;
+        spect= 10*log10(abs(spect./max(spect(:))));
+        figure
+        fig = imagesc(time_axis,f,spect,[-50 0]);
+        ylim([-100 100])
+        colorbar
+        xlabel('Time (Sec)')
+        % ylabel('Radial Velocity (mph)')   
+        ylabel('Doppler Frequency (Hz)')  
+        fig_title = "Monostatic Single Delay Line MTI Spectrogram - Test " + Test_id;
+        title(fig_title);
+        fig_name = save_directory + "/MTI_Spectrogram_" + Test_id + ".jpg";
+        saveas(fig,fig_name,'jpeg')        
+
         
 %     %% Coherent integration 
 %     compressed_data = sum(Dec_Deramped,2);
