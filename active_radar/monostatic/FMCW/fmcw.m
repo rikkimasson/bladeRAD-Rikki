@@ -41,6 +41,8 @@ Rx_SDR = 2;   % SDR to use for RX
 
 %% Create Sawtooth Chirp for bladeRF
 chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
+figure
+plot(real(chirp));
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 % clear chirp
     % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp

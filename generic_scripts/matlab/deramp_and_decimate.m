@@ -6,7 +6,7 @@ function [actual_max_range,Final_Data] = deramp_and_decimate(file_location,max_r
 
 C = physconst('LightSpeed');
 
-if capture_duration < 30
+if capture_duration < 31
      
     %% load rx file
             rx_file= file_location + ".sc16q11";
@@ -43,7 +43,7 @@ if capture_duration < 30
             actual_max_range = beat2range(if_freq_actual,slope); %translates if frequency to range
         
         %decimate signal
-            decimated_signal = zeros(decimation_factor_rounded-1,size(deramped_signal,2)); %initiate array
+            decimated_signal = zeros(decimation_factor_rounded,size(deramped_signal,2)); %initiate array
             tic
             for i=1:number_pulses
             decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
