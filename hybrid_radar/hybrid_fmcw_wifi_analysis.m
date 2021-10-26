@@ -13,7 +13,7 @@ names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 
 
-for i = 19
+for i = 17
     % load .mat file containing experiment parameters
         mat_file_name = save_directory1 + i + "/Hybrid Experimental Configuration.mat";
         load(mat_file_name);
@@ -34,11 +34,13 @@ for i = 19
                     time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
                     RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
                     figure
-                    fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);   
+                    fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
                         ylabel('Time (Sec)')
-                        xlabel('Range Bin')
-                        title("FMCW RTI - " + Experiment_ID)
-                        xlim([0 100])
+                        xlabel('Range (m)')
+                        %title("FMCW RTI - " + Experiment_ID)
+                        xlim([0 200])
+                        c = colorbar
+                        c.Label.String='Norm Power (dB)'
                         fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
                         saveas(fig,fig_name,'jpeg')
                         fig_name = exp_dir + "RTI -" + Experiment_ID;
@@ -60,9 +62,10 @@ for i = 19
                     v=dop2speed(f,C/FMCW_Fc)*2.237;
                     spect= 10*log10(abs(spect./max(spect(:))));
                     figure
-                    fig = imagesc(time_axis,f,spect,[-30 0]);   
+                    fig = imagesc(time_axis,-f,spect,[-30 0]);   
                         ylim([-100 100])
-                        colorbar
+                        c = colorbar
+                        c.Label.String='Norm Power (dB)'
                         xlabel('Time (Sec)')
                         % ylabel('Radial Velocity (mph)')   
                         ylabel('Doppler Frequency (Hz)')  
@@ -83,13 +86,14 @@ for i = 19
                 % Plot MTI RTI      
                 MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
                 figure
-                fig = imagesc(Range_bin,time_axis,MTI_RTI_plot,[-20,0]);
+                fig = imagesc(Range_axis,time_axis,MTI_RTI_plot,[-20,0]);
                     xlim([1 200])
                     %ylim([0 0.0005])
                     grid on            
-                    colorbar
+                    c = colorbar
+                    c.Label.String='Norm Power (dB)'          
                     ylabel('Time (Sec)')
-                    xlabel('Range Bin')   
+                    xlabel('Range (m)')   
                     fig_title = "Monostatic Single Delay Line MTI  RTI - Test " + Experiment_ID;
                     title(fig_title);
                     fig_name = exp_dir + "/MTI_RTI_" + Experiment_ID + ".jpg";
@@ -113,9 +117,10 @@ for i = 19
                     v=dop2speed(f,C/FMCW_Fc)*2.237;
                     spect= 10*log10(abs(spect./max(spect(:))));
                     figure
-                    fig = imagesc(time_axis,f,spect,[-25 0]);
+                    fig = imagesc(time_axis,-f,spect,[-30 0]);
                     ylim([-100 100])
-                    colorbar
+                    c = colorbar
+                    c.Label.String='Norm Power (dB)'
                     xlabel('Time (Sec)')
                     % ylabel('Radial Velocity (mph)')   
                     ylabel('Doppler Frequency (Hz)')  
@@ -150,22 +155,24 @@ for i = 19
                      saveas(fig,fig_name)
            % Batch process data and cross correlate  
                  seg_s = 5000; % number of segments per second - analagos to PRF.
-                 seg_percent = 10;  % percentage of segment used for cross coreclation of 
+                 seg_percent = 50;  % percentage of segment used for cross coreclation of 
                                     % survallance and reference. Will affect SNR dramatically.
                  cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range,exp_dir);
                  save(exp_dir + 'passive_matrix','cc_matrix')
             % RTI Plot
                 RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
                 Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));
+                
                 time_axis = linspace(0,capture_duration,size(cc_matrix,2));
                 figure
                 fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
                     % xlim([1 20])
                     %ylim([0 0.0005])
                     grid on            
-                    colorbar
+                    c = colorbar
+                    c.Label.String='Norm Power (dB)'
                     ylabel('Time (Sec)')
-                    xlabel('Range Bin')   
+                    xlabel('Range (m)')   
                     fig_title = "Passive RTI - " + Experiment_ID;
                     title(fig_title);
                     fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
@@ -201,9 +208,10 @@ for i = 19
                 v=dop2speed(f,C/passive_Fc)*2.237;
                 spect= 10*log10(abs(spect./max(spect(:))));
                 figure
-                fig = imagesc(time_axis,f,spect,[-50 0]);   
-                    ylim([-500 500])
-                    colorbar
+                fig = imagesc(time_axis,f,spect,[-30 0]);   
+                    ylim([-200 200])
+                    c = colorbar
+                    c.Label.String='Norm Power (dB)'
                     xlabel('Time (Sec)')
                     % ylabel('Radial Velocity (mph)')   
                     ylabel('Doppler Frequency (Hz)')  
