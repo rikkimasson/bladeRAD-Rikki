@@ -6,19 +6,19 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 100;    % Expeiment Name
-capture_duration = 0.5;        % capture duration
+Experiment_ID = 5;    % Expeiment Name
+capture_duration = 15;        % capture duration
 % save_directory = "/media/piers/data_drive/BladeRF_Experiments/Captures/Pulse_Doppler/"; % each experiment will save as a new folder in this directory
-save_directory = "/home/piers/Documents/Captures/Pulse_Doppler/"; % rach experiment will save as a new folder in this directory
+save_directory = "/home/piers/Documents/Captures/7_Oct/pulse_doppler/"; % rach experiment will save as a new folder in this directory
 
 % Radar Parameters
-Fc = 500e6;
-Fs = 40e6;          %Sample Rate of SDR per I & Q (in reality Fs is double this)
+Fc = 2.4e9;
+Fs = 20e6;          %Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;  %Desired Pulse Duration 
-Bw = 40e6;          %LFM Bandwidth 
+Bw = 20e6;          %LFM Bandwidth 
 PRF = 500;
-Tx_gain = 10;   % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)  
-Rx1_gain = 0;   % [-16, 60]
+Tx_gain = 66;   % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)  
+Rx1_gain = 16;   % [-16, 60]
 Rx2_gain = 0;   % [-16, 60] 
 Tx_SDR = 1;     % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;     % SDR to use for RX
@@ -143,7 +143,7 @@ end
     Range_bin = 1:size(radar_matrix,2);
     Range = linspace(0,R_Max*2,size(radar_matrix,2));
     time_axis = linspace(0,capture_duration,size(radar_matrix,1));
-    RTI_plot=10*log10(abs(radar_matrix./max(radar_matrix(:))));
+    RTI_plot=10*log10(abs(radar_matrix./max(max(radar_matrix))));
     figure
     fig = imagesc(Range,time_axis,RTI_plot,[-50,0]); 
         xlim([0 100]);
@@ -155,7 +155,7 @@ end
         fig_name = exp_dir + "Monostatic_RTI_" + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg')
     figure
-    plot(RTI_plot(100,:));
+    fig = plot(RTI_plot(100,:));
         title("Single Pulse - " + Experiment_ID);
         xlim([0 100])
         grid on

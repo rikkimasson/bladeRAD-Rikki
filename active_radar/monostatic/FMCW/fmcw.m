@@ -7,17 +7,18 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 20;       % Expeiment Name
+Experiment_ID = 8;       % Expeiment Name
 capture_duration = 30;    % capture duration
-Fs = 40e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+Fs = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
-Bw = 40e6;               % LFM Bandwidth 
-save_directory = "/home/piers/Documents/Captures/6_Oct/FMCW/"; % each experiment will save as a new folder in this directory
+Bw = 20e6;               % LFM Bandwidth 
+save_directory = "/home/piers/Documents/Captures/7_Oct/FMCW/"; % each experiment will save as a new folder in this directory
+    exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 2.4e9;   % Central RF 
 Tx_gain = 66;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 12;  % [-16, 60]
+Rx1_gain = 16;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -91,7 +92,6 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 
 
 %% Save Raw Data and create  header to directory 
-    exp_dir = save_directory + Experiment_ID + '/';
     make_dir = 'mkdir ' + exp_dir;
     system(make_dir); % Blocking system command execution
     move_file = 'mv /tmp/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
@@ -112,7 +112,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 % %     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
 %     
 % %% Load Signal, Mix and Dermap Signal  
-% zero_padding = 1;
+% zero_padding = 2;
 % file_location = exp_dir + 'active_' + Experiment_ID;
 % [max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
 % save(exp_dir + 'deramped_signal','processed_signal')

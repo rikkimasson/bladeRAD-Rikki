@@ -6,7 +6,7 @@ function [actual_max_range,Final_Data] = deramp_and_decimate(file_location,max_r
 
 C = physconst('LightSpeed');
 
-if capture_duration < 30
+if capture_duration < 31
      
     %% load rx file
             rx_file= file_location + ".sc16q11";
