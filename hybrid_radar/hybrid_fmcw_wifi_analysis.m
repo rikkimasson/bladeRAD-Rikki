@@ -2,16 +2,20 @@
 clear all
 addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/home/piers/repos/bladeRAD/generic_scripts',...
-        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/',...
+        '/Users/piersbeasley/Documents/repos/bladeRAD/generic_scripts/matlab') % path to generic functions
 
 %% Parameters - Configurable by User
-save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
+% save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
+save_directory1 = "/Volumes/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
 
 %create array with experiment names
 dinfo = dir(save_directory1);
 names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 
+process_fmcw = 0;
+process_passive = 1;
 
 for i = 17
     % load .mat file containing experiment parameters
@@ -19,8 +23,11 @@ for i = 17
         load(mat_file_name);
    
         exp_dir = save_directory1 + i + '/';
-    try     
-            %% FMCW Processing and Print RTI
+
+%% FMCW Processing and Print RTI
+   if process_fmcw == 1
+       try     
+
                 % load refsig for deramping
                     refsig = load_refsig(FMCW_Bw_M,FMCW_Fc,pulse_duration);    
                 % load Signal, Mix and Dermap Signal  
@@ -133,10 +140,14 @@ for i = 17
 
     catch 
         "Error In FMCW Processing"
-    end
-
+       end
+   end
+   
+   
+%% Passive Processing   
+   if process_passive == 1
     try 
-         %% Passive Processing
+
             % load signal and split ref and sur
                 file_location = exp_dir + 'passive_' + Experiment_ID;
                 [ref_channel, sur_channel]  = load_passive_data(file_location);
@@ -224,5 +235,7 @@ for i = 17
     catch 
         "Error In Passive Processing"
     end
-
+   end
+   
+   
 end
