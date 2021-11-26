@@ -7,17 +7,17 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 8;       % Expeiment Name
-capture_duration = 30;    % capture duration
+Experiment_ID = 2001;       % Expeiment Name
+capture_duration = 9.8;    % capture duration
 Fs = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 20e6;               % LFM Bandwidth 
-save_directory = "/home/piers/Documents/Captures/7_Oct/FMCW/"; % each experiment will save as a new folder in this directory
+save_directory = "/home/piers/Documents/Captures/"; % each experiment will save as a new folder in this directory
     exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 2.4e9;   % Central RF 
-Tx_gain = 66;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Tx_gain = 20;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 Rx1_gain = 16;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
@@ -42,6 +42,8 @@ Rx_SDR = 2;   % SDR to use for RX
 
 %% Create Sawtooth Chirp for bladeRF
 chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
+% figure
+% plot(real(chirp));
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 % clear chirp
     % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
@@ -81,7 +83,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
                                    Fc_M,...
                                    Bw_M,...
                                    Rx_SDR,...
-                                   'master',...
+                                   'slave',...
                                    1,...
                                    'rx'); 
     if trig_flag_1 && trig_flag_2
@@ -106,116 +108,116 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
     save(exp_dir + 'Experimental Configuration') 
 
     
-% %% Load Reference Deramp Signal
-%     refsig = load_refsig(Bw_M,Fc,pulse_duration);
-% %     figure 
-% %     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
-%     
-% %% Load Signal, Mix and Dermap Signal  
-% zero_padding = 2;
-% file_location = exp_dir + 'active_' + Experiment_ID;
-% [max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
-% save(exp_dir + 'deramped_signal','processed_signal')
-% 
-% 
-% %% Plot RTI
-% 
-%     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
-%     Range_bin = 1:size(processed_signal,1);
-%     time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
-%     RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
+%% Load Reference Deramp Signal
+    refsig = load_refsig(Bw_M,Fc,pulse_duration);
+%     figure 
+%     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
+    
+%% Load Signal, Mix and Dermap Signal  
+zero_padding = 2;
+file_location = exp_dir + 'active_' + Experiment_ID;
+[max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
+save(exp_dir + 'deramped_signal','processed_signal')
+
+
+%% Plot RTI
+
+    Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
+    Range_bin = 1:size(processed_signal,1);
+    time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
+    RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
+    figure
+    fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
+        xlim([0 100])
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range (m)')   
+        title("FMCW RTI - " + Experiment_ID);
+        fig_name = exp_dir + "FMCW_RTI_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg') 
+
+
+    figure
+    plot(Range_axis,RTI_plot(10,:));
+        title("Single Pulse - " + Experiment_ID);
+        xlim([0 100])
+        grid on
+        ylabel('Relative Power (dB)')
+        xlabel('Range (m)')  
+        fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg') 
+        
+% Plot Spectrogram 
+    r_bin = 3;
+    l_fft = 1024;
+    pad_factor = 1;
+    overlap_factor = 0.99;
+    [spect,f] = spectrogram(processed_signal(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
+        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        v=dop2speed(f,C/Fc)*2.237;
+        spect= 10*log10(abs(spect./max(spect(:))));
+        figure
+        fig = imagesc(time_axis,f,spect,[-50 0]);
+        ylim([-100 100])
+        colorbar
+        xlabel('Time (Sec)')
+        % ylabel('Radial Velocity (mph)')   
+        ylabel('Doppler Frequency (Hz)')  
+        fig_title = "Monostatic Single Delay Line MTI Spectrogram - Test " + Experiment_ID;
+        title(fig_title);
+        fig_name = save_directory + "/MTI_Spectrogram_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg')        
+        
+%% MTI Filtering 
+    % Single Delay Line Filter 
+    MTI_Data = zeros(size(processed_signal));
+          for i=2:number_pulses
+                MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
+          end
+      
+    % Plot MTI RTI      
+    MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
+    figure
+    fig = imagesc(Range_bin,time_axis,MTI_RTI_plot,[-30,0]);
+        xlim([1 50])
+        %ylim([0 0.0005])
+        grid on            
+        colorbar
+        ylabel('Time (Sec)')
+        xlabel('Range Bin')   
+        fig_title = "Monostatic Single Delay Line MTI  RTI - Test " + Experiment_ID;
+        title(fig_title);
+        fig_name = save_directory + "/MTI_RTI_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg')
+        plot_signal = toc     
+    
+
+    %Plot MTI Spectrogram 
+    r_bin = 3;
+    l_fft = 512;
+    pad_factor = 4;
+    overlap_factor = 0.99;
+    [spect,f] = spectrogram(MTI_Data(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
+        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        v=dop2speed(f,C/Fc)*2.237;
+        spect= 10*log10(abs(spect./max(spect(:))));
+        figure
+        fig = imagesc(time_axis,f,spect,[-20 0]);
+        ylim([-100 100])
+        colorbar
+        xlabel('Time (Sec)')
+        % ylabel('Radial Velocity (mph)')   
+        ylabel('Doppler Frequency (Hz)')  
+        fig_title = "Monostatic Single Delay Line MTI Spectrogram - Test " + Experiment_ID;
+        title(fig_title);
+        fig_name = save_directory + "/MTI_Spectrogram_" + Experiment_ID + ".jpg";
+        saveas(fig,fig_name,'jpeg')        
+
+        
+%     %% Coherent integration 
+%     compressed_data = sum(Dec_Deramped,2);
 %     figure
-%     fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-%         xlim([0 100])
-%         grid on            
-%         colorbar
-%         ylabel('Time (Sec)')
-%         xlabel('Range (m)')   
-%         title("FMCW RTI - " + Experiment_ID);
-%         fig_name = exp_dir + "FMCW_RTI_" + Experiment_ID + ".jpg";
-%         saveas(fig,fig_name,'jpeg') 
-% 
-% 
-%     figure
-%     plot(Range_axis,RTI_plot(10,:));
-%         title("Single Pulse - " + Experiment_ID);
-%         xlim([0 100])
-%         grid on
-%         ylabel('Relative Power (dB)')
-%         xlabel('Range (m)')  
-%         fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
-%         saveas(fig,fig_name,'jpeg') 
-%         
-% % Plot Spectrogram 
-%     r_bin = 3;
-%     l_fft = 1024;
-%     pad_factor = 1;
-%     overlap_factor = 0.99;
-%     [spect,f] = spectrogram(processed_signal(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
-%         % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
-%         v=dop2speed(f,C/Fc)*2.237;
-%         spect= 10*log10(abs(spect./max(spect(:))));
-%         figure
-%         fig = imagesc(time_axis,f,spect,[-50 0]);
-%         ylim([-100 100])
-%         colorbar
-%         xlabel('Time (Sec)')
-%         % ylabel('Radial Velocity (mph)')   
-%         ylabel('Doppler Frequency (Hz)')  
-%         fig_title = "Monostatic Single Delay Line MTI Spectrogram - Test " + Experiment_ID;
-%         title(fig_title);
-%         fig_name = save_directory + "/MTI_Spectrogram_" + Experiment_ID + ".jpg";
-%         saveas(fig,fig_name,'jpeg')        
-%         
-% %% MTI Filtering 
-%     % Single Delay Line Filter 
-%     MTI_Data = zeros(size(processed_signal));
-%           for i=2:number_pulses
-%                 MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
-%           end
-%       
-%     % Plot MTI RTI      
-%     MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
-%     figure
-%     fig = imagesc(Range_bin,time_axis,MTI_RTI_plot,[-30,0]);
-%         xlim([1 50])
-%         %ylim([0 0.0005])
-%         grid on            
-%         colorbar
-%         ylabel('Time (Sec)')
-%         xlabel('Range Bin')   
-%         fig_title = "Monostatic Single Delay Line MTI  RTI - Test " + Experiment_ID;
-%         title(fig_title);
-%         fig_name = save_directory + "/MTI_RTI_" + Experiment_ID + ".jpg";
-%         saveas(fig,fig_name,'jpeg')
-%         plot_signal = toc     
-%     
-% 
-%     %Plot MTI Spectrogram 
-%     r_bin = 3;
-%     l_fft = 512;
-%     pad_factor = 4;
-%     overlap_factor = 0.99;
-%     [spect,f] = spectrogram(MTI_Data(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,PRF,'centered','yaxis');
-%         % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
-%         v=dop2speed(f,C/Fc)*2.237;
-%         spect= 10*log10(abs(spect./max(spect(:))));
-%         figure
-%         fig = imagesc(time_axis,f,spect,[-20 0]);
-%         ylim([-100 100])
-%         colorbar
-%         xlabel('Time (Sec)')
-%         % ylabel('Radial Velocity (mph)')   
-%         ylabel('Doppler Frequency (Hz)')  
-%         fig_title = "Monostatic Single Delay Line MTI Spectrogram - Test " + Experiment_ID;
-%         title(fig_title);
-%         fig_name = save_directory + "/MTI_Spectrogram_" + Experiment_ID + ".jpg";
-%         saveas(fig,fig_name,'jpeg')        
-% 
-%         
-% %     %% Coherent integration 
-% %     compressed_data = sum(Dec_Deramped,2);
-% %     figure
-% %     plot(Range_axis,abs(compressed_data))
-% %     xlim([0 1000])
-% 
+%     plot(Range_axis,abs(compressed_data))
+%     xlim([0 1000])
+
