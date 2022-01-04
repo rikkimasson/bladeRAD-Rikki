@@ -34,7 +34,7 @@ for i = 17
                     file_location = exp_dir + 'active_' + Experiment_ID;
                     zero_padding = 2; % 1 = none; 2 = 100%
                     [max_range_actual,processed_signal] = deramp_and_decimate(file_location,FMCW_max_range,refsig,capture_duration,FMCW_number_pulses,FMCW_Fs,slope,zero_padding);
-                    save(exp_dir + 'deramped_signal','processed_signal')
+                    save(exp_dir + 'deramped_signal','processed_signal','max_range_actual')
                 % Plot RTI
                     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
                     Range_bin = 1:size(processed_signal,1);
@@ -169,7 +169,7 @@ for i = 17
                  seg_percent = 50;  % percentage of segment used for cross coreclation of 
                                     % survallance and reference. Will affect SNR dramatically.
                  cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range,exp_dir);
-                 save(exp_dir + 'passive_matrix','cc_matrix')
+                 save(exp_dir + 'passive_matrix','cc_matrix','seg_s','seg_percent')
             % RTI Plot
                 RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
                 Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));
