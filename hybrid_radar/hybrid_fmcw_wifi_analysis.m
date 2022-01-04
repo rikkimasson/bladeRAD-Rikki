@@ -168,8 +168,8 @@ for i = 17
                  seg_s = 5000; % number of segments per second - analagos to PRF.
                  seg_percent = 50;  % percentage of segment used for cross coreclation of 
                                     % survallance and reference. Will affect SNR dramatically.
-                 cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range,exp_dir);
-                 save(exp_dir + 'passive_matrix','cc_matrix','seg_s','seg_percent')
+                 [dec_ref_channel, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,passive_Fs,passive_max_range,exp_dir);
+                 save(exp_dir + 'passive_matrix','cc_matrix','seg_s','seg_percent','dec_ref_channel')
             % RTI Plot
                 RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
                 Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));

@@ -30,7 +30,7 @@ for i = 1
     zero_padding = 2;
     file_location = exp_dir + 'active_' + Experiment_ID;
     [max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
-    save(exp_dir + 'deramped_signal','processed_signal')
+    save(exp_dir + 'deramped_signal','processed_signal','max_range_actual')
 
 
     %% Plot RTI
