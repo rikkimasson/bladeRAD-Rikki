@@ -1,4 +1,4 @@
-function cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir)
+function [dec_ref_channel, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir)
 %PASSIVE_BATCH_PROCESS Summary of this function goes here
 %   seg_s : number of segments a second. 
 %   seg_percent : percentage of segment used for cross coreclation of 

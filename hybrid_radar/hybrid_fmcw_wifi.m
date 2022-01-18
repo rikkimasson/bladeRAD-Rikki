@@ -1,4 +1,3 @@
-
 clear all
 addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/home/piers/repos/bladeRAD/generic_scripts',...
@@ -168,7 +167,7 @@ passive_max_range = 100; %max range to cross-correlate to
 %         "Passive Copy Failed"
 %         return
 %     end
-%     save(exp_dir + 'Hybrid Experimental Configuration') 
+%     save(exp_dir + 'Experimental Configuration') 
 %     
 %% FMCW Processing and Print RTI
     % load refsig for deramping
