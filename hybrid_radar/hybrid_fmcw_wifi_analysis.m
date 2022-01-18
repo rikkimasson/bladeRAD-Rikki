@@ -6,7 +6,7 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/Users/piersbeasley/Documents/repos/bladeRAD/generic_scripts/matlab') % path to generic functions
 
 %% Parameters - Configurable by User
-save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
+save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/26_Nov_lab/";
 % save_directory1 = "/Volumes/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
 
 %create array with experiment names

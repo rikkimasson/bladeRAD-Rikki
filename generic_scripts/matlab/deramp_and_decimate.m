@@ -43,7 +43,7 @@ if capture_duration < 31
             actual_max_range = beat2range(if_freq_actual,slope); %translates if frequency to range
         
         %decimate signal
-            decimated_signal = zeros(decimation_factor_rounded,size(deramped_signal,2)); %initiate array
+            decimated_signal = zeros(decimation_factor_rounded-3,size(deramped_signal,2)); %initiate array
             tic
             for i=1:number_pulses
             decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);

@@ -47,7 +47,7 @@ then
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=30s delay='$delay' ;
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=60s delay='$delay' ;
 	
     			'$clock_ref';
     			set clock_out enable;
@@ -73,7 +73,7 @@ then
 			set agc off; 
 			set gain rx1 '$rx1_gain' ; 
 			
-			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=30s; 
+			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=16384 buffers=32 xfers=16 timeout=60s; 
 			print;
     			'$clock_ref';
     			set clock_out enable;
@@ -99,7 +99,7 @@ then
 			set gain rx1 '$rx1_gain'; 
 			set gain rx2 '$rx2_gain'; 
 
-			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=30s;
+			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=16384 buffers=32 xfers=16 timeout=60s;
 
     			'$clock_ref';
     			set clock_out enable;

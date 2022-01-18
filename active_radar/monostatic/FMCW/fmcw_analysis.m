@@ -2,7 +2,7 @@ clear all
 close all
 addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/home/piers/repos/bladeRAD/generic_scripts',...
-        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals') % path to generic functions
 
 %% Parameters - Configurable by User
 
