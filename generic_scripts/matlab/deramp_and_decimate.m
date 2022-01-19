@@ -1,8 +1,11 @@
-function [actual_max_range,Final_Data] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding)
+function [actual_max_range,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope)
+% MIX_AND_DERAMP - for bladeRAD FMCW Signal Processing  
 
+%   1. Load receive file - location passed in as 'file_location'
+%   2. Reshape receive channel into radar matrix of PRI
+%   3. Deramp signal using a pre-recorded chirp passed in as'refsig'.
+%   4. Decimate signal - low pass and decimate to range passed in as 'max_range'
 
-%MIX_AND_DERAMP Load receive file deramp and decimate
-%   Detailed explanation goes here
 
 C = physconst('LightSpeed');
 
@@ -21,8 +24,6 @@ if capture_duration < 31
                 ylabel('ADV Value (0-1)')
                 xlabel('Samples')      
                 title("Pulse Time Series");
-
-
 
         %% Deramp Signal
             deramped_signal = zeros(size(pulse_matrix,1),size(pulse_matrix,2));
@@ -43,21 +44,19 @@ if capture_duration < 31
             actual_max_range = beat2range(if_freq_actual,slope); %translates if frequency to range
         
         %decimate signal
-            decimated_signal = zeros(decimation_factor_rounded-3,size(deramped_signal,2)); %initiate array
+            decimated_signal_size = size(decimate(deramped_signal(:,1),decimation_factor_actual),1);
+            decimated_signal = zeros(decimated_signal_size,size(deramped_signal,2)); %initiate array
             tic
             for i=1:number_pulses
-            decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
+                 decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
             end
             clear Data_Deramped
             Decimation_time = toc
+            return
 
-        %% FFT Signal
-            tic
-            Final_Data = fft(decimated_signal,(size(decimated_signal,1)*zero_padding));
-            clear Dec_Deramped 
 end 
 
-if capture_duration > 30
+if capture_duration > 31
     %If capture duration is over 30s, load capture in indiviual 30s sections to
     %process and concatanate at the end.
     window_size = 5; %window size in s

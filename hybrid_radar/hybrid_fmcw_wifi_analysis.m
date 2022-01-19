@@ -6,7 +6,7 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/Users/piersbeasley/Documents/repos/bladeRAD/generic_scripts/matlab') % path to generic functions
 
 %% Parameters - Configurable by User
-save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/26_Nov_lab/";
+save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
 % save_directory1 = "/Volumes/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
 
 %create array with experiment names
@@ -14,10 +14,10 @@ dinfo = dir(save_directory1);
 names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 
-process_fmcw = 0;
-process_passive = 1;
+process_fmcw = 1;
+process_passive = 0;
 
-for i = 17
+for i=names_cell
     % load .mat file containing experiment parameters
         mat_file_name = save_directory1 + i + "/Hybrid Experimental Configuration.mat";
         load(mat_file_name);
@@ -32,9 +32,18 @@ for i = 17
                     refsig = load_refsig(FMCW_Bw_M,FMCW_Fc,pulse_duration);    
                 % load Signal, Mix and Dermap Signal  
                     file_location = exp_dir + 'active_' + Experiment_ID;
-                    zero_padding = 2; % 1 = none; 2 = 100%
-                    [max_range_actual,processed_signal] = deramp_and_decimate(file_location,FMCW_max_range,refsig,capture_duration,FMCW_number_pulses,FMCW_Fs,slope,zero_padding);
-                    save(exp_dir + 'deramped_signal','processed_signal','max_range_actual')
+                    [max_range_actual,decimated_signal] = deramp_and_decimate(file_location,FMCW_max_range,refsig,capture_duration,FMCW_number_pulses,FMCW_Fs,slope);
+                    save(exp_dir + 'deramped_signal','decimated_signal','max_range_actual')
+                 
+                %% Window and FFT Signal 
+                    % window signal
+                        w = window('hann',size(decimated_signal,1));
+                        windowed_signal = decimated_signal.*w;
+                    % fft signal
+                        zero_padding = 1;
+                        processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
+                    
+                    
                 % Plot RTI
                     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
                     Range_bin = 1:size(processed_signal,1);
@@ -93,7 +102,7 @@ for i = 17
                 % Plot MTI RTI      
                 MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
                 figure
-                fig = imagesc(Range_axis,time_axis,MTI_RTI_plot,[-20,0]);
+                fig = imagesc(Range_axis,time_axis,MTI_RTI_plot,[-50,0]);
                     xlim([1 200])
                     %ylim([0 0.0005])
                     grid on            
@@ -124,7 +133,7 @@ for i = 17
                     v=dop2speed(f,C/FMCW_Fc)*2.237;
                     spect= 10*log10(abs(spect./max(spect(:))));
                     figure
-                    fig = imagesc(time_axis,-f,spect,[-30 0]);
+                    fig = imagesc(time_axis,-f,spect,[-50 0]);
                     ylim([-100 100])
                     c = colorbar
                     c.Label.String='Norm Power (dB)'
@@ -240,13 +249,3 @@ for i = 17
    
 end
 
-%% Save Passive Files as int array 
-
-
-
-inter_sur = interleave(real(sur_channel),imag(sur_channel));
-inter_sur = inter_sur * 1e4;
-
-
-inter_ref = interleave(real(ref_channel),imag(ref_channel));
-inter_ref = inter_ref * 1e4;

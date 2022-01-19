@@ -14,7 +14,7 @@ dinfo = dir(save_directory1);
 names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 
-for i = 1
+for i = names_cell
 
     % load .mat file containing experiment parameters
     mat_file_name = save_directory1 + i + "/Experimental Configuration.mat";
@@ -26,14 +26,28 @@ for i = 1
     %     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
 
     %% Load Signal, Mix and Dermap Signal 
-    exp_dir = save_directory1 + i + '/';
-    zero_padding = 2;
-    file_location = exp_dir + 'active_' + Experiment_ID;
-    [max_range_actual,processed_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,zero_padding);
-    save(exp_dir + 'deramped_signal','processed_signal','max_range_actual')
+        exp_dir = save_directory1 + i + '/';
+        file_location = exp_dir + 'active_' + Experiment_ID;
+        [max_range_actual,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope);
+        save(exp_dir + 'deramped_signal','decimated_signal','max_range_actual')
 
-
-    %% Plot RTI
+    %% Window and FFT Signal 
+    % window signal
+        w = window('hann',size(decimated_signal,1));
+        windowed_signal = decimated_signal.*w;
+    % fft signal
+        zero_padding = 1;
+        processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
+    
+    
+    %% MTI Filtering 
+        % Single Delay Line Filter 
+        MTI_Data = zeros(size(processed_signal));
+              for i=2:number_pulses
+                    MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
+              end
+        
+     %% Plot RTI
 
         Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
         Range_bin = 1:size(processed_signal,1);
@@ -101,7 +115,7 @@ for i = 1
         MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
         figure
         fig = imagesc(Range_axis,time_axis,MTI_RTI_plot,[-30,0]);
-            xlim([1 50])
+            xlim([1 100])
             %ylim([0 0.0005])
             grid on            
             colorbar
