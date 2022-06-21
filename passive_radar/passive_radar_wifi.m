@@ -14,7 +14,7 @@ passive_max_range = 100; %max range to cross-correlate to
 
 % Radar Parameters 
 Fc = 500e6;   % Central RF    
-Ref_gain = 36;
+Ref_gain = 0;
 Sur_gain = 60;
 Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 
