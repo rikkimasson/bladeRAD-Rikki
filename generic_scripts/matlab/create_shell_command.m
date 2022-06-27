@@ -10,6 +10,6 @@ end
 
 sdr_serial = select_SDR(SDR_No); % find SDR serial number
 
-command = "/home/piers/repos/bladeRAD/generic_scripts/bladeRAD_shell_script.sh " + test_id + " " + cap_samps + " " + pulses + " " + delay + " " + tx_gain + " " + rx1_gain + " " + rx2_gain + " " + center_freq + " " + bw + " " + sdr_serial + " " + trigger + " " + clock + " " + tx_rx; 
+command = "~/repos/bladeRAD/generic_scripts/bladeRAD_shell_script.sh " + test_id + " " + cap_samps + " " + pulses + " " + delay + " " + tx_gain + " " + rx1_gain + " " + rx2_gain + " " + center_freq + " " + bw + " " + sdr_serial + " " + trigger + " " + clock + " " + tx_rx; 
 
 end

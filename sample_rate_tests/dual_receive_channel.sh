@@ -1,8 +1,8 @@
 #!/bin/sh
 
 test_id='test1'
-cap_samps='150M'
-bw=15000000
+cap_samps='400M'
+bw=20000000
 
 
 

@@ -1,5 +1,5 @@
-clear all
-close all
+%clear all
+%close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals') % path to generic functions
@@ -8,12 +8,13 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 9;       % Expeiment Name
-capture_duration = 1;    % capture duration
+capture_duration = 30;    % capture duration
 Fs = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 20e6;               % LFM Bandwidth 
-save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
-    exp_dir = save_directory + Experiment_ID + '/';
+%save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
+save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
+exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 2.4e9;   % Central RF 
@@ -24,7 +25,7 @@ Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Pa
 Rx_SDR = 2;   % SDR to use for RX
 
 % Procesing Parameters
- max_range = 100; %max range to LPF filter data to
+ max_range = 1000; %max range to LPF filter data to
  processing_flag = true;
 
 % Parameters not configurable by user 
@@ -53,26 +54,6 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
     % plot(f,20*log10(abs(fftshift(fft(chirp)))/Samps_per_pulse));%plot FFT of chirp to show entire spectral content
 
 %% Setup Radar
-    % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
-
-    % Setup Tx SDR 
-    [trig_flag_1,tx_command] = create_shell_command(Experiment_ID,...
-                                   number_cap_samps,... 
-                                   number_pulses,...
-                                   0,...
-                                   Tx_gain,...
-                                   Rx1_gain,...
-                                   Rx2_gain,...
-                                   Fc_M,...
-                                   Bw_M,...
-                                   Tx_SDR,...
-                                   'slave',...
-                                   3,...
-                                   'tx');
-    tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
-    status = system(tx_command);
-    pause(5);
-
     % Setup Rx SDR 
     [trig_flag_2,rx_command] = create_shell_command(Experiment_ID,...
                                    number_cap_samps,... 
@@ -87,10 +68,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
                                    'slave',...
                                    1,...
                                    'rx'); 
-    if trig_flag_1 && trig_flag_2
-        "Trigger Conflict - FMCW Radar"
-        return
-    end                                                          
+   
     system(rx_command) % Blocking system command execution 
 
 
@@ -119,8 +97,9 @@ end
     
 %% Load Signal, Mix and Dermap Signal  
 zero_padding = 2;
+lp_filter = false;
 file_location = exp_dir + 'active_' + Experiment_ID;
-[max_range_actual,deramped_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope);
+[max_range_actual,deramped_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter);
 save(exp_dir + 'deramped_signal','deramped_signal')
 
 

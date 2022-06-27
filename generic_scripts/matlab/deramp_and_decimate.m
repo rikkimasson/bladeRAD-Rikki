@@ -1,4 +1,4 @@
-function [actual_max_range,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope)
+function [actual_max_range,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter)
 % MIX_AND_DERAMP - for bladeRAD FMCW Signal Processing  
 
 %   1. Load receive file - location passed in as 'file_location'
@@ -33,7 +33,7 @@ if capture_duration < 31
             deramp_data = toc
 
         %% Decimate Signal 
-        %%determine decimation factor 
+        %%determine decimation factor number_pulses
         %decimation factor must be by an integer thus the maximum range will likley
         %be non integer due to rounding
             if_max = (max_range * 2 * slope)/C; % if_max is the maximum frequency were intrested in
@@ -42,19 +42,58 @@ if capture_duration < 31
             decimation_factor_actual = ceil(size(deramped_signal,1)/decimation_factor_rounded); %determines actual optmal decimation factor
             if_freq_actual = Fs/decimation_factor_actual; %determines subsequent maximum if frequency 
             actual_max_range = beat2range(if_freq_actual,slope); %translates if frequency to range
-        
-        %decimate signal
+       % allocate memory 
             decimated_signal_size = size(decimate(deramped_signal(:,1),decimation_factor_actual),1);
             decimated_signal = zeros(decimated_signal_size,size(deramped_signal,2)); %initiate array
+       
+       % low-pass filter then decimate (requires alot of computation)
+       if lp_filter == true
             tic
             for i=1:number_pulses
                  decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
             end
             clear Data_Deramped
-            Decimation_time = toc
+            Filter_and_Decimation_time = toc
             return
+        else 
+            tic 
+            for i=1:number_pulses
+                 decimated_signal(:,i) = downsample(deramped_signal(:,i),decimation_factor_actual);
+            end
+            clear Data_Deramped
+            Decimation_time = toc
+        end
+        
+
 
 end 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if capture_duration > 31
     %If capture duration is over 30s, load capture in indiviual 30s sections to
