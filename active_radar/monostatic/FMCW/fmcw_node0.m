@@ -1,5 +1,5 @@
-%clear all
-%close all
+% clear all
+% close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals') % path to generic functions
@@ -7,19 +7,19 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 9;       % Expeiment Name
-capture_duration = 30;    % capture duration
-Fs = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+Experiment_ID = 11;       % Expeiment Name
+capture_duration = 15;    % capture duration
+Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
-Bw = 20e6;               % LFM Bandwidth 
+Bw = 30e6;               % LFM Bandwidth 
 %save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
-Fc = 2.4e9;   % Central RF 
-Tx_gain = 30;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 26;  % [-16, 60]
+Fc = 2.44e9;   % Central RF 
+Tx_gain = 57;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Rx1_gain = 25;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -114,9 +114,9 @@ if processing_flag == false
 end
     
 %% Load Reference Deramp Signal
-    refsig = load_refsig(Bw_M,Fc,pulse_duration);
-%     figure 
-%     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
+    refsig = load_refsig(Bw_M,Fs,Fc,pulse_duration);
+    figure 
+    spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
     
 %% Load Signal, Mix and Dermap Signal  
 zero_padding = 2;
@@ -152,7 +152,7 @@ save(exp_dir + 'deramped_signal','deramped_signal')
     RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
     figure
     fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-        xlim([0 100])
+        xlim([-inf 100])
         grid on            
         colorbar
         ylabel('Time (Sec)')

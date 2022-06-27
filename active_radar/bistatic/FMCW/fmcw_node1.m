@@ -8,7 +8,7 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 9;       % Expeiment Name
-capture_duration = 30;    % capture duration
+capture_duration = 1;    % capture duration
 Fs = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 20e6;               % LFM Bandwidth 
