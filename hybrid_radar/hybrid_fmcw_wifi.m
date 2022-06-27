@@ -6,12 +6,11 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-<<<<<<< HEAD
 Experiment_ID = 22;    % Expeiment Name
 capture_duration = 15;        % capture duration
 % save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
 save_directory = "/home/piers/Documents/Captures/7_Oct/hybrid/"; % rach experiment will save as a new folder in this directory
-=======
+
 Experiment_ID = 2;    % Expeiment Name
 capture_duration = 15;        % capture duration
 % save_directory = "/media/piers/data_drive/BladeRF_Experiments/Hybrid Radar/"; % each experiment will save as a new folder in this directory
@@ -19,7 +18,6 @@ capture_duration = 15;        % capture duration
 save_directory = "/media/piers/data_drive/BladeRF_Experiments/6_Oct/hybrid/"
 
 exp_dir = save_directory + Experiment_ID + '/';
->>>>>>> 1c5ddb33d1ae92180b94ba0050155e51f243fe60
 
 
 % FMCW Parameters 
@@ -30,6 +28,8 @@ FMCW_Fc = 5.8e9;   % Central RF
 Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 Rx1_gain = 50;      % [-16, 60]
 Rx2_gain = 0;       % [-16, 60]
+Rx_1_lna = True;
+Rx_2_lna = True;
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
 % Procesing Parameters

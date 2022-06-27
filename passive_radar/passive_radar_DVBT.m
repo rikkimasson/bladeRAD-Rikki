@@ -1,20 +1,20 @@
 clear all
-addpath('~/repos/bladeRAD/generic_scripts/matlab',...
-        '~/repos/bladeRAD/generic_scripts',...
-        '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
+        '/home/piers/repos/bladeRAD/generic_scripts',...
+        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
 
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 6;       % Expeiment Name
-capture_duration = 1;    % capture duration
-Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
-passive_max_range = 100; %max range to cross-correlate to
+Experiment_ID = 0005;       % Expeiment Name
+capture_duration = 10;    % capture duration
+Bw = 15e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+save_directory = "/home/piers/Documents/Captures/"; % each experiment will save as a new folder in this directory
+passive_max_range = 1000; %max range to cross-correlate to
 
 % Radar Parameters 
-Fc = 500e6;   % Central RF    
-Ref_gain = 0;
+Fc = 530e6;   % Central RF    
+Ref_gain = 47;
 Sur_gain = 60;
 Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 
@@ -42,7 +42,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
                                    RF_freq,...
                                    Bw_M,...
                                    Pass_SDR,...
-                                   'slave',...
+                                   'master',...
                                    3,...
                                    'pass');
                                
@@ -80,8 +80,8 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
              saveas(fig,fig_name,'jpeg')
    % Batch process data and cross correlate  
-         seg_s = 5000; % number of segments per second - analagos to PRF.
-         seg_percent = 10;  % percentage of segment used for cross coreclation of 
+         seg_s = 1000; % number of segments per second - analagos to PRF.
+         seg_percent = 90;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
          cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range,exp_dir);
          save(exp_dir + 'passive_matrix','cc_matrix')
@@ -108,7 +108,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
         t_cc_matrix = transpose(cc_matrix);
         CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
         figure
-        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
+        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-100 1]); 
             ylim([-500 500])     
             % xlim([1 20])
             colorbar
@@ -123,7 +123,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
      % Spectrogram 
         r_bin = 1;
         l_fft = 2056;
-        pad_factor = 4;
+        pad_factor = 1;
         overlap_factor = 0.99;
         [spect,f] = spectrogram(cc_matrix(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,seg_s,'centered','yaxis');
         % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;

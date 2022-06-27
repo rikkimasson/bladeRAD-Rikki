@@ -13,6 +13,8 @@ sdr_serial=${10}
 trigger=${11}
 clock=${12}
 tx_rx=${13}
+#rx1_lna=${14}
+#rx2_lna==${15}
 
 IFS=$''
 
@@ -72,6 +74,7 @@ then
 			set bandwidth rx '$bw'M;
 			set agc off; 
 			set gain rx1 '$rx1_gain' ; 
+			set biastee rx on;
 			
 			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=134144 buffers=32 xfers=16 timeout=60s; 
 			print;
@@ -98,6 +101,7 @@ then
 			set agc off; 
 			set gain rx1 '$rx1_gain'; 
 			set gain rx2 '$rx2_gain'; 
+			set biastee rx on;
 
 			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=134144 buffers=32 xfers=16 timeout=60s;
 
