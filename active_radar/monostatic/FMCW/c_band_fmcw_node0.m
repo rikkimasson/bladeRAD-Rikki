@@ -7,8 +7,8 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 11;       % Expeiment Name
-capture_duration = 15;    % capture duration
+Experiment_ID = 1;       % Expeiment Name
+capture_duration = 1;    % capture duration
 Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 1e-3;   % Desired Pulse Duration 
 Bw = 30e6;               % LFM Bandwidth 
@@ -17,9 +17,9 @@ save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will sa
 exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
-Fc = 2.44e9;   % Central RF 
-Tx_gain = 57;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 25;  % [-16, 60]
+Fc = 5.75e9;   % Central RF 
+Tx_gain = 60;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Rx1_gain = 23;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -43,15 +43,15 @@ Rx_SDR = 2;   % SDR to use for RX
 
 
 %% Create Sawtooth Chirp for bladeRF
-chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
+chirp = 0.8*saw_LFM_chirp(Bw,pulse_duration,Fs);
 % figure
 % plot(real(chirp));
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
-% clear chirp
-    % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
-    % f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
-    % figure
-    % plot(f,20*log10(abs(fftshift(fft(chirp)))/Samps_per_pulse));%plot FFT of chirp to show entire spectral content
+clear chirp
+%     spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
+%     f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
+%     figure
+%     plot(f,20*log10(abs(fftshift(fft(chirp)))/Samps_per_pulse));%plot FFT of chirp to show entire spectral content
 
 %% Setup Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''

@@ -49,7 +49,7 @@ then
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=60s delay='$delay' ;
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=30720 buffers=32 repeat='$pulses' timeout=60s delay='$delay' ;
 	
     			'$clock_ref';
     			set clock_out enable;
