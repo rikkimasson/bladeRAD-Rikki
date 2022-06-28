@@ -1,5 +1,5 @@
-% clear all
-% close all
+clear all
+close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals') % path to generic functions
@@ -7,10 +7,10 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 30;       % Expeiment Name
-capture_duration = 1;    % capture duration
+Experiment_ID = 42;       % Expeiment Name
+capture_duration = 30;    % capture duration
 Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-pulse_duration = 1e-3;   % Desired Pulse Duration 
+pulse_duration = 0.2e-3;   % Desired Pulse Duration 
 Bw = 30e6;               % LFM Bandwidth 
 %save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory

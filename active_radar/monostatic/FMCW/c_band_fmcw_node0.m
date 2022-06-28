@@ -18,8 +18,8 @@ exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 5.75e9;   % Central RF 
-Tx_gain = 60;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 23;  % [-16, 60]
+Tx_gain = 66;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Rx1_gain = 36;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 Rx_SDR = 2;   % SDR to use for RX
@@ -115,8 +115,8 @@ end
     
 %% Load Reference Deramp Signal
     refsig = load_refsig(Bw_M,Fs,Fc,pulse_duration);
-    figure 
-    spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
+%     figure 
+%     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
     
 %% Load Signal, Mix and Dermap Signal  
 zero_padding = 2;
@@ -163,7 +163,7 @@ save(exp_dir + 'deramped_signal','deramped_signal')
 
 
     figure
-    plot(Range_axis,RTI_plot(10,:));
+    fig = plot(Range_axis,RTI_plot(10,:));
         title("Single Pulse - " + Experiment_ID);
         xlim([0 100])
         grid on
@@ -172,15 +172,19 @@ save(exp_dir + 'deramped_signal','deramped_signal')
         fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg') 
 
-[value, pulse_rbin] = max(processed_signal(:,100)); 
-phase_9 = angle(processed_signal(pulse_rbin,:));
-phase_norm_9 = phase_9 - mean(phase_9(1:100));
-save(exp_dir + 'phase_norm_9', 'phase_9')
-figure
-plot(phase_norm_9)
-figure
-plot(abs(processed_signal(pulse_rbin,:)))
-        
+    [value, pulse_rbin] = max(processed_signal(:,100)); 
+    phase_9 = angle(processed_signal(pulse_rbin,:));
+    phase_norm_9 = phase_9 - mean(phase_9(1:100));
+    phase_time = phase_9/(2*pi*Fc)
+    save(exp_dir + 'phase_norm_9', 'phase_9')
+    figure
+    fig = plot(time_axis,phase_time)
+    xlabel('Time (s)')
+    ylabel('phase')
+    fig_name = exp_dir + "Phase Series" + Experiment_ID + ".jpg";
+    saveas(fig,fig_name,'jpeg') 
+    
+            
         
         %         
 % % Plot Spectrogram 
