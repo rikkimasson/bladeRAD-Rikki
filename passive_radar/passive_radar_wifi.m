@@ -7,9 +7,11 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 6;       % Expeiment Name
-capture_duration = 1;    % capture duration
+capture_duration = 2;    % capture duration
 Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
+% save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
+save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
+
 passive_max_range = 100; %max range to cross-correlate to
 
 % Radar Parameters 
@@ -25,6 +27,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
     number_cap_samps = 2*(capture_duration/sample_duration)
     RF_freq = Fc/1e6;   % RF in MHz 
     Bw_M = Bw/1e6;      % BW in MHz
+
     file_size_MBytes = (number_cap_samps * 16)*2/(8*1e6) 
 
     
@@ -42,7 +45,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
                                    RF_freq,...
                                    Bw_M,...
                                    Pass_SDR,...
-                                   'slave',...
+                                   'master',...
                                    3,...
                                    'pass');
                                

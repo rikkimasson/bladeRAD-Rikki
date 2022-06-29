@@ -7,10 +7,10 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1;       % Expeiment Name
-capture_duration = 1;    % capture duration
+Experiment_ID = 8;       % Expeiment Name
+capture_duration = 30;    % capture duration
 Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-pulse_duration = 1e-3;   % Desired Pulse Duration 
+pulse_duration = 0.2e-3;   % Desired Pulse Duration 
 Bw = 30e6;               % LFM Bandwidth 
 %save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
@@ -26,7 +26,7 @@ Rx_SDR = 2;   % SDR to use for RX
 
 % Procesing Parameters
  max_range = 1000; %max range to LPF filter data to
- processing_flag = true;
+ processing_flag = false;
 
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
