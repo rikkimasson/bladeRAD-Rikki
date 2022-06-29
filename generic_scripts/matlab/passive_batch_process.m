@@ -1,4 +1,4 @@
-function [dec_ref_channel, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir)
+function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir)
 %PASSIVE_BATCH_PROCESS Summary of this function goes here
 %   seg_s : number of segments a second. 
 %   seg_percent : percentage of segment used for cross coreclation of 
@@ -39,10 +39,12 @@ function [dec_ref_channel, cc_matrix] = passive_batch_process(ref_channel,sur_ch
 
 %% Cross-Correlate segments of ref and sur
         cc_matrix = complex(zeros((2*max_range)+1, (size(ref_channel,1)/seg_size)));
+        ref_self_ambg = complex(zeros((2*max_range)+1, (size(ref_channel,1)/seg_size)));
     % range limited Xcorr
         for i=1:size(seg_ref_channel,2)
-            cc_matrix(:,i) = xcorr(dec_sur_channel(:,i),dec_ref_channel(:,i),max_range); %xcorr(sur_chan,ref_chan) in order to get positive r_bins
+            cc_matrix(:,i) = xcorr(dec_sur_channel(:,i),dec_ref_channel(:,i),max_range);        % xcorr(sur_chan,ref_chan) in order to get positive r_bins
+            ref_self_ambg(:,i) = xcorr(dec_ref_channel(:,i),dec_ref_channel(:,i),max_range);   % xcorr
         end
         cc_matrix = cc_matrix(max_range+1:end,:); %take zero shifted to +r_max shifted range bins
+        self_ambg_matrix = ref_self_ambg(max_range+1:end,:); %take zero shifted to +r_max shifted range bins
 end
-
