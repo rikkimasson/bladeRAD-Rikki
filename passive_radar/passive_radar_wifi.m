@@ -6,29 +6,29 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 6;       % Expeiment Name
+Experiment_ID = 1;       % Expeiment Name
 capture_duration = 2;    % capture duration
-Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 % save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
 
-passive_max_range = 100; %max range to cross-correlate to
+passive.max_range = 100; %max range to cross-correlate to
 
 % Radar Parameters 
-Fc = 500e6;   % Central RF    
-Ref_gain = 0;
-Sur_gain = 60;
-Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
+passive.Fc = 5.75e6;   % Central RF
+passive.Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+passive.Ref_gain = 0;
+passive.Sur_gain = 60;
+passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
-    Fs = Bw;
-    sample_duration = 1/Fs;
-    number_cap_samps = 2*(capture_duration/sample_duration)
-    RF_freq = Fc/1e6;   % RF in MHz 
-    Bw_M = Bw/1e6;      % BW in MHz
+    passive.Fs = passive.Bw;
+    passive.sample_duration = 1/Fs;
+    passive.number_cap_samps = 2*(capture_duration/sample_duration)
+    passive.RF_freq = Fc/1e6;   % RF in MHz 
+    passive.Bw_M = Bw/1e6;      % BW in MHz
 
-    file_size_MBytes = (number_cap_samps * 16)*2/(8*1e6) 
+    passive_file_size_MBytes = (number_cap_samps * 16)*2/(8*1e6) 
 
     
 %% Setup Radar
@@ -36,15 +36,15 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
 
     % Setup Passive SDR 
    [trig_flag, passive_command] = create_shell_command(Experiment_ID,...
-                                   number_cap_samps,... 
+                                   passive.number_cap_samps,... 
                                    0,...
                                    0,...
                                    0,...
-                                   Ref_gain,...
-                                   Sur_gain,...
-                                   RF_freq,...
-                                   Bw_M,...
-                                   Pass_SDR,...
+                                   passive.Ref_gain,...
+                                   passive.Sur_gain,...
+                                   passive.RF_freq,...
+                                   passive.Bw_M,...
+                                   passive.SDR,...
                                    'master',...
                                    3,...
                                    'pass');
@@ -83,10 +83,10 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
              saveas(fig,fig_name,'jpeg')
    % Batch process data and cross correlate  
-         seg_s = 5000; % number of segments per second - analagos to PRF.
-         seg_percent = 10;  % percentage of segment used for cross coreclation of 
+         passive.seg_s = 5000; % number of segments per second - analagos to PRF.
+         passive.seg_percent = 10;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
-         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range,exp_dir);
+         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.passive_max_range,exp_dir);
          save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
@@ -147,13 +147,13 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
 
 
 %% Proccess Passive data into Range-Doppler Slices
-           passive.PRF = seg_s; %seg_s
+           passive.PRF = passive.seg_s; %seg_s
            passive.cpi = 0.5; % cohernet proccessing interval (s)
            passive.cpi_overlap = 0.9; % overlap between CPIs (watch this - too large will cause slow exceution)
            passive.doppler_window = 'hann';
            passive.zero_padding = 4;
            passive.dynamic_range = +inf;
-           passive.max_range = max_range;       
+           passive.max_range = passive_max_range;       
      
                 [passive.number_cpi,... 
                  passive.pulses_per_cpi,...
