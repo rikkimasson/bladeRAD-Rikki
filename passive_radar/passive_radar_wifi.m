@@ -86,7 +86,7 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
          seg_s = 5000; % number of segments per second - analagos to PRF.
          seg_percent = 10;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
-         cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range,exp_dir);
+         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range,exp_dir);
          save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
@@ -146,5 +146,33 @@ Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
             saveas(fig,fig_name)
 
 
+%% Proccess Passive data into Range-Doppler Slices
+           passive.PRF = seg_s; %seg_s
+           passive.cpi = 0.5; % cohernet proccessing interval (s)
+           passive.cpi_overlap = 0.9; % overlap between CPIs (watch this - too large will cause slow exceution)
+           passive.doppler_window = 'hann';
+           passive.zero_padding = 4;
+           passive.dynamic_range = +inf;
+           passive.max_range = max_range;       
+     
+                [passive.number_cpi,... 
+                 passive.pulses_per_cpi,...
+                 passive.range_doppler_slices] = rangeDopplerSlice(cc_matrix,passive.cpi,passive.PRF,...
+                                                                   passive.cpi_overlap,...
+                                                                   passive.zero_padding,...
+                                                                   passive.doppler_window);  
+                
+                 [~,~,passive.self_ambg_slices] = rangeDopplerSlice(self_ambg_matrix,passive.cpi,passive.PRF,...
+                                                                   passive.cpi_overlap,...
+                                                                   passive.zero_padding,...
+                                                                   passive.doppler_window);  
+            
+            passive.cpi_stride = round(passive.pulses_per_cpi*(1-passive.cpi_overlap)); % number of pulses to stride each for next CPI
+            passive.velocity_conv = C*(((1/C)/(passive_Fc/C)));
+            passive.range_bins = size(cc_matrix,1);
+            passive.doppler_bins = passive.pulses_per_cpi*passive.zero_padding+1;
+            passive.doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.doppler_bins);
+            passive.doppler_velocity_axis = passive.doppler_axis*passive.velocity_conv;
+            passive.range_axis = linspace(0,passive.max_range,passive.range_bins);
 
          
