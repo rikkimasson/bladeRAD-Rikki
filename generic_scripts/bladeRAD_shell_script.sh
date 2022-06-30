@@ -107,7 +107,7 @@ then
     			'$clock_ref';
     			set clock_out enable;
 			trigger j51-1 rx '$trigger';
-            
+            		set biastee rx on;
             
 			rx start;
             		trigger '$triggerctrl' '$chain' '$fire';
