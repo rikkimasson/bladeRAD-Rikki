@@ -1,73 +1,38 @@
-clear all
+% clear all
 close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+% 
+% %% Parameters - Configurable by User
+% 
+% % Capture parameters 
+% Experiment_ID = 51;       % Expeiment Name
+% capture_duration = 30;    % capture duration
+% % save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
+% save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/hybrid_radar/"; % each experiment will save as a new folder in this directory
+% 
+passive.max_range = 100 % max number of range bins to cross correlate
 
-%% Parameters - Configurable by User
-
-% Capture parameters 
-Experiment_ID = 13;       % Expeiment Name
-capture_duration = 30;    % capture duration
-% save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
-save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/hybrid_radar/"; % each experiment will save as a new folder in this directory
-
-passive.max_range = 100; %max range to cross-correlate to
-
-% Radar Parameters 
-passive.Fc = 2437e6;   % Central RF
-passive.Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-passive.Ref_gain = 3;
-passive.Sur_gain = 3;
-passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
-
-% Parameters not configurable by user 
-    C = physconst('LightSpeed');
-    passive.Fs = passive.Bw;
-    passive.sample_duration = 1/passive.Fs;
-    passive.number_cap_samps = 2*(capture_duration/passive.sample_duration)
-    passive.RF_freq = passive.Fc/1e6;   % RF in MHz 
-    passive.Bw_M = passive.Bw/1e6;      % BW in MHz
-
-    passive_file_size_MBytes = (passive.number_cap_samps * 16)*2/(8*1e6) 
-
-    
-%% Setup Radar
-    % 1 'set clock_sel external'; 2 'set clock_out enable; 3 'set clock_ref enable'
-
-    % Setup Passive SDR 
-   [trig_flag, passive_command] = create_shell_command(Experiment_ID,...
-                                   passive.number_cap_samps,... 
-                                   0,...
-                                   0,...
-                                   0,...
-                                   passive.Ref_gain,...
-                                   passive.Sur_gain,...
-                                   passive.RF_freq,...
-                                   passive.Bw_M,...
-                                   passive.SDR,...
-                                   'master',...
-                                   3,...
-                                   'pass');
-                               
-    %passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
-    status = system(passive_command);
-
-%% Save Raw Data and create header file for directory 
-    exp_dir = save_directory + Experiment_ID + '/';
-    make_dir = 'mkdir ' + exp_dir;
-    system(make_dir); % Blocking system command execution
-    move_file = 'mv /tmp/passive_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
-    rtn = system(move_file);
-    if rtn == 0
-        "Rx Data Copyied to Save directory"
-    else 
-        "Rx Copy Failed"
-        return
-    end
-    save(exp_dir + 'Passive Experimental Configuration') 
-
-
+% % Radar Parameters 
+% passive.Fc = 689.5e6;   % Central RF
+% passive.Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+% passive.Ref_gain = 13;
+% passive.Sur_gain = 33;
+% passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
+passive.bin_size = C*1/(passive.Bw*2)
+% 
+% % Parameters not configurable by user 
+%     C = physconst('LightSpeed');
+%     passive.Fs = passive.Bw;
+%     passive.sample_duration = 1/passive.Fs;
+%     passive.number_cap_samps = 2*(capture_duration/passive.sample_duration)
+%     passive.RF_freq = passive.Fc/1e6;   % RF in MHz 
+%     passive.Bw_M = passive.Bw/1e6;      % BW in MHz
+% 
+%     passive_file_size_MBytes = (passive.number_cap_samps * 16)*2/(8*1e6) 
+% 
+%     
  %% Passive Processing
     % load signal and split ref and sur
         file_location = exp_dir + 'passive_' + Experiment_ID;
@@ -84,23 +49,25 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
              saveas(fig,fig_name,'jpeg')
    % Batch process data and cross correlate  
-         passive.seg_s = 5000; % number of segments per second - analagos to PRF.
+         passive.seg_s = 1000; % number of segments per second - analagos to PRF.
          passive.seg_percent = 100;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
          [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir);
          save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
-        Range_bin = linspace(0,passive.max_range,size(cc_matrix,1));
+        passive.range_bins = size(cc_matrix,1);  
+        passive.range_axis = linspace(0,passive.max_range*passive.bin_size,passive.range_bins);
         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
         figure
-        fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
+        fig = imagesc(passive.range_axis,time_axis,RTI_plot,[-inf,0]);
             % xlim([1 20])
             %ylim([0 0.0005])
             grid on            
-            colorbar
+            c = colorbar;
+            c.Label.String='Norm Power (dB)';
             ylabel('Time (Sec)')
-            xlabel('Range Bin')   
+            xlabel('Range (m)')   
             fig_title = "Passive RTI - " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
@@ -111,13 +78,14 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
         f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
         t_cc_matrix = transpose(cc_matrix);
         CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
-        figure
-        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
-            ylim([-500 500])     
-            % xlim([1 20])
-            colorbar
+        fig = figure
+        imagesc(passive.range_axis,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
+            ylim([-50 50])     
+            xlim([-inf 400])
+            c = colorbar;
+            c.Label.String='Norm Power (dB)';
             ylabel('Doppler Shift (Hz)')
-            xlabel('Range Bin')  
+            xlabel('Range (m)')  
             title("CAF for entire capture" + Experiment_ID)
             fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
@@ -130,8 +98,8 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
         l_fft = 1024;
         pad_factor = 4;
         overlap_factor = 0.99;
-        integrated_data = sum(t_cc_matrix(r_start:r_stop,:));
-        [spect,f] = spectrogram(cc_matrix(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
+        integrated_data = sum(cc_matrix(r_start:r_stop,:));
+        [spect,f] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
         % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
         v=dop2speed(f,C/passive.Fc)*2.237;
         spect= 10*log10(abs(spect./max(spect(:))));
@@ -142,7 +110,7 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
             xlabel('Time (Sec)')
             % ylabel('Radial Velocity (mph)')   
             ylabel('Doppler Frequency (Hz)')  
-            fig_title = "Passive Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
+            fig_title = "Passive Spectrogram - " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
@@ -154,7 +122,7 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
            passive.cpi = 0.5; % cohernet proccessing interval (s)
            passive.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
            passive.doppler_window = 'hann';
-           passive.zero_padding = 4;
+           passive.zero_padding = 1;
            passive.dynamic_range = +inf;
            passive.max_range = passive.max_range;       
      
@@ -172,18 +140,16 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
             
             passive.cpi_stride = round(passive.pulses_per_cpi*(1-passive.cpi_overlap)); % number of pulses to stride each for next CPI
             passive.velocity_conv = C*(((1/C)/(passive.Fc/C)));
-            passive.range_bins = size(cc_matrix,1);
             passive.doppler_bins = passive.pulses_per_cpi*passive.zero_padding+1;
             passive.doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.doppler_bins);
             passive.doppler_velocity_axis = passive.doppler_axis*passive.velocity_conv;
-
 
             % create video of CLEANed range-Doppler slices
              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Passive Pre-DSI";
              dynamic_range = 50;
-             max_range = 50;
+             max_range = 150;
              max_doppler = 50;
              frame_rate = 1/(capture_duration/passive.number_cpi);    
              createVideo(passive.range_doppler_slices,frame_rate,...
@@ -195,10 +161,10 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
 %% Direct Signal Interference Cancellation
    % set DSI cancellation parameters
       p = 0.999;        % subtraction parameter - P must be a positive 
-                        % integer less than one to avoid unwanted discontinuities
+                        % integer less than one to avoid    unwanted discontinuities
                         % arising from zero values in the range–Doppler surface.
      threshold = 0.005; % cutoff threshold parameter
-     max_iterations = 20; % maximum number of itterations DSI is CLEANed from CAF slice
+     max_iterations = 100; % maximum number of itterations DSI is CLEANed from CAF slice
      number_rbins = size(passive.range_doppler_slices{1},2);
   
    % perform CLEAN based DSI Cancellation   
@@ -218,12 +184,73 @@ passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and b
   % create video of CLEANed range-Doppler slices
      video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-     video_title = "CLEANing Passive Radar Capture";
-     dynamic_range = 50;
-     max_range = 50;
-     max_doppler = 500;
+     video_title = "CLEANed Passive Radar Capture";
+     dynamic_range = 30;
+     max_range = 150;
+     max_doppler = 100;
      frame_rate = 1/(capture_duration/passive.number_cpi);    
      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
                  passive.range_axis,max_range,...
                  passive.doppler_axis,max_doppler,...
                  dynamic_range,video_name,video_title);
+
+
+%% maximum return detector
+number_cpi = size(passive.CLEANed_range_doppler_slices,2);
+passive_range_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*passive.range_axis;
+passive_doppler_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*transpose(passive.doppler_velocity_axis);
+time_axis = linspace(0,15,number_cpi);
+
+
+passive_range_max_det = zeros(number_cpi,1);
+passive_doppler_max_det = zeros(number_cpi,1);
+for i=1:number_cpi   
+   i
+   [mag, index] = max(passive.CLEANed_range_doppler_slices{i}(:));
+   passive_range_max_det(i) = passive_range_lookup(index);
+   passive_doppler_max_det(i) = passive_doppler_lookup(index);            
+end
+
+
+fig = figure
+p = plot(time_axis,passive_range_max_det);
+p.Marker = '*';
+% a.Marker = '*';
+grid on
+grid minor
+ylabel('Range (m)')
+xlabel('Time (s)')
+% ylim([-inf 50])
+legend('Passive Radar Peak Return')
+fig_name = exp_dir + "Passive Peak Detection" + Experiment_ID + ".jpg";
+saveas(fig,fig_name,'jpeg')
+saveas(fig,fig_name)
+
+%% SNR of peak return 
+
+passive_range_detections = zeros(number_cpi-1,1);
+passive_detection_snr = zeros(number_cpi-1,1);
+for i=1:number_cpi-1
+   i
+   [target_mag, index] = max(passive.CLEANed_range_doppler_slices{i}(:));
+   passive_range_detections(i) = passive_range_lookup(index)
+   passive_target_power = 10*log10(abs(target_mag))
+   passive_noise_estimate = 10*log10(mean(abs(passive.CLEANed_range_doppler_slices{i}(:,70:101)),'all'))
+   passive_detection_snr(i) = passive_target_power - passive_noise_estimate
+end  
+t = linspace(0,15,size(passive_detection_snr,1));
+figure    
+plot(passive_range_detections,passive_detection_snr,'*r')    
+grid on
+grid minor
+ylabel('SNR (dB)')
+xlabel('Range (m)')
+
+
+
+
+
+
+
+
+

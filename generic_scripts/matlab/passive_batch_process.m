@@ -16,9 +16,9 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
     % plot spectrum of segment of ref and sur channel
         freq_axis = linspace(-Fs/2,Fs/2,size(seg_sur_channel,1));
         figure
-        fig = plot(freq_axis,fftshift(10*log10(abs(fft(seg_ref_channel(:,2000))))));
+        fig = plot(freq_axis,fftshift(10*log10(abs(fft(seg_ref_channel(:,1000))))));
         hold on 
-        plot(freq_axis,fftshift(10*log10(abs(fft(seg_sur_channel(:,2000))))))
+        plot(freq_axis,fftshift(10*log10(abs(fft(seg_sur_channel(:,1000))))))
         ylabel('Relative Power (dB)')
         xlabel('Frequency')   
         title("FFT of Single Passive Segment");    

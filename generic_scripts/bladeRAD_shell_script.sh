@@ -48,7 +48,7 @@ then
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=32 repeat='$pulses' timeout=60s delay='$delay' ;
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=16 xfers=8 repeat='$pulses' timeout=60s delay='$delay' ;
 	
     			'$clock_ref';
     			set clock_out enable;
@@ -80,7 +80,7 @@ then
         		'$clock_ref';
     	    		set clock_out enable;
 			trigger j51-1 rx '$trigger';
-            
+            		set biastee on;
             
 			rx start;
 			trigger '$triggerctrl' '$chain' '$fire';
@@ -107,7 +107,8 @@ then
     			'$clock_ref';
     			set clock_out enable;
 			trigger j51-1 rx '$trigger';
-            		set biastee rx on;
+            		set biastee on;
+
             
 			rx start;
             		trigger '$triggerctrl' '$chain' '$fire';

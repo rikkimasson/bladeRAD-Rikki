@@ -2,17 +2,20 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
 %CREATE_VIDEO Summary of this function goes here
 %   Detailed explanation goes here
 % create the video writer
+    
+     fig = figure
      writerObj = VideoWriter(file_name);
-     writerObj.FrameRate = frame_rate;           
+     writerObj.FrameRate = frame_rate;      
+     nFrames = size(frame_array,2)
      open(writerObj)   
-     
+        
+
      for i=1:size(frame_array,2)-1   
 
         frame =  10*log(abs(frame_array{i}./max(frame_array{i}(:))));
-%         frame =  (abs(frame_array{i}./max(frame_array{i}(:))));
 
-
-        fig =  transpose(imagesc(x_axis,y_axis, frame, [-dynamic_range 0]));
+        fig = transpose(imagesc(x_axis,y_axis, frame, [-dynamic_range 0]));
+        hold on
         title(video_title + ' - CPI no.: ' + i)
         ylabel('Doppler (Hz)')
         xlabel('Range (m)')   
@@ -23,6 +26,7 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
         colormap jet;
         saveas(fig,'frame','png');
         im = imread('frame.png');
+        im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end
  
