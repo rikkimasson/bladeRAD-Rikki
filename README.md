@@ -6,3 +6,8 @@ SDRs provide highly flexible platforms that can be used to perform multiple func
 
 # Top level description
 This repository contains code for both the command and control of the bladeRF SDRs, in addition to code for conducting radar signal processing on the data captured by the SDRs. All processing is currently completed post-capture as the receive channel is saved to RAM for post-processing in MATLAB. 
+There is currently code in this repository to control the radar as an:
+
+1. FMCW active radar, using two synchronised SDRs (1 for Tx, 1 for Rx - this is done to reduce the direct-path (breakthrough)between seperate SDR boards). 
+2. Passive Radar, using a single SDR. 
+3. Hybrid Radar, using three synchronised SDRs. Two for active FMCW radar and a single SDR for passive radar.  
