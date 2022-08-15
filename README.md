@@ -11,3 +11,14 @@ There is currently code in this repository to control the radar as an:
 1. FMCW active radar, using two synchronised SDRs (1 for Tx, 1 for Rx - this is done to reduce the direct-path (breakthrough)between seperate SDR boards). 
 2. Passive Radar, using a single SDR. 
 3. Hybrid Radar, using three synchronised SDRs. Two for active FMCW radar and a single SDR for passive radar.  
+
+## Installation and Usage
+
+Requirements 
+  1. Linux OS
+  2. bladeRF CLI - https://github.com/Nuand/bladeRF/wiki/Getting-Started%3A-Linux
+  3. Gnome-terminal - $ sudo apt install gnome-terminal
+  4. MATLAB
+
+Clone this repository in a folder named repos in your home directory '~/home/repos/bladeRAD' - important to get this location correct. 
+
