@@ -1,38 +1,23 @@
+
+
+%% How to use analysis scripts 
+% 1) load the 'experimental configuration.mat' file
+% 2) enter correct location of experiments as save_directory1
+
+% location of the raw data
+save_directory1 = "/media/piers/T7/06_07_2022_farm/hybrid_radar/"
+exp_dir = save_directory1 + Experiment_ID + '/';
+
 % clear all
 close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
-% 
-% %% Parameters - Configurable by User
-% 
-% % Capture parameters 
-% Experiment_ID = 51;       % Expeiment Name
-% capture_duration = 30;    % capture duration
-% % save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
-% save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/hybrid_radar/"; % each experiment will save as a new folder in this directory
-% 
-passive.max_range = 100 % max number of range bins to cross correlate
 
-% % Radar Parameters 
-% passive.Fc = 689.5e6;   % Central RF
-% passive.Bw = 20e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-% passive.Ref_gain = 13;
-% passive.Sur_gain = 33;
-% passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
+%% Capture parameters 
+passive.max_range = 100 % max number of range bins to cross correlate
 passive.bin_size = C*1/(passive.Bw*2)
-% 
-% % Parameters not configurable by user 
-%     C = physconst('LightSpeed');
-%     passive.Fs = passive.Bw;
-%     passive.sample_duration = 1/passive.Fs;
-%     passive.number_cap_samps = 2*(capture_duration/passive.sample_duration)
-%     passive.RF_freq = passive.Fc/1e6;   % RF in MHz 
-%     passive.Bw_M = passive.Bw/1e6;      % BW in MHz
-% 
-%     passive_file_size_MBytes = (passive.number_cap_samps * 16)*2/(8*1e6) 
-% 
-%     
+
  %% Passive Processing
     % load signal and split ref and sur
         file_location = exp_dir + 'passive_' + Experiment_ID;
@@ -120,7 +105,7 @@ passive.bin_size = C*1/(passive.Bw*2)
 %% Proccess Passive data into Range-Doppler Slices
            passive.PRF = passive.seg_s; %seg_s
            passive.cpi = 0.5; % cohernet proccessing interval (s)
-           passive.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
+           passive.cpi_overlap = 0.8; % overlap between CPIs (watch this - too large will cause slow execution)
            passive.doppler_window = 'hann';
            passive.zero_padding = 1;
            passive.dynamic_range = +inf;
@@ -137,7 +122,8 @@ passive.bin_size = C*1/(passive.Bw*2)
                                                                    passive.cpi_overlap,...
                                                                    passive.zero_padding,...
                                                                    passive.doppler_window);  
-            
+            passive.pulses_per_cpi
+
             passive.cpi_stride = round(passive.pulses_per_cpi*(1-passive.cpi_overlap)); % number of pulses to stride each for next CPI
             passive.velocity_conv = C*(((1/C)/(passive.Fc/C)));
             passive.doppler_bins = passive.pulses_per_cpi*passive.zero_padding+1;
@@ -148,9 +134,9 @@ passive.bin_size = C*1/(passive.Bw*2)
              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Passive Pre-DSI";
-             dynamic_range = 50;
-             max_range = 150;
-             max_doppler = 50;
+             dynamic_range = passive.dynamic_range;
+             max_range = 500;
+             max_doppler = 100;
              frame_rate = 1/(capture_duration/passive.number_cpi);    
              createVideo(passive.range_doppler_slices,frame_rate,...
                          passive.range_axis,max_range,...
@@ -164,7 +150,7 @@ passive.bin_size = C*1/(passive.Bw*2)
                         % integer less than one to avoid    unwanted discontinuities
                         % arising from zero values in the range–Doppler surface.
      threshold = 0.005; % cutoff threshold parameter
-     max_iterations = 100; % maximum number of itterations DSI is CLEANed from CAF slice
+     max_iterations = 500; % maximum number of itterations DSI is CLEANed from CAF slice
      number_rbins = size(passive.range_doppler_slices{1},2);
   
    % perform CLEAN based DSI Cancellation   
@@ -186,7 +172,7 @@ passive.bin_size = C*1/(passive.Bw*2)
      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
      video_title = "CLEANed Passive Radar Capture";
      dynamic_range = 30;
-     max_range = 150;
+     max_range = 500;
      max_doppler = 100;
      frame_rate = 1/(capture_duration/passive.number_cpi);    
      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
@@ -220,9 +206,10 @@ grid on
 grid minor
 ylabel('Range (m)')
 xlabel('Time (s)')
+ylim([-inf 100])
 % ylim([-inf 50])
 legend('Passive Radar Peak Return')
-fig_name = exp_dir + "Passive Peak Detection" + Experiment_ID + ".jpg";
+fig_name = exp_dir + "Passive Peak Detection- CPI = " + passive.cpi + " s.jpg";
 saveas(fig,fig_name,'jpeg')
 saveas(fig,fig_name)
 
@@ -239,13 +226,16 @@ for i=1:number_cpi-1
    passive_detection_snr(i) = passive_target_power - passive_noise_estimate
 end  
 t = linspace(0,15,size(passive_detection_snr,1));
-figure    
+fig = figure    
 plot(passive_range_detections,passive_detection_snr,'*r')    
 grid on
 grid minor
 ylabel('SNR (dB)')
 xlabel('Range (m)')
-
+xlim([-inf 100])
+fig_name = exp_dir + "Passive SNR of Peak Detection - CPI = " + passive.cpi + " s.jpg";
+saveas(fig,fig_name,'jpeg')
+saveas(fig,fig_name)
 
 
 
