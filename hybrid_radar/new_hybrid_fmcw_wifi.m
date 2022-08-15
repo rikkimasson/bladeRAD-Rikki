@@ -7,8 +7,8 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 63;    % Expeiment Name
-capture_duration = 1;        % capture duration
+Experiment_ID = 800;    % Expeiment Name
+capture_duration = 5;        % capture duration
 save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/hybrid_radar/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
@@ -33,7 +33,7 @@ passive.Fc = 2437e6;   % Central RF    sample_duration
 passive.Ref_gain = 0; % 26dB seems good for C-Band Patch Antennas [-16, 60]
 passive.Sur_gain = 10; % 40dB seems good for C-Band Patch Antennas [-16, 60]
 passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
-passive.Bw = 20e6;
+passive.Bw = 10e6;
 passive.Fs = passive.Bw;
 passive.max_range = 1000; %max range to cross-correlate to
 
@@ -67,10 +67,30 @@ chirp = saw_LFM_chirp(active.Bw,active.pulse_duration,active.Fs);
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 clear chirp
 
+% %% Setup clock distribution
+ exit_code = setup_ref(1,3);
+ if exit_code > 0
+     "error configuring device"
+     return
+ end
+ pause(5);
+ exit_code = setup_ref(2,1);
+  if exit_code > 0
+     "error configuring device"
+     return
+ end
+ pause(5);
+ exit_code = setup_ref(3,1);
+ if exit_code > 0
+     "error configuring device"
+     return
+ end
+
 %% Setup FMCW Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
     % Setup Tx SDR 
-    [trig_flag_1,tx_command] = create_shell_command(Experiment_ID,...
+    [trig_flag_1,tx_command] = create_shell_command(true,...
+                                   Experiment_ID,...
                                    active.number_cap_samps,... 
                                    active.number_pulses,...
                                    0,...
@@ -89,7 +109,8 @@ clear chirp
 
 
     % Setup Rx SDR 
-    [trig_flag_2,rx_command] = create_shell_command(Experiment_ID,...
+    [trig_flag_2,rx_command] = create_shell_command(true,...
+                                   Experiment_ID,...
                                    active.number_cap_samps,... 
                                    active.number_pulses,...
                                    0,...
@@ -116,7 +137,8 @@ clear chirp
     % 2 'set clock_ref enable';
 
     % Setup Passive SDR 
-   [trig_flag_3, passive_command] = create_shell_command(Experiment_ID,...
+   [trig_flag_3, passive_command] = create_shell_command(false,...
+                                   Experiment_ID,...
                                    passive_number_cap_samps,... 
                                    0,...
                                    0,...
@@ -136,7 +158,7 @@ clear chirp
     end
 %     passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
     status = system(passive_command);
-    pause(1)
+    pause(2)
 
 
 

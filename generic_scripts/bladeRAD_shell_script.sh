@@ -41,14 +41,14 @@ else clock_ref=''; fi
 # if Transmission ONLY is required run the following
 if [ "$tx_rx" = 'tx' ]
 then 
-	bladeRF-cli -d "*:serial=$sdr_serial" -e ' 
+	bladeRF-cli -d "*:serial=$sdr_serial" -v verbose -e ' 
 			
 			set frequency tx '$center_freq'M;
 			set samplerate tx '$bw'M;
 			set bandwidth tx '$bw'M;
 			set gain tx1 '$tx_gain';
 
-			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=16 xfers=8 repeat='$pulses' timeout=60s delay='$delay' ;
+			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=10 xfers=5 repeat='$pulses' timeout=60s delay='$delay' ;
 	
     			'$clock_ref';
     			set clock_out enable;
@@ -66,7 +66,7 @@ fi
 # if Reception on Rx1 channel is required run the following
 if [ "$tx_rx" = 'rx' ]
 then 
-	bladeRF-cli -d "*:serial=$sdr_serial" -e '
+	bladeRF-cli -d "*:serial=$sdr_serial" -v verbose -e '
 			
 			set frequency rx '$center_freq'M;
 			set samplerate rx '$bw'M;
@@ -75,7 +75,7 @@ then
 			set gain rx1 '$rx1_gain' ; 
 
 			
-			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=134144 buffers=16 xfers=8 timeout=60s; 
+			rx config file=/tmp/active_'$test_id'.sc16q11 format=bin n='$cap_samps' samples=134144 buffers=10 xfers=5 timeout=60s; 
 			print;
         		'$clock_ref';
     	    		set clock_out enable;
@@ -92,7 +92,7 @@ fi
 if [ "$tx_rx" = 'pass' ]
 then 
 	chain="rx";
-	bladeRF-cli -d "*:serial=$sdr_serial" -e '
+	bladeRF-cli -d "*:serial=$sdr_serial" -v verbose -e '
 
 			set frequency rx '$center_freq'M;
 			set samplerate rx '$bw'M;
@@ -102,7 +102,7 @@ then
 			set gain rx2 '$rx2_gain'; 
 
 
-			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=134144 buffers=16 xfers=8 timeout=60s;
+			rx config file=/tmp/passive_'$test_id'.sc16q11 format=bin n='$cap_samps' channel=1,2 samples=134144 buffers=10 xfers=5 timeout=60s;
 
     			'$clock_ref';
     			set clock_out enable;
