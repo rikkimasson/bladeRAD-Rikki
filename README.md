@@ -8,7 +8,7 @@ SDRs provide highly flexible platforms that can be used to perform multiple func
 This repository contains code for both the command and control of the bladeRF SDRs, in addition to code for conducting radar signal processing on the data captured by the SDRs. All processing is currently completed post-capture as the receive channel is saved to RAM for post-processing in MATLAB. 
 There is currently code in this repository to control the radar as an:
 
-1. FMCW active radar, using two synchronised SDRs (1 for Tx, 1 for Rx - this is done to reduce the direct-path (breakthrough)between seperate SDR boards). 
+1. FMCW active radar, using two synchronised SDRs - 1 for Tx, 1 for Rx - this is done to reduce the direct-path breakthrough between transmit and receive channels and reduce bandwidth requirement on the SDR to PC USB-3 conncection. 
 2. Passive Radar, using a single SDR. 
 3. Hybrid Radar, using three synchronised SDRs. Two for active FMCW radar and a single SDR for passive radar.  
 
@@ -20,5 +20,5 @@ Requirements
   3. Gnome-terminal - $ sudo apt install gnome-terminal
   4. MATLAB
 
-Clone this repository in a folder named repos in your home directory '~/home/repos/bladeRAD' - important to get this location correct. 
+Clone this repository in a folder named 'repos' in your home directory '~/home/repos/bladeRAD' - important to get this location correct. 
 
