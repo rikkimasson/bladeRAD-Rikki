@@ -231,11 +231,11 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
     
     methods (Access = protected)
         
-        function processInputSizeChangeImpl(obj,X,~,~)
-            sz_x = size(X);
-            obj.pMaximumCellRowIndex = sz_x(1);
-            obj.pMaximumCellColIndex = sz_x(2);
-        end
+%         function processInputSizeChangeImpl(obj,X,~,~)
+%             sz_x = size(X);
+%             obj.pMaximumCellRowIndex = sz_x(1);
+%             obj.pMaximumCellColIndex = sz_x(2);
+%         end
 
         function releaseImpl(obj)
             releaseImpl@phased.internal.AbstractVarSizeEngine(obj);
@@ -310,7 +310,7 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
             
             classtoUse = class(X);
             if ~obj.pSizeInitialized
-                processInputSizeChangeImpl(obj,X);
+%                 processInputSizeChangeImpl(obj,X);
                 obj.pSizeInitialized = true;
             end
         

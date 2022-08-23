@@ -29,7 +29,7 @@ CLEANed_cpi_matrix_array_norm = createArrays(number_cpi, [range_bins doppler_bin
 
 %% loop through all caf slices 
     tic
-    for i=1:number_cpi-1
+    for i=1:number_cpi
      
      CLEAN_progress = 100*i/number_cpi;
      "Progress : " + ceil(CLEAN_progress) + "%"

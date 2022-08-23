@@ -1,3 +1,7 @@
+%% This file is for analysis of DVB-T radar captures 
+
+
+
 
 
 %% How to use analysis scripts 
@@ -6,13 +10,14 @@
 
 % location of the raw data
 save_directory1 = "/media/piers/T7/06_07_2022_farm/hybrid_radar/"
-exp_dir = save_directory1 + Experiment_ID + '/';
+exp_dir = save_directory + Experiment_ID + '/';
 
 % clear all
 close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
-        '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+        '~/repos/bladeRAD/generic_scripts/ref_signals/',...
+        '~/repos/bladeRAD/generic_scripts/matlab/CFAR') % path to generic functions
 
 %% Capture parameters 
 passive.max_range = 100 % max number of range bins to cross correlate
@@ -238,9 +243,30 @@ saveas(fig,fig_name,'jpeg')
 saveas(fig,fig_name)
 
 
+%% CFAR CAF Slices 
+        % Create the CFAR detector.
+            p = 0.5e-9;
+            passive_detector = mod_CFARDetector2D('TrainingBandSize',[8,8], ...
+                                             'GuardBandSize',[4,6],...
+                                             'ThresholdFactor','Auto',...
+                                             'Method','CA', ...
+                                             'ProbabilityFalseAlarm',p,...
+                                             'ThresholdOutputPort',true);
+        % Create CUT Matrix
+            passive.full_cutidx = createCutMatrix(passive_detector,passive.range_bins,passive.doppler_bins);                             
 
+        %loop through matrix and operate CFAR     
+            [passive.cfar_range_doppler_slices] = cfarSlices(passive.CLEANed_range_doppler_slices,passive_detector,passive.full_cutidx);
+   
+       % create video of CFAR data
+             video_name = exp_dir + "CFAR_passive_range-Doppler_Exp_" + Experiment_ID + ".avi";
+             video_title = "CFAR Passive Radar Capture";
+             max_range = 200;
+             max_doppler = 200;
+             frame_rate = 1/(capture_duration/passive.number_cpi);    
 
-
-
-
+             createCFARVideo(passive.cfar_range_doppler_slices,frame_rate,...
+                             passive.range_axis,max_range,...
+                            -passive.doppler_axis,max_doppler,...
+                            video_name,video_title);
 
