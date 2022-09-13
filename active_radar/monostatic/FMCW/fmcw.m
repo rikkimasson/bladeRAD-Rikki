@@ -42,15 +42,15 @@ Rx_SDR = 2;   % SDR to use for RX
 
 
 %% Create Sawtooth Chirp for bladeRF
-chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
-% figure
-% plot(real(chirp));
+refsig = saw_LFM_chirp(Bw,pulse_duration,Fs);
+figure
+plot(real(chirp));
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
-% clear chirp
-    % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
-    % f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
-    % figure
-    % plot(f,20*log10(abs(fftshift(fft(chirp)))/Samps_per_pulse));%plot FFT of chirp to show entire spectral content
+clear chirp
+    spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
+    f = linspace(-0.5 * Fs, 0.5 * Fs, length(chirp));
+    figure
+    plot(f,20*log10(abs(fftshift(fft(chirp)))/size(chirp,1)));%plot FFT of chirp to show entire spectral content
 
 %% Setup Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''

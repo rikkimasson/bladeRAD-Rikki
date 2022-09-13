@@ -10,7 +10,7 @@
 
 % location of the raw data
 save_directory1 = "/media/piers/T7/06_07_2022_farm/hybrid_radar/"
-exp_dir = save_directory + Experiment_ID + '/';
+exp_dir = save_directory1 + Experiment_ID + '/';
 
 % clear all
 close all
@@ -33,7 +33,7 @@ passive.bin_size = C*1/(passive.Bw*2)
             plot(real(ref_channel(1:4000000)));
             title("Ref channel time series");
          hold on
-         subplot(2,1,2)
+         subplot(2,1,2)         
              plot(real(sur_channel(1:4000000)))
              title("Sur channel time series");    
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
@@ -135,23 +135,23 @@ passive.bin_size = C*1/(passive.Bw*2)
             passive.doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.doppler_bins);
             passive.doppler_velocity_axis = passive.doppler_axis*passive.velocity_conv;
 
-            % create video of CLEANed range-Doppler slices
-             video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
-             %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-             video_title = "Passive Pre-DSI";
-             dynamic_range = passive.dynamic_range;
-             max_range = 500;
-             max_doppler = 100;
-             frame_rate = 1/(capture_duration/passive.number_cpi);    
-             createVideo(passive.range_doppler_slices,frame_rate,...
-                         passive.range_axis,max_range,...
-                         passive.doppler_axis,max_doppler,...
-                         dynamic_range,video_name,video_title);
-        
+%             % create video of CLEANed range-Doppler slices
+%              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
+%              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+%              video_title = "Passive Pre-DSI";
+%              dynamic_range = passive.dynamic_range;
+%              max_range = 500;
+%              max_doppler = 100;
+%              frame_rate = 1/(capture_duration/passive.number_cpi);    
+%              createVideo(passive.range_doppler_slices,frame_rate,...
+%                          passive.range_axis,max_range,...
+%                          passive.doppler_axis,max_doppler,...
+%                          dynamic_range,video_name,video_title);
+%         
                  
 %% Direct Signal Interference Cancellation
    % set DSI cancellation parameters
-      p = 0.999;        % subtraction parameter - P must be a positive 
+      p = 0.99;        % subtraction parameter - P must be a positive 
                         % integer less than one to avoid    unwanted discontinuities
                         % arising from zero values in the range–Doppler surface.
      threshold = 0.005; % cutoff threshold parameter
@@ -172,18 +172,18 @@ passive.bin_size = C*1/(passive.Bw*2)
                                                passive.range_axis,passive.doppler_axis);
 
 
-  % create video of CLEANed range-Doppler slices
-     video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
-     %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-     video_title = "CLEANed Passive Radar Capture";
-     dynamic_range = 30;
-     max_range = 500;
-     max_doppler = 100;
-     frame_rate = 1/(capture_duration/passive.number_cpi);    
-     createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
-                 passive.range_axis,max_range,...
-                 passive.doppler_axis,max_doppler,...
-                 dynamic_range,video_name,video_title);
+%   % create video of CLEANed range-Doppler slices
+%      video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
+%      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+%      video_title = "CLEANed Passive Radar Capture";
+%      dynamic_range = 30;
+%      max_range = 500;
+%      max_doppler = 100;
+%      frame_rate = 1/(capture_duration/passive.number_cpi);    
+%      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
+%                  passive.range_axis,max_range,...
+%                  passive.doppler_axis,max_doppler,...
+%                  dynamic_range,video_name,video_title);
 
 
 %% maximum return detector
@@ -245,9 +245,9 @@ saveas(fig,fig_name)
 
 %% CFAR CAF Slices 
         % Create the CFAR detector.
-            p = 0.5e-9;
+            p = 1e-6;
             passive_detector = mod_CFARDetector2D('TrainingBandSize',[8,8], ...
-                                             'GuardBandSize',[4,6],...
+                                             'GuardBandSize',[6,6],...
                                              'ThresholdFactor','Auto',...
                                              'Method','CA', ...
                                              'ProbabilityFalseAlarm',p,...
