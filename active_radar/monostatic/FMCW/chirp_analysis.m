@@ -1,6 +1,6 @@
           
-        [spect,f] = spectrogram(refsig,127,100,127,Fs,'centered','yaxis');
-        time_axis = linspace(0,pulse_duration,size(refsig,2));
+        [spect,f] = spectrogram(refsig,127,100,127,active.Fs,'centered','yaxis');
+        time_axis = linspace(0,active.pulse_duration,size(refsig,2));
         spect= 10*log10(abs(spect./max(spect(:))));
         figure
 %         subplot(1,2,2)
@@ -18,7 +18,7 @@
         
         
         figure
-        subplot(1,2,1)
+%         subplot(1,2,1)
         plot((time_axis),real(refsig));
         grid on 
         grid minor
@@ -31,8 +31,8 @@
         f = linspace(-15,15,size(freq,2));
         subplot(1,2,2)
         plot(f,freq);
-        xlim([-16 16])
-        ylim([-20 5])
+%         xlim([-16 16])
+%         ylim([-20 5])
         xlabel('Frequency (MHz)')
         ylabel('Normalised Power (dB)')  
         grid on
