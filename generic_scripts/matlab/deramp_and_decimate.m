@@ -64,6 +64,15 @@ if capture_duration < 31
             Decimation_time = toc
         end
         
+%         if hp_filter == true
+%             tic
+%             for i=1:number_pulses
+%                  decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
+%             end
+%             clear Data_Deramped
+%             Filter_and_Decimation_time = toc
+%             return
+%         end
 
 
 end 

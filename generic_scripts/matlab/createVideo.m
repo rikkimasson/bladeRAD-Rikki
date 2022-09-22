@@ -10,7 +10,7 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
      open(writerObj)   
         
 
-     for i=1:size(frame_array,2)-1   
+     for i=1:size(frame_array,2)   
 
         frame =  10*log(abs(frame_array{i}./max(frame_array{i}(:))));
 
