@@ -144,7 +144,43 @@ if process_active_a == true
 
 
 
+%% Process Active data into Range-Doppler Slices
+           active.cpi = 0.5; % cohernet proccessing interval (s)
+           active.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
+           active.zero_padding = 1;
+           active.doppler_window = 'blackmanharris';
+           active.dynamic_range = 50;
+           active.velocity_conv = C*(((1/C)/(Fc/C)));
+                 active.range_bins = size(MTI_Data,1);
+                 active.max_range_actual = max_range_actual; %1000;
+  
+          [active.number_cpi,....
+           active.pulses_per_cpi,...
+           active.range_doppler_slices] = rangeDopplerSlice(MTI_Data,active.cpi,PRF,...
+                                                                 active.cpi_overlap,...
+                                                                 active.zero_padding,...
+                                                                 active.doppler_window);   
+           
+           % Determine Active Data Range and Doppler Axis                                              
+             active.doppler_bins = active.pulses_per_cpi*active.zero_padding;
+             active.doppler_axis = linspace(-PRF/2,PRF/2,active.doppler_bins);
+             active.doppler_velocity_axis = active.doppler_axis * active.velocity_conv;
+             active.range_axis = linspace(0,active.max_range_actual,active.range_bins);
+             active.range_bins_axis = 1:active.range_bins;
 
+%            % Create video of range-Doppler slices
+%              video_name = exp_dir + "active_range-Doppler_0ZP_hann_wind_Dopppler_Exp_" + Experiment_ID + ".avi";
+%              %video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
+%              video_title = "Active Radar Capture";
+%              dynamic_range = +inf;
+%              max_range = 100;
+%              max_doppler = 100;
+%              frame_rate = 1/(capture_duration/active.number_cpi);    
+% 
+%              createVideo(active.range_doppler_slices,frame_rate,...
+%                          active.range_axis,max_range,...
+%                          -active.doppler_axis,max_doppler,...
+%                          dynamic_range,video_name,video_title);
 
 
 
