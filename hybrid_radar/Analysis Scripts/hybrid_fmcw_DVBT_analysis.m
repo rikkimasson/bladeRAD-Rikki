@@ -355,3 +355,103 @@ close all
  end
 
 end
+
+  %% CFAR CAF Slices 
+        % Create the CFAR detector.
+            p = 1e-6;
+            active_detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
+                                             'GuardBandSize',[4,4],...
+                                             'ThresholdFactor','Auto',...
+                                             'Method','CA', ...
+                                             'ProbabilityFalseAlarm',p,...
+                                             'ThresholdOutputPort',true);
+        % Create CUT Matrix
+            active.full_cutidx = createCutMatrix(active_detector,active.range_bins,active.doppler_bins);                             
+
+        %loop through matrix and operate CFAR     
+            [cfar_range_doppler_slices] = cfarSlices(active.range_doppler_slices,active_detector,active.full_cutidx);
+   
+       % create video of CFAR data
+             video_name = exp_dir + "CFAR_active_range-Doppler_Exp_" + Experiment_ID + ".avi";
+             video_title = "CFAR Active Radar Capture";
+             max_range = 200;
+             max_doppler = 200;
+             frame_rate = 1/(capture_duration/active.number_cpi);    
+
+             createCFARVideo(cfar_range_doppler_slices,frame_rate,...
+                             active.range_axis,max_range,...
+                            -active.doppler_axis,max_doppler,...
+                            video_name,video_title);
+    
+
+
+%% Hybrid Video 
+ 
+   video_name = exp_dir + "hybrid_range-Doppler_Exp_" + Experiment_ID + ".avi";     
+   dynamic_range = 30;
+            createVideos(cpi_matrix_array_norm,...
+                         CLEANed_cpi_matrix_array_norm,...
+                         frame_rate,...
+                         active.range_axis,...
+                         passive.range_axis,...
+                         -active.doppler_velocity_axis,...
+                         passive.doppler_velocity_axis,...
+                         dynamic_range,...
+                         video_name,video_title);
+                     
+%% Hybrid Range and Doppler Plots 
+
+number_cpi = size(CLEANed_cpi_matrix_array_norm,2);
+passive_range_detections = zeros(number_cpi,1);
+active_range_detections = zeros(number_cpi,1);
+passive_doppler_detections = zeros(number_cpi,1);
+active_doppler_detections = zeros(number_cpi,1);
+                     
+passive_range_lookup = ones(size(CLEANed_cpi_matrix_array_norm{1})).*passive.range_axis;
+passive_doppler_lookup = ones(size(CLEANed_cpi_matrix_array_norm{1})).*transpose(passive.doppler_velocity_axis);
+
+active_range_lookup = ones(size(cpi_matrix_array_norm{1})).*active.range_axis;
+
+active_doppler_lookup = ones(size(cpi_matrix_array_norm{1})).*transpose(active.doppler_velocity_axis);
+
+for i=1:number_cpi   
+   i
+   [mag, index] = max(CLEANed_cpi_matrix_array_norm{i}(:));
+   passive_range_detections(i) = passive_range_lookup(index);
+   passive_doppler_detections(i) = passive_doppler_lookup(index);
+   
+   
+%    [mag, index] = max(cpi_matrix_array_norm{i}(:));
+%    active_range_detections(i) = active_range_lookup(index);
+%    active_doppler_detections(i) = active_doppler_lookup(index);                  
+end
+
+time_axis = linspace(0,15,number_cpi);
+
+figure
+p = plot(time_axis,passive_range_detections);
+hold on
+% a = plot(time_axis,active_range_detections);
+p.Marker = '*';
+% a.Marker = '*';
+grid on
+grid minor
+ylabel('Range (m)')
+xlabel('Time (s)')
+ylim([-inf 50])
+legend('Passive Radar Peak Return','Active Radar Peak Return')
+
+figure
+p = plot(time_axis,-passive_doppler_detections);
+hold on
+a = plot(time_axis,active_doppler_detections);
+p.Marker = '*';
+a.Marker = '*';
+grid on
+grid minor
+ylim([-8 8])
+ylabel('Velocity (m/s)')
+xlabel('Time (s)')
+legend('Passive Radar Peak Return','Active Radar Peak Return')
+
+end
