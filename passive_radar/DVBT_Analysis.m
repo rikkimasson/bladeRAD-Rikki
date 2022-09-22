@@ -211,7 +211,7 @@ grid on
 grid minor
 ylabel('Range (m)')
 xlabel('Time (s)')
-ylim([-inf 100])
+ylim([-inf 200])
 % ylim([-inf 50])
 legend('Passive Radar Peak Return')
 fig_name = exp_dir + "Passive Peak Detection- CPI = " + passive.cpi + " s.jpg";
@@ -227,7 +227,7 @@ for i=1:number_cpi-1
    [target_mag, index] = max(passive.CLEANed_range_doppler_slices{i}(:));
    passive_range_detections(i) = passive_range_lookup(index)
    passive_target_power = 10*log10(abs(target_mag))
-   passive_noise_estimate = 10*log10(mean(abs(passive.CLEANed_range_doppler_slices{i}(:,70:101)),'all'))
+   passive_noise_estimate = 10*log10(mean(abs(passive.CLEANed_range_doppler_slices{i}(:,60:70)),'all'))
    passive_detection_snr(i) = passive_target_power - passive_noise_estimate
 end  
 t = linspace(0,15,size(passive_detection_snr,1));
@@ -237,7 +237,7 @@ grid on
 grid minor
 ylabel('SNR (dB)')
 xlabel('Range (m)')
-xlim([-inf 100])
+% xlim([-inf 100])
 fig_name = exp_dir + "Passive SNR of Peak Detection - CPI = " + passive.cpi + " s.jpg";
 saveas(fig,fig_name,'jpeg')
 saveas(fig,fig_name)
@@ -245,7 +245,7 @@ saveas(fig,fig_name)
 
 %% CFAR CAF Slices 
         % Create the CFAR detector.
-            p = 1e-6;
+            p = 1e-8;
             passive_detector = mod_CFARDetector2D('TrainingBandSize',[8,8], ...
                                              'GuardBandSize',[6,6],...
                                              'ThresholdFactor','Auto',...
