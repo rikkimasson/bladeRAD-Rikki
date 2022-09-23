@@ -4,6 +4,8 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
 
+save_directory1 =  "/media/piers/T7/15_09_2022_farm/hybrid/";
+
 process_active_a = true;
 process_passive_a = true;
  
@@ -147,8 +149,8 @@ if process_active_a == true
 %% Process Active data into Range-Doppler Slices
            active.cpi = 0.5; % cohernet proccessing interval (s)
            active.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
-           active.zero_padding = 1;
-           active.doppler_window = 'blackmanharris';
+           active.zero_padding = 2; % 1 = none; 2 = 100%
+           active.doppler_window = 'Hann';
            active.dynamic_range = 50;
            active.velocity_conv = C*(((1/C)/(active.Fc/C)));
                  active.range_bins = size(MTI_Data,1);
@@ -162,14 +164,14 @@ if process_active_a == true
                                                                  active.doppler_window);   
            
            % Determine Active Data Range and Doppler Axis                                              
-             active.doppler_bins = active.pulses_per_cpi*active.zero_padding;
-             active.doppler_axis = linspace(-active.PRF/2,active.PRF/2,active.doppler_bins);
+             active.doppler_bins = 1:size(active.range_doppler_slices{1},1);
+             active.doppler_axis = linspace(-active.PRF/2,active.PRF/2,size(active.doppler_bins,2));
              active.doppler_velocity_axis = active.doppler_axis * active.velocity_conv;
              active.range_axis = linspace(0,active.max_range_actual,active.range_bins);
              active.range_bins_axis = 1:active.range_bins;
 
            % Create video of range-Doppler slices
-             video_name = exp_dir + "active_range-Doppler_0ZP_hann_wind_Dopppler_Exp_" + Experiment_ID + ".avi";
+             video_name = exp_dir + "active_range-Doppler_0Zactive.range_doppler_slicesP_hann_wind_Dopppler_Exp_" + Experiment_ID + ".avi";
              %video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Active Radar Capture";
              dynamic_range = +50;
@@ -190,7 +192,8 @@ end
 
  %% Passive Processing
  if process_passive_a == true
-    passive.max_range = 70
+    passive.max_range = 50
+    passive.range_zero_padding = 2; % 1 = none, 2 = 100%
     passive.seg_s = 5000; % number of segments per second - analagos to PRF.
     passive.seg_percent = 100;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
@@ -208,8 +211,8 @@ end
              title("Sur channel time series");    
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
              saveas(fig,fig_name,'jpeg')
-   % Batch process data and cross correlate  
-         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir);
+   % Batch process data and cross correlate
+         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding);
          save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
@@ -217,8 +220,7 @@ end
         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
         figure
         fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-            xlim([1 20])
-%             ylim([0 0.0005])
+%             xlim([1 20])
             grid on            
             colorbar
             ylabel('Time (Sec)')
@@ -228,6 +230,7 @@ end
             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
             saveas(fig,fig_name)
+
 
       % CAF of entire capture
         f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
@@ -254,7 +257,7 @@ end
         pad_factor = 1;
         overlap_factor = 0.99;
         [spect,f] = spectrogram(int_bins,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
-        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        % spect(pad_factor*l_fft/2-1Blackman-Harris:pad_factor*l_fft/2+1,:) = 0;
         v=dop2speed(f,C/passive.Fc)*2.237;
         spect= 10*log10(abs(spect./max(spect(:))));
         figure
@@ -276,21 +279,21 @@ end
            passive.PRF = passive.seg_s; %seg_s
            passive.cpi = 0.5; % cohernet proccessing interval (s)
            passive.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
-           passive.doppler_window = 'hann';
-           passive.zero_padding = 1;
+           passive.doppler_window = 'Hann';
+           passive.dopp_zero_padding = 1;
            passive.dynamic_range = +50;
-           passive.max_range_m = passive.max_range*(1/passive.Fs)/passive.zero_padding * C;      
+           passive.max_range_m = passive.max_range*(1/passive.Fs)/passive.range_zero_padding * C/2;      
      
                 [passive.number_cpi,... 
                  passive.pulses_per_cpi,...
                  passive.range_doppler_slices] = rangeDopplerSlice(cc_matrix,passive.cpi,passive.PRF,...
                                                                    passive.cpi_overlap,...
-                                                                   passive.zero_padding,...
+                                                                   passive.dopp_zero_padding,...
                                                                    passive.doppler_window);  
                 
                  [~,~,passive.self_ambg_slices] = rangeDopplerSlice(self_ambg_matrix,passive.cpi,passive.PRF,...
                                                                    passive.cpi_overlap,...
-                                                                   passive.zero_padding,...
+                                                                   passive.dopp_zero_padding,...
                                                                    passive.doppler_window);  
             
             passive.cpi_stride = round(passive.pulses_per_cpi*(1-passive.cpi_overlap)); % number of pulses to stride each for next CPI
@@ -306,7 +309,7 @@ end
              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Passive Pre-DSI";
-             dynamic_range = +50;
+             dynamic_range = +inf;
              max_range = 200;
              max_doppler = 100;
              frame_rate = 1/(capture_duration/passive.number_cpi);    
@@ -322,7 +325,7 @@ end
                         % integer less than one to avoid unwanted discontinuities
                         % arising from zero values in the range–Doppler surface.
      threshold = 0.005; % cutoff threshold parameter
-     max_iterations = 100; % maximum number of itterations DSI is CLEANed from CAF slice
+     max_iterations = 1000; % maximum number of itterations DSI is CLEANed from CAF slice
      number_rbins = size(passive.range_doppler_slices{1},2);
   
    % perform CLEAN based DSI Cancellation   
@@ -344,8 +347,8 @@ close all
      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
      video_title = "CLEANing Passive Radar Capture";
      dynamic_range = 50;
-     max_range = 200;
-     max_doppler = 100;
+     max_range = 100;
+     max_doppler = 50;
      frame_rate = 1/(capture_duration/passive.number_cpi);    
      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
                  passive.range_axis,max_range,...
@@ -388,42 +391,46 @@ end
 %% Hybrid Video 
  
    video_name = exp_dir + "hybrid_range-Doppler_Exp_" + Experiment_ID + ".avi";     
-   dynamic_range = 30;
-            createVideos(cpi_matrix_array_norm,...
-                         CLEANed_cpi_matrix_array_norm,...
+   dynamic_range = 50;
+   range_limit = 200;
+   doppler_limit = 20;
+            createVideos(active.range_doppler_slices,...
+                         passive.CLEANed_range_doppler_slices,...
                          frame_rate,...
                          active.range_axis,...
                          passive.range_axis,...
                          -active.doppler_velocity_axis,...
                          passive.doppler_velocity_axis,...
+                         range_limit,...
+                         doppler_limit,...
                          dynamic_range,...
                          video_name,video_title);
                      
 %% Hybrid Range and Doppler Plots 
 
-number_cpi = size(CLEANed_cpi_matrix_array_norm,2);
+number_cpi = size(passive.CLEANed_range_doppler_slices,2);
 passive_range_detections = zeros(number_cpi,1);
 active_range_detections = zeros(number_cpi,1);
 passive_doppler_detections = zeros(number_cpi,1);
 active_doppler_detections = zeros(number_cpi,1);
                      
-passive_range_lookup = ones(size(CLEANed_cpi_matrix_array_norm{1})).*passive.range_axis;
-passive_doppler_lookup = ones(size(CLEANed_cpi_matrix_array_norm{1})).*transpose(passive.doppler_velocity_axis);
+passive_range_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*passive.range_axis;
+passive_doppler_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*transpose(passive.doppler_velocity_axis);
 
-active_range_lookup = ones(size(cpi_matrix_array_norm{1})).*active.range_axis;
+active_range_lookup = ones(size(active.range_doppler_slices{1})).*active.range_axis;
 
-active_doppler_lookup = ones(size(cpi_matrix_array_norm{1})).*transpose(active.doppler_velocity_axis);
+active_doppler_lookup = ones(size(active.range_doppler_slices{1})).*transpose(active.doppler_velocity_axis);
 
 for i=1:number_cpi   
    i
-   [mag, index] = max(CLEANed_cpi_matrix_array_norm{i}(:));
-   passive_range_detections(i) = passive_range_lookup(index);
+   [mag, index] = max(passive.CLEANed_range_doppler_slices{i}(:));
+   passive_range_detections(i) = passive_range_lookup(index)+10;
    passive_doppler_detections(i) = passive_doppler_lookup(index);
    
    
-%    [mag, index] = max(cpi_matrix_array_norm{i}(:));
-%    active_range_detections(i) = active_range_lookup(index);
-%    active_doppler_detections(i) = active_doppler_lookup(index);                  
+   [mag, index] = max(active.range_doppler_slices{i}(:));
+   active_range_detections(i) = active_range_lookup(index);
+   active_doppler_detections(i) = active_doppler_lookup(index);                  
 end
 
 time_axis = linspace(0,15,number_cpi);
@@ -431,14 +438,14 @@ time_axis = linspace(0,15,number_cpi);
 figure
 p = plot(time_axis,passive_range_detections);
 hold on
-% a = plot(time_axis,active_range_detections);
+a = plot(time_axis,active_range_detections);
 p.Marker = '*';
-% a.Marker = '*';
+a.Marker = '*';
 grid on
 grid minor
 ylabel('Range (m)')
 xlabel('Time (s)')
-ylim([-inf 50])
+% ylim([-inf 50])
 legend('Passive Radar Peak Return','Active Radar Peak Return')
 
 figure
@@ -449,9 +456,9 @@ p.Marker = '*';
 a.Marker = '*';
 grid on
 grid minor
-ylim([-8 8])
+% ylim([-8 8])
 ylabel('Velocity (m/s)')
 xlabel('Time (s)')
 legend('Passive Radar Peak Return','Active Radar Peak Return')
 
-end
+% end

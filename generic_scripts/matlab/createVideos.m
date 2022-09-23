@@ -1,4 +1,4 @@
-function createVideo(active_array,passive_array,frame_rate,active_range_axis, passive_range_axis, active_doppler_axis,passive_doppler_axis,dynamic_range,file_name,video_title)
+function createVideo(active_array,passive_array,frame_rate,active_range_axis, passive_range_axis, active_doppler_axis,passive_doppler_axis,range_limit,doppler_limit,dynamic_range,file_name,video_title)
 %CREATE_VIDEO Summary of this function goes here
 %   Detailed explanation goes here
 % create the video writer
@@ -24,9 +24,8 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         xlabel('Range (m)')   
         c = colorbar;
         c.Label.String='Norm Power (dB)';
-        ylim([-100 100]);
-        ylim([-10 10]);
-        xlim([-inf 50]);
+        ylim([-doppler_limit doppler_limit]);
+        xlim([-inf range_limit]);
         colormap jet;
 
         
@@ -39,14 +38,14 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         xlabel('Range (m)')   
         c = colorbar;
         c.Label.String='Norm Power (dB)';
-        ylim([-100 100]);
-        ylim([-10 10]);
-        xlim([-inf 50]);
+        ylim([-doppler_limit doppler_limit]);
+        xlim([-inf range_limit]);
         colormap jet;
         
         
         saveas(fig,'frame','png');
         im = imread('frame.png');
+        im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end
  
