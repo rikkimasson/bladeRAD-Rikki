@@ -45,13 +45,13 @@ if iscell(cross_ambg_matrix_array)
          iteration = 0;   
          while iteration <= max_iterations
             iteration = iteration + 1;
-            [scale_factor, delay] = max(CLEANed_cpi_matrix_array_norm{i}(zero_Doppler_cut_index,:)) % max value and delay on zero-Doppler-cut
-            zero_doppler_peak = 10*log(abs(scale_factor))
+            [scale_factor, delay] = max(CLEANed_cpi_matrix_array_norm{i}(zero_Doppler_cut_index,:)); % max value and delay on zero-Doppler-cut
+            zero_doppler_peak = 10*log(abs(scale_factor));
     
-            [max_val, index] = max(CLEANed_cpi_matrix_array_norm{i}(:))
-            cpi_peak = 10*log(abs(CLEANed_cpi_matrix_array_norm{i}(8283)))
+            [max_val, index] = max(CLEANed_cpi_matrix_array_norm{i}(:));
+            cpi_peak = 10*log(abs(CLEANed_cpi_matrix_array_norm{i}(8283)));
     
-            relative_pwr = cpi_peak - zero_doppler_peak
+            relative_pwr = cpi_peak - zero_doppler_peak;
          
 %             figure
 %             slice = 10*log(abs(CLEANed_cpi_matrix_array_norm{i}./max(CLEANed_cpi_matrix_array_norm{i}(:)))); 

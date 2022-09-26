@@ -6,8 +6,9 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
         '/Users/piersbeasley/Documents/repos/bladeRAD/generic_scripts/matlab') % path to generic functions
 
 %% Parameters - Configurable by User
-save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
+% save_directory1 = "/media/piers/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
 % save_directory1 = "/Volumes/data_drive/BladeRF_Experiments/7_Oct/hybrid/";
+save_directory1 = "/media/piers/T7/15_09_2022_farm/hybrid/";
 
 %create array with experiment names
 dinfo = dir(save_directory1);
@@ -15,11 +16,11 @@ names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 
 process_fmcw = 1;
-process_passive = 0;
+process_passive = 1;
 
-for i=names_cell
+for i=12
     % load .mat file containing experiment parameters
-        mat_file_name = save_directory1 + i + "/Hybrid Experimental Configuration.mat";
+        mat_file_name = save_directory1 + i + "/Experimental Configuration.mat";
         load(mat_file_name);
    
         exp_dir = save_directory1 + i + '/';
@@ -42,8 +43,7 @@ for i=names_cell
                     % fft signal
                         zero_padding = 1;
                         processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
-                    
-                    
+         
                 % Plot RTI
                     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
                     Range_bin = 1:size(processed_signal,1);

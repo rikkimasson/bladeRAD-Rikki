@@ -20,8 +20,7 @@ function [number_cpi,pulses_per_cpi,range_doppler_slices] = rangeDopplerSlice(ra
                  % window section of pulses from raw data
                  cpi_window = radar_matrix( :,1 + ((i-1)*cpi_stride) : 1 + pulses_per_cpi + (i-1)*cpi_stride );
                  % window data to reduce sidelobes
-                 w = transpose(window(window_type,size(pulses_per_cpi,2)));
-                 cpi_window = cpi_window .* w;
+                 %cpi_window = windowing(cpi_window, window_type);
                  % fft cpi window to get CAF slice
                  caf = fftshift(fft(cpi_window,doppler_bins,2),2);
                  % normalise cpi slice to 0

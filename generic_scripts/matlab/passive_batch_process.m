@@ -1,4 +1,4 @@
-function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir)
+function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir,zero_padding)
 %PASSIVE_BATCH_PROCESS Summary of this function goes here
 %   seg_s : number of segments a second. 
 %   seg_percent : percentage of segment used for cross coreclation of 
@@ -35,9 +35,12 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
 %% Window Sur channel
         for i=1:size(seg_ref_channel,2)
         dec_sur_channel(:,i) = windowing(dec_sur_channel(:,i), "Blackman-Harris");
+        dec_ref_channel(:,i) = windowing(dec_ref_channel(:,i), "Blackman-Harris");
         end
 
 %% Cross-Correlate segments of ref and sur
+if zero_padding == 1
+% Time domain implementation
         cc_matrix = complex(zeros((2*max_range)+1, (size(ref_channel,1)/seg_size)));
         ref_self_ambg = complex(zeros((2*max_range)+1, (size(ref_channel,1)/seg_size)));
     % range limited Xcorr
@@ -47,4 +50,39 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
         end
         cc_matrix = cc_matrix(max_range+1:end,:); %take zero shifted to +r_max shifted range bins
         self_ambg_matrix = ref_self_ambg(max_range+1:end,:); %take zero shifted to +r_max shifted range bins
+else
+    % Frequency domain implementation
+        cc_matrix = complex(zeros((2*seg_size)*zero_padding-1, (size(ref_channel,1)/seg_size)));
+        ref_self_ambg = complex(zeros((2*seg_size)*zero_padding-1, (size(ref_channel,1)/seg_size)));
+    % range limited Xcorr
+        for i=1:size(seg_ref_channel,2)
+            
+            % make arrays
+            sur_ch = [ complex(zeros(seg_size-1,1)).' dec_sur_channel(:,i).' ];
+            ref_ch = [ dec_ref_channel(:,i).' complex(zeros(seg_size-1,1)).'  ];
+
+            % Compute FFTs
+            X1 = fft(sur_ch);
+            X2 = fft(ref_ch);
+            % Compute cross-correlation
+            X = X1.*conj(X2);
+            ck = ifft((X),size(cc_matrix,1));
+            cc_matrix(:,i) = ck;      
+
+             % make arrays
+            r1 = [ complex(zeros(seg_size-1,1)).' dec_ref_channel(:,i).' ];
+            r2 = [ dec_ref_channel(:,i).' complex(zeros(seg_size-1,1)).'  ];
+            % Compute FFTs
+            X3 = fft(r1);
+            X4 = fft(r2);
+            % Compute cross-correlation
+            X5 = X3.*conj(X4);
+            sa = ifft((X5),size(ref_self_ambg,1));
+            ref_self_ambg(:,i) = sa;    
+        end
+        hw_point = size(cc_matrix,1)/2;
+        cc_matrix = cc_matrix(hw_point:hw_point+max_range,:); %take zero shifted to +r_max shifted range bins
+        self_ambg_matrix = ref_self_ambg(hw_point:hw_point+max_range,:); %take zero shifted to +r_max shifted range bins
+
+
 end

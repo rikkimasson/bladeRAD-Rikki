@@ -1,4 +1,4 @@
-function [outputArg1] = windowing(surv_ch, window_function)
+function [outputArg1] = windowing(data, window_function)
 %Applies the specified window function on the surveillance channel.
 %         Description:
 %         ------------
@@ -20,22 +20,22 @@ function [outputArg1] = windowing(surv_ch, window_function)
 %         --------------
 %         
         if window_function == "Rectangular"
-            window = ones(size(surv_ch,1));
+            window = ones(size(data,1));
         elseif window_function == "Flat top"
-            window = flattopwin(size(surv_ch,1));
+            window = flattopwin(size(data,1));
         elseif window_function == "Hamming"
-            window = hamming(size(surv_ch,1));
+            window = hamming(size(data,1));
         elseif window_function == "Hann"
-            window = hann(size(surv_ch,1));
+            window = hann(size(data,1));
 %         elseif window_function == "Tukey":
 %             window = signal.tukey(size(surv_ch))
         elseif window_function == "Blackman"
-            window = blackman(size(surv_ch,1));
+            window = blackman(size(data,1));
         elseif window_function == "Blackman-Harris"
-            window = blackmanharris(size(surv_ch,1));
+            window = blackmanharris(size(data,1));
         else
             print("Window function is not identified");
         end
-        outputArg1 = surv_ch .* window;
+        outputArg1 = data .* window;
 
         end
