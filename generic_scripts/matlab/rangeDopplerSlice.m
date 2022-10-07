@@ -12,7 +12,7 @@ function [number_cpi,pulses_per_cpi,range_doppler_slices] = rangeDopplerSlice(ra
   end
   
   % normalised cpi 
-            norm_range_doppler_slices = createArrays(number_cpi, [size(radar_matrix,1) doppler_bins]);
+            range_doppler_slices = createArrays(number_cpi, [size(radar_matrix,1) doppler_bins]);
           % normalised cpi slices on dB scale
           
             for i=1:number_cpi
@@ -20,7 +20,8 @@ function [number_cpi,pulses_per_cpi,range_doppler_slices] = rangeDopplerSlice(ra
                  % window section of pulses from raw data
                  cpi_window = radar_matrix( :,1 + ((i-1)*cpi_stride) : 1 + pulses_per_cpi + (i-1)*cpi_stride );
                  % window data to reduce sidelobes
-                 %cpi_window = windowing(cpi_window, window_type);
+                 w = transpose(windowing(ones(size(pulses_per_cpi,2)),window_type));
+                 cpi_window = cpi_window.*w;
                  % fft cpi window to get CAF slice
                  caf = fftshift(fft(cpi_window,doppler_bins,2),2);
                  % normalise cpi slice to 0
