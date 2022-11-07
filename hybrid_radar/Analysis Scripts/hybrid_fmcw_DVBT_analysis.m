@@ -12,10 +12,7 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
     process_passive_a = true;
      
 % Select the experiment you wish to process
-    experiment_number = 2; 
-
-% Shift passive radar range to align with active radar range
-    passive.range_shift = 10;
+    experiment_number = 2;
 
 for i=experiment_number
     
@@ -66,7 +63,11 @@ if process_active_a == true
                   for i=2:active.number_pulses
                         MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
                   end
-            
+            % IIR Filter
+                [b, a] = butter(12, 0.04, 'high');
+                  for i=1:active.range_bins
+                        MTI_Data(i,:) = filtfilt(b,a,processed_signal(i,:));
+                  end
      % Plot RTIs
             active.range_axis = linspace(0,max_range_actual,size(processed_signal,1));
             active.range_bin_size = active.range_axis(2);
@@ -444,6 +445,9 @@ end
              passive.cfar.noise_estimate] = cfarSlicesDetections(passive.CLEANed_range_doppler_slices,passive.detector,...
                                                 passive.full_cutidx,passive.range_axis,-passive.doppler_velocity_axis);
          
+       % Shift passive radar range to align with active radar range
+             passive.range_shift = 10;
+            
        % Plot active and passive detections in range and Doppler
             figure
             plot(gt.interp_range,2*-gt.interp_sog,'black-',LineWidth=2);hold on;      
@@ -566,13 +570,13 @@ end
     passive_detection_snr = zeros(active.number_cpi,1);
     active_detection_snr = zeros(active.number_cpi,1);
    % loop thorugh CPIs 
-    for j=1:active.number_cpi
-       [target_mag, index] = max(passive.CLEANed_range_doppler_slices{j}(:));
-       passive_range_detections(j) = passive_range_lookup(index)+passive.range_shift;
-       passive_target_power = 10*log10(abs(target_mag));
-       passive_noise_estimate = 10*log10(mean(abs(passive.CLEANed_range_doppler_slices{j}(:,45:50)),'all'))
+    for j=1:active.number_cpi   
+       [target_mag, index] = max(passive.inter_range_doppler_slices{j}(:));
+       passive_range_detections(j) = passive_range_lookup(index)
+       passive_target_power = 10*log10(abs(target_mag))
+       passive_noise_estimate = 10*log10(mean(abs(passive.inter_range_doppler_slices{j}(:,110:130)),'all'))   
        passive_detection_snr(j) = passive_target_power - passive_noise_estimate;
-    
+     
        [target_mag, index] = max(active.range_doppler_slices{j}(:));
        active_range_detections(j) = active_range_lookup(index);
        active_target_power = 10*log10(abs(target_mag));
