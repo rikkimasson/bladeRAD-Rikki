@@ -32,7 +32,7 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         subplot(1,2,2);
         imagesc(passive_range_axis, passive_doppler_axis, passive_frame, [-dynamic_range, 0]);
         %title('CLEANed Passive Radar Capture')
-        title("Wi-Fi Passive Radar Capture")
+        title("Passive Radar Capture")
         ylabel('Doppler (Hz)')
         ylabel('Velocity (m/s)')
         xlabel('Range (m)')   
@@ -43,8 +43,8 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         colormap jet;
         
         
-        saveas(fig,'frame','png');
-        im = imread('frame.png');
+        saveas(fig,'/tmp/frame','png');
+        im = imread('/tmp/frame.png');
         im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end

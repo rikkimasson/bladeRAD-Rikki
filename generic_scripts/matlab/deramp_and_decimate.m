@@ -1,4 +1,4 @@
-function [actual_max_range,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter)
+function [actual_max_range,decimated_signal,decimation_factor_actual] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter)
 % MIX_AND_DERAMP - for bladeRAD FMCW Signal Processing  
 
 %   1. Load receive file - location passed in as 'file_location'

@@ -14,8 +14,8 @@ function createCFARVideo(frame_array,frame_rate,x_axis,x_limit,y_axis,y_limit,fi
         xlabel('Range (m)')   
         ylim([-y_limit y_limit]);
         xlim([-inf x_limit]);
-        saveas(fig,'frame','png');
-        im = imread('frame.png');
+        saveas(fig,'/tmp/frame','png');
+        im = imread('/tmp/frame.png');
         im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end

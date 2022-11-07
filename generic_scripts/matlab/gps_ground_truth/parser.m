@@ -2,7 +2,8 @@
 
 % Opens the file gpsLog.txt with read access.
     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/geode_logger/Nmea_20220915_114115.txt','r');
-    fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 13_37_44.nmea','r');
+%     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 15_07_51.nmea','r');
+%     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 16_10_52.nmea','r');
 % Read the text file.
     gpsData = fscanf(fileID,'%c');
 % Create NMEA parser
@@ -27,7 +28,7 @@ Tx_lon = -0.241389;
 Tx_height = 234 
 [x y z] = latlonalt_xyz(Tx_lon,Tx_lat,Tx_height)
 sandyheath(1) = x; 
-sandyheath(2) = y;
+sandyheath(2) = y;    
 sandyheath(3) = z;
 
 
@@ -56,9 +57,12 @@ text(Tx_lat,Tx_lon,'DVB-T Tower',...
     'VerticalAlignment','middle','HorizontalAlignment','right');
 
 figure
-geoplot([geode1.lat(1) Tx_lat],[geode1.lon(1) Tx_lon],'r-*');
+geoplot([geode1.lat(1) Tx_lat],[geode1.lon(1) Tx_lon],'black-');
 hold on
+geoplot([geode1.lat(1) Tx_lat],[geode1.lon(1) Tx_lon],'r-*');
 geobasemap 'topographic';
+legend('Target Motion','Bistatic Baseline: 8.70 km')
+
 text(Tx_lat,Tx_lon,'DVB-T Tower',...
     'VerticalAlignment','middle','HorizontalAlignment','right');
 
@@ -73,7 +77,7 @@ for i=1:size(ggaData,1)
    xyz(i,3) = z;
    measured_gps_range(i) = straight_line_dist(radar_position_xyz(1),radar_position_xyz(2),radar_position_xyz(3),x,y,z);
 end
-% geode1.target_range = measured_gps_range
+geode1.target_range = measured_gps_range
 % geode1.baseline = baseline
 % mean_pos = [mean(xyz(:,1)),mean(xyz(:,2)),mean(xyz(:,3))]
 figure
