@@ -12,9 +12,9 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
 
      for i=1:size(frame_array,2)   
         i
-        frame =  10*log(abs(frame_array{i}./max(frame_array{i}(:))));
+        frame = 10*log(abs(frame_array{i}./max(frame_array{i}(:))));
 
-        fig = transpose(imagesc(x_axis,y_axis, frame, [-dynamic_range 0]));
+        fig = transpose(imagesc(x_axis,y_axis,frame, [-dynamic_range 0]));
         hold on
 %         title(video_title + ' - CPI no.: ' + i)
         ylabel('Doppler Velocity [m/s]')

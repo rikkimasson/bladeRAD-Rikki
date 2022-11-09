@@ -27,52 +27,73 @@
 
 %% Scale range Doppler images and fuse
 passive_range_slide = 0;
-active_range_slide  = 2;
+active_range_slide  = 2; %2
 [nAdbins nArbins] = size(active.range_doppler_slices{1});
 [nPdbins nPrbins] = size(passive.inter_range_doppler_slices{1});
 fused_range = min([nArbins nPrbins])-max([active_range_slide passive_range_slide]);
 fused_doppler = (min([nAdbins nPdbins]))/2-1;
 hybrid.range_doppler_slices = createArrays(size(active.range_doppler_slices,2), [fused_range ceil(fused_doppler)]);
 
-
+wv = 'db2';
+lv = 5;
+active_data = createArrays(size(active.range_doppler_slices,2), [fused_range ceil(fused_doppler)]);
+passive_data = createArrays(size(active.range_doppler_slices,2), [fused_range ceil(fused_doppler)]);
 
 for i=1:size(active.range_doppler_slices,2)
-    active_data = flipud(active.range_doppler_slices{i}(nAdbins/2-fused_doppler:nAdbins/2+fused_doppler,1+active_range_slide:fused_range+active_range_slide));
-    passive_data = passive.inter_range_doppler_slices{i}(nPdbins/2-fused_doppler:nPdbins/2+fused_doppler,1+passive_range_slide:fused_range+passive_range_slide);
-    active_data = (active_data./max(active_data(:)));
-    passive_data = (passive_data./max(passive_data(:)));
-    hybrid.range_doppler_slices{i} = abs(active_data) + abs(passive_data);
+    active_data{i} = flipud(active.range_doppler_slices{i}(nAdbins/2-fused_doppler:nAdbins/2+fused_doppler,1+active_range_slide:fused_range+active_range_slide));
+    passive_data{i} = passive.inter_range_doppler_slices{i}(nPdbins/2-fused_doppler:nPdbins/2+fused_doppler,1+passive_range_slide:fused_range+passive_range_slide);
+    active_data1 = (active_data{i}./max(active_data{i}(:)));
+    passive_data1 = (passive_data{i}./max(passive_data{i}(:)));
+%     hybrid.range_doppler_slices{i} = wfusmat(abs(active_data{i}),abs(passive_data{i}),'mean');
+    [aA,aH,aV,aD] = dwt2(abs(active_data{i}),'sym5','mode','per');
+    [pA,pH,pV,pD] = dwt2(abs(passive_data{i}),'sym5','mode','per');
+    
+    hybrid.range_doppler_slices{i} = idwt2((aA),(aH+pH),(aV+pV),(aD+pD),'db4')
+
+%     hybrid.range_doppler_slices{i} = abs(active_data1) + abs(passive_data1);
+
 end 
 
 hybrid.range_axis = active.range_axis(1:fused_range);
 hybrid.doppler_velocity_axis = active.doppler_velocity_axis(nAdbins/2-fused_doppler:nAdbins/2+fused_doppler);
 
-% create video of  range-Doppler slices
-     video_name = exp_dir + "Fused_Range_Doppler_Slices" + Experiment_ID + ".avi";
-     video_title = "";
-     dynamic_range = +90;
-     max_range = +inf;
-     max_doppler = 60;
-     frame_rate = 1/(capture_duration/passive.number_cpi);    
-     createVideo(hybrid.range_doppler_slices,frame_rate,...
-                 hybrid.range_axis,max_range,...
-                 hybrid.doppler_velocity_axis,max_doppler,...
-                 dynamic_range,video_name,video_title);
+% % create video of  range-Doppler slices
+% %      video_name = exp_dir + "Fused_Range_Doppler_Slices" + Experiment_ID + ".avi";
+% %      video_title = "";
+% %      dynamic_range = +90;
+% %      max_range = +inf;
+% %      max_doppler = 60;
+% %      frame_rate = 1/(capture_duration/passive.number_cpi);    
+% %      createVideo(hybrid.range_doppler_slices,frame_rate,...
+% %                  hybrid.range_axis,max_range,...
+% %                  hybrid.doppler_velocity_axis,max_doppler,...
+% %                  dynamic_range,video_name,video_title);
+
+  % create video of  range-Doppler slices
+    video_name = exp_dir + "Three images" + Experiment_ID + ".avi";
+    video_title = "";
+    dynamic_range = +90;
+    max_range = +inf;
+    max_doppler = 60;
+    createVideo3(active_data, ...
+                passive_data,hybrid.range_doppler_slices, ...
+                frame_rate,hybrid.range_axis,hybrid.doppler_velocity_axis, ...
+                max_range,max_doppler,dynamic_range,video_name,video_title)
 
 
 
 %% SNR of peak return 
-passive_range_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*passive.range_axis;
-passive_doppler_lookup = ones(size(passive.CLEANed_range_doppler_slices{1})).*transpose(passive.doppler_velocity_axis);
+passive_range_lookup = ones(size(passive.CLEANed_range_doppler_slices{2})).*passive.range_axis;
+passive_doppler_lookup = ones(size(passive.CLEANed_range_doppler_slices{2})).*transpose(passive.doppler_velocity_axis);
 
-passive_range_lookup = ones(size(passive.inter_range_doppler_slices {1})).*passive.interp_range_axis;
-passive_doppler_lookup = ones(size(passive.inter_range_doppler_slices{1})).*transpose(passive.interp_doppler_velocity_axis);
+passive_range_lookup = ones(size(passive.inter_range_doppler_slices {2})).*passive.interp_range_axis;
+passive_doppler_lookup = ones(size(passive.inter_range_doppler_slices{2})).*transpose(passive.interp_doppler_velocity_axis);
 
-active_range_lookup = ones(size(active.range_doppler_slices{1})).*active.range_axis;
-active_doppler_lookup = ones(size(active.range_doppler_slices{1})).*transpose(active.doppler_velocity_axis);
+active_range_lookup = ones(size(active.range_doppler_slices{2})).*active.range_axis;
+active_doppler_lookup = ones(size(active.range_doppler_slices{2})).*transpose(active.doppler_velocity_axis);
 
-hybrid_range_lookup = ones(size(hybrid.range_doppler_slices{1})).*hybrid.range_axis;
-hybrid_doppler_lookup = ones(size(hybrid.range_doppler_slices{1})).*transpose(hybrid.doppler_velocity_axis);
+hybrid_range_lookup = ones(size(hybrid.range_doppler_slices{2})).*hybrid.range_axis;
+hybrid_doppler_lookup = ones(size(hybrid.range_doppler_slices{2})).*transpose(hybrid.doppler_velocity_axis);
 
 
 passive_range_detections = zeros(active.number_cpi,1);
@@ -81,7 +102,7 @@ active_range_detections = zeros(active.number_cpi,1);
 active_detection_snr = zeros(active.number_cpi,1);
 hybrid_range_detections = zeros(active.number_cpi,1);
 hybrid_detection_snr = zeros(active.number_cpi,1);
-for i=1:active.number_cpi
+for i=2:active.number_cpi
    i
 %    [target_mag, index] = max(passive.CLEANed_range_doppler_slices{i}(:));
 %    passive_range_detections(i) = passive_range_lookup(index)+10
@@ -90,26 +111,26 @@ for i=1:active.number_cpi
 %    passive_detection_snr(i) = passive_target_power - passive_noise_estimate
 
    [target_mag, index] = max(passive.inter_range_doppler_slices{i}(:));
-   passive_range_detections(i) = passive_range_lookup(index)
-   passive_target_power = 10*log10(abs(target_mag))
-   passive_noise_estimate = 10*log10(mean(abs(passive.inter_range_doppler_slices{i}(350:500,110:130)),'all'))   
+   passive_range_detections(i) = passive_range_lookup(index);
+   passive_target_power = 10*log10(abs(target_mag));
+   passive_noise_estimate = 10*log10(mean(abs(passive.inter_range_doppler_slices{i}(350:500,110:120)),'all'));   
    passive_detection_snr(i) = passive_target_power - passive_noise_estimate;
 
 
    [target_mag, index] = max(active.range_doppler_slices{i}(:));
-   active_range_detections(i) = active_range_lookup(index)
-   active_target_power = 10*log10(abs(target_mag))
-   active_noise_estimate = 10*log10(mean(abs(active.range_doppler_slices{i}(350:500,110:130)),'all'))
+   active_range_detections(i) = active_range_lookup(index);
+   active_target_power = 10*log10(abs(target_mag));
+   active_noise_estimate = 10*log10(mean(abs(active.range_doppler_slices{i}(350:500,110:120)),'all'));
    active_detection_snr(i) = active_target_power - active_noise_estimate;
 
    [target_mag, index] = max(hybrid.range_doppler_slices{i}(:));
-   hybrid_range_detections(i) = hybrid_range_lookup(index)
-   hybrid_target_power = 10*log10(abs(target_mag))
-   hybrid_noise_estimate = 10*log10(mean(abs(hybrid.range_doppler_slices{i}(350:500,110:130)),'all'))
+   hybrid_range_detections(i) = hybrid_range_lookup(index);
+   hybrid_target_power = 10*log10(abs(target_mag));
+   hybrid_noise_estimate = 10*log10(mean(abs(hybrid.range_doppler_slices{i}(:,110:120)),'all'));
    hybrid_detection_snr(i) = hybrid_target_power - hybrid_noise_estimate;
 
-figure
-imagesc(10*log10(abs(active.range_doppler_slices{58}))); colorbar;colormap jet;
+% figure
+% imagesc(10*log10(abs(active.range_doppler_slices{58}))); colorbar;colormap jet;
 
 
 end  
@@ -117,7 +138,7 @@ t = linspace(0,15,size(passive_detection_snr,1));
 fig = figure    
 plot(passive_range_detections,passive_detection_snr,'*r')    
 hold on
-plot(active_range_detections,active_detection_snr,'*b')    
+plot(active_range_detections-10,active_detection_snr,'*b')    
 hold on
 plot(hybrid_range_detections,hybrid_detection_snr,'*magenta')   
 legend('SNR Passive Radar Peak Return','SNR Active Radar Peak Return','SNR of Hybrid Peak Return')

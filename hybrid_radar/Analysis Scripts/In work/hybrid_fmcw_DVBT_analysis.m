@@ -25,91 +25,137 @@ for i=2
 
 %% FMCW Processing and Print RTI
 if process_active_a == true
-    % load refsig for deramping
+        % load refsig for deramping
         refsig = load_refsig(active.Bw_M,active.Fs,active.Fc,active.pulse_duration);    
     % load Signal, Mix and Dermap Signal  
         file_location = exp_dir + 'active_' + Experiment_ID;
         lp_filter = true;
         [max_range_actual,deramped_signal,active.decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
         save(exp_dir + 'deramped_signal','deramped_signal')
-        
-    % add awgn to signal     
-        noise_signal = awgn(deramped_signal,46,'measured');
     
     % Window and FFT Signal 
     % window signal
-        w = window('hamming',size(deramped_signal,1));
+        w = window('blackman',size(deramped_signal,1));
         windowed_signal = deramped_signal.*w;
     % fft signal
         zero_padding = 1; % 1 = none; 2 = 100%
-        processed_signal = fft(windowed_signal,round(size(windowed_signal,1)*zero_padding));
+        processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
+        beat_frequncies = processed_signal(1:(size(processed_signal,1)/2),:); % keep +ve beat frequencies
 
     % MTI Filtering 
         % Single Delay Line Filter 
-        MTI_Data = zeros(size(processed_signal));
-              for i=2:active.number_pulses
-                    MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
-              end
-        
-      % Plot RTI
-      % calculate FMCW range axis
-      frequncies = fftshift(fftfreq(size(processed_signal,1),1/(passive.Fs*2/active.decimation_factor_actual))) % possible beat frequencies
-      slope = active.Bw/active.pulse_duration;
-      ranges = (frequncies*C)/(2*slope); % calculate true range bin size    
-      ranges = ranges+max(ranges)
-      figure
-      plot(ranges)
-      figure; plot(ranges)
-        active.range_axis = linspace(0,max_range_actual,size(processed_signal,1));
-        active.range_bin_size = active.range_axis(2);
+            MTI_Data = zeros(size(beat_frequncies));
+            active.range_bins = size(MTI_Data,1);
+                  for i=2:active.number_pulses
+                        MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
+                  end
+            % IIR Filter
+                [b, a] = butter(12, 0.04, 'high');
+                  for i=1:active.range_bins
+                        MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
+                  end
+
+    % Derive range and time axis 
         active.range_bins = 1:size(processed_signal,1);
+        active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
+        active.slope = active.Bw/active.pulse_duration;
+        ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
+        active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
+        active.range_bin_size = ranges(2)
         active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
-        RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
+      
+     % Plot RTI
+        RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
         figure
-        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
-            ylabel('Time (Sec)')
+        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on;
+        plot(interp_flight_path,active.time_axis,'-r', 'LineWidth', 2);
+            ylabel('Time (s)')
             xlabel('Range (m)')
             title("FMCW RTI - " + Experiment_ID)
-            xlim([0 200])
-            c = colorbar
-            c.Label.String='Norm Power (dB)'
+            %xlim([0 200])
             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
             saveas(fig,fig_name)    
     
-         MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
-                figure
-                fig = imagesc(active.range_axis,active.time_axis,MTI_RTI_plot,[-50,0]);
-                    xlim([1 200])
-                    %ylim([0 0.0005])
-                    grid on            
-                    c = colorbar
-                    c.Label.String='Norm Power (dB)'          
-                    ylabel('Time (Sec)')
-                    xlabel('Range (m)')   
-                    fig_title = "MTI  RTI - " + Experiment_ID;
-                    title(fig_title);
-                    fig_name = exp_dir + "/MTI_RTI_" + Experiment_ID + ".jpg";
-                    saveas(fig,fig_name,'jpeg')
-                    fig_name = exp_dir + "/MTI_RTI_" + Experiment_ID;
-                    saveas(fig,fig_name)
 
 
-    fig = figure
-    ranges_2_plot = floor(linspace(1,active.number_pulses,5));
-    for i = ranges_2_plot
-        plot(RTI_plot(i,:));
-        hold on
-    end
-        title("Single Pulse - " + Experiment_ID);
-        xlim([0 200])
-        grid on
-        ylabel('Relative Power (dB)')
-        xlabel('Range (m)')  
-        fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg') 
+    grid on            
+    c = colorbar
+    c.Label.String='Norm Power (dB)'
+    ylabel('Time (Sec)')
+    xlabel('Range (m)')            
+    xlim([0 200])
+    legend('Target GPS Ground Truth')
+
+
+
+
+
+
+
+
+     % Plot series of pulses
+        fig = figure
+        ranges_2_plot = floor(linspace(1,active.number_pulses,5));
+        for i = ranges_2_plot
+            plot(active.range_axis,RTI_plot(i,:));
+            hold on
+        end
+            title("Single Pulse - " + Experiment_ID);
+            xlim([0 200])
+            grid on; grid minor;
+            ylabel('Relative Power (dB)')
+            xlabel('Range (m)')  
+            fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg') 
 
             
+ % Spectrogram 
+         % Parameters
+            r_start = 5;
+            r_stop = 12;
+            l_fft = 256;
+            pad_factor = 1;
+            overlap_factor = 0.90;
+     
+         % Plot Spectrogram pre-MTI filtering
+            integrated_data = sum(beat_frequncies(r_start:r_stop,:));
+            [spect,active.doppler_axis] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
+            spect= 10*log10(abs(spect./max(spect(:))));
+            figure
+            fig = imagesc(active.time_axis,-active.doppler_axis,spect,[-50 0]);   
+                ylim([-500 500])
+                c = colorbar
+                c.Label.String='Norm Power (dB)'
+                xlabel('Time (Sec)')
+                % ylabel('Radial Velocity (mph)')   
+                ylabel('Doppler Frequency (Hz)')  
+                fig_title = "FMCW Spectrogram -" + Experiment_ID;
+                title(fig_title);
+                fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID + ".jpg";
+                saveas(fig,fig_name,'jpeg')
+                fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID;
+                saveas(fig,fig_name)
+                
+          % Plot Spectrogram post-MTI filtering
+            MTI_integrated_data = sum(MTI_Data(r_start:r_stop,:));
+            [spect,f] = spectrogram(MTI_integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
+            spect= 10*log10(abs(spect./max(spect(:))));
+            figure
+            fig = imagesc(active.time_axis,-f,spect,[-50 0]);   
+                ylim([-500 500])
+                c = colorbar
+                c.Label.String='Norm Power (dB)'
+                xlabel('Time (Sec)')
+                % ylabel('Radial Velocity (mph)')   
+                ylabel('Doppler Frequency (Hz)')  
+                fig_title = "MTI FMCW Spectrogram - " + Experiment_ID;
+                title(fig_title);
+                fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID + ".jpg";
+                saveas(fig,fig_name,'jpeg')
+                fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID;
+                saveas(fig,fig_name)
+
      
       %% Spectrogram 
         r_start = 5;
@@ -712,10 +758,17 @@ passive.rangeBias = 8;
 [passive.cfar.detected, passive.cfar.pd] = computePD(passive.cfar.detections,interp_flight_path_cpi,2*-interp_sog_cpi,passive.cfar.range_error_lim,passive.cfar.sog_error_lim,passive.rangeBias);
 figure; plot(passive.cfar.detected); ylim([0 2]); title('Passive Detections'); passive.cfar.pd
  
-% fused detection result
+% OR fused detection result
 fused = active.cfar.detected + passive.cfar.detected;
 fused = ceil(fused/2);
-fused_pd = (sum(fused)/active.number_cpi)*100
+or_fused_pd = (sum(fused)/active.number_cpi)*100
+
+% AND fused detection result
+fused = active.cfar.detected + passive.cfar.detected;
+fused = floor(fused - 0.5);
+and_fused_pd = (sum(fused)/active.number_cpi)*100
+
+
 figure; plot(fused); ylim([0 2]);title('Fused Detections');
 
 

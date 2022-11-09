@@ -38,69 +38,87 @@ for i=experiment_number
 
 %% FMCW Processing and Print RTI
 if process_active_a == true
-    % load refsig for deramping
+       % load refsig for deramping
         refsig = load_refsig(active.Bw_M,active.Fs,active.Fc,active.pulse_duration);    
     % load Signal, Mix and Dermap Signal  
         file_location = exp_dir + 'active_' + Experiment_ID;
-        lp_filter = true; % low pass before decimation?
+        lp_filter = true;
         [max_range_actual,deramped_signal,active.decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
         save(exp_dir + 'deramped_signal','deramped_signal')
-        
-    % Option to add AWGN to active radar data     
-        noise_signal = awgn(deramped_signal,46,'measured');
     
     % Window and FFT Signal 
-        % window signal
-            w = window('hamming',size(deramped_signal,1));
-            windowed_signal = deramped_signal.*w;
-        % fft signal
-            zero_padding = 1; % 1 = none; 2 = 100%
-            processed_signal = fft(windowed_signal,round(size(windowed_signal,1)*zero_padding));
-        
-        % MTI Filtering 
-            % Single Delay Line Filter 
-            MTI_Data = zeros(size(processed_signal));
-                  for i=2:active.number_pulses
-                        MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
-                  end
-            % IIR Filter
-                [b, a] = butter(12, 0.04, 'high');
-                  for i=1:active.range_bins
-                        MTI_Data(i,:) = filtfilt(b,a,processed_signal(i,:));
-                  end
-     % Plot RTIs
-            active.range_axis = linspace(0,max_range_actual,size(processed_signal,1));
-            active.range_bin_size = active.range_axis(2);
-            active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
-            RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
-            figure
-            fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on; 
-            plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
-                grid on; grid minor;      
-                ylabel('Time (Sec)'); xlabel('Range (m)'); legend('Target GPS Ground Truth');
-                title("FMCW RTI - " + Experiment_ID)
-                xlim([0 200]);
-                c = colorbar; c.Label.String='Norm Power (dB)';
-                fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
-                saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);    
-      
-       % Plot MTI RTI
-            MTI_RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
-            figure
-            fig = imagesc(active.range_axis,active.time_axis,MTI_RTI_plot,[-50,0]); hold on; 
-            plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
-                xlim([1 200])
-                grid on; grid minor;      
-                c = colorbar; c.Label.String='Norm Power (dB)';          
-                ylabel('Time (Sec)'); xlabel('Range (m)');  legend('Target GPS Ground Truth');   
-                fig_title = "MTI  RTI - " + Experiment_ID;
-                title(fig_title);
-                fig_name = exp_dir + "/MTI_RTI_" + Experiment_ID + ".jpg";
-                saveas(fig,fig_name,'jpeg')
-                fig_name = exp_dir + "/MTI_RTI_" + Experiment_ID;
-                saveas(fig,fig_name)
+    % window signal
+        w = window('blackman',size(deramped_signal,1));
+        windowed_signal = deramped_signal.*w;
+    % fft signal
+        zero_padding = 1; % 1 = none; 2 = 100%
+        processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
+        beat_frequncies = processed_signal(1:(size(processed_signal,1)/2),:); % keep +ve beat frequencies
 
-     % Spectrogram 
+    % MTI Filtering 
+        % Single Delay Line Filter 
+            MTI_Data = zeros(size(beat_frequncies));
+            active.range_bins = size(MTI_Data,1);
+                  for i=2:active.number_pulses
+                        MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
+                  end
+%             % IIR Filter
+%                 [b, a] = butter(12, 0.04, 'high');
+%                   for i=1:active.range_bins
+%                         MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
+%                   end
+
+    % Derive range and time axis 
+        active.n_range_bins = size(beat_frequncies,1);
+        active.range_bins = 1:active.n_range_bins;
+        active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
+        active.slope = active.Bw/active.pulse_duration;
+        ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
+        active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
+        active.range_bin_size = ranges(2)
+        active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
+      
+     % Plot RTI
+        RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
+        figure
+        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on;
+        plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+            ylabel('Time (s)');xlabel('Range (m)');legend('Target Ground Truth')
+            title("FMCW RTI - " + Experiment_ID)
+            xlim([0 200])
+            fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
+
+     % Plot MTI RTI
+        RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
+        figure
+        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on;
+        plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+            ylabel('Time (s)');xlabel('Range (m)');legend('Target Ground Truth')
+            title("FMCW RTI - " + Experiment_ID)
+            xlim([0 200])
+            fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)  
+
+     % Plot series of pulses
+        fig = figure
+        ranges_2_plot = floor(linspace(1,active.number_pulses,5));
+        for i = ranges_2_plot
+            plot(active.range_axis,RTI_plot(i,:));
+            hold on
+        end
+            title("Single Pulse - " + Experiment_ID);
+            xlim([0 200])
+            grid on; grid minor;
+            ylabel('Relative Power (dB)')
+            xlabel('Range (m)')  
+            fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg') 
+
+            
+ % Spectrogram 
          % Parameters
             r_start = 5;
             r_stop = 12;
@@ -109,7 +127,7 @@ if process_active_a == true
             overlap_factor = 0.90;
      
          % Plot Spectrogram pre-MTI filtering
-            integrated_data = sum(processed_signal(r_start:r_stop,:));
+            integrated_data = sum(beat_frequncies(r_start:r_stop,:));
             [spect,active.doppler_axis] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
             spect= 10*log10(abs(spect./max(spect(:))));
             figure
@@ -130,7 +148,6 @@ if process_active_a == true
           % Plot Spectrogram post-MTI filtering
             MTI_integrated_data = sum(MTI_Data(r_start:r_stop,:));
             [spect,f] = spectrogram(MTI_integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
-            v=dop2speed(f,C/passive.Fc)*2.237;
             spect= 10*log10(abs(spect./max(spect(:))));
             figure
             fig = imagesc(active.time_axis,-f,spect,[-50 0]);   
@@ -147,7 +164,6 @@ if process_active_a == true
                 fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID;
                 saveas(fig,fig_name)
 
-
 %% Process Active data into Range-Doppler Slices
            active.cpi = 0.5; % cohernet proccessing interval (s)
            active.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
@@ -155,7 +171,6 @@ if process_active_a == true
            active.doppler_window = 'Hann';
            active.dynamic_range = 50
            active.velocity_conv = C*(((1/C)/(active.Fc/C)));
-                 active.range_bins = size(MTI_Data,1);
                  active.max_range_actual = max_range_actual; %1000;
           
            % Create range-Doppler surfaces  
@@ -170,10 +185,9 @@ if process_active_a == true
              active.doppler_bins = 1:size(active.range_doppler_slices{1},1);
              active.doppler_axis = linspace(-active.PRF/2,active.PRF/2,size(active.doppler_bins,2));
              active.doppler_velocity_axis = active.doppler_axis * active.velocity_conv;
-             active.range_axis = linspace(0,active.max_range_actual,active.range_bins);
              active.range_bins_axis = 1:active.range_bins;
 
-           % Create video of range-Doppler slices
+%            % Create video of range-Doppler slices
              video_name = exp_dir + "active_range-Doppler" + Experiment_ID + ".avi";
              %video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Active Radar Capture";
@@ -294,25 +308,26 @@ end
   
             passive.cpi_stride = round(passive.pulses_per_cpi*(1-passive.cpi_overlap)); % number of pulses to stride each for next CPI
             passive.velocity_conv = C*(((1/C)/(passive.Fc/C)));
-            passive.range_bins = size(cc_matrix,1);
+            passive.no_range_bins = size(cc_matrix,1);
+            passive.range_bins = 1:passive.no_range_bins;
             passive.doppler_bins = passive.pulses_per_cpi*passive.dopp_zero_padding+1;
             passive.doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.doppler_bins);
             passive.doppler_velocity_axis = passive.doppler_axis*passive.velocity_conv;
-            passive.range_axis = linspace(0,passive.max_range_m,passive.range_bins);
+            passive.range_axis = linspace(0,passive.max_range_m,passive.no_range_bins);
 
 
-            % create video of  range-Doppler slices
-             video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
-             %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-             video_title = "Passive Pre-DSI";
-             dynamic_range = +inf;
-             max_range = 200;
-             max_doppler = 100;
-             frame_rate = 1/(capture_duration/passive.number_cpi);    
-             createVideo(passive.range_doppler_slices,frame_rate,...
-                         passive.range_axis,max_range,...
-                         passive.doppler_axis,max_doppler,...
-                         dynamic_range,video_name,video_title);
+%             % create video of  range-Doppler slices
+%              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
+%              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+%              video_title = "Passive Pre-DSI";
+%              dynamic_range = +inf;
+%              max_range = 200;
+%              max_doppler = 100;
+%              frame_rate = 1/(capture_duration/passive.number_cpi);    
+%              createVideo(passive.range_doppler_slices,frame_rate,...
+%                          passive.range_axis,max_range,...
+%                          passive.doppler_axis,max_doppler,...
+%                          dynamic_range,video_name,video_title);
                  
 %% Direct Signal Interference Cancellation
    % set DSI cancellation parameters
@@ -336,18 +351,19 @@ end
                                                threshold,p,...
                                                passive.range_axis,passive.doppler_axis);
 
-  % create video of CLEANed range-Doppler slices
-     video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
-     %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-     video_title = "CLEANed Passive Radar Capture";
-     dynamic_range = 50;
-     max_range = 100;
-     max_doppler = 20;
-     frame_rate = 1/(capture_duration/passive.number_cpi);    
-     createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
-                 passive.range_axis,max_range,...
-                 passive.doppler_velocity_axis,max_doppler,...
-                 dynamic_range,video_name,video_title);
+%   % create video of CLEANed range-Doppler slices
+%      video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
+%      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+%      video_title = "CLEANed Passive Radar Capture";
+%      dynamic_range = 50;
+%      max_range = 100;
+%      max_doppler = 20;
+%      frame_rate = 1/(capture_duration/passive.number_cpi);    
+%      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
+%                  passive.range_axis,max_range,...
+%                  passive.doppler_velocity_axis,max_doppler,...
+%                  dynamic_range,video_name,video_title);
+
 end
 
 
@@ -381,7 +397,7 @@ end
                                                  'OutputFormat','Detection index');             
              
             % Create CUT Matrix
-                active.full_cutidx = createCutMatrix(active.detector,active.range_bins,size(active.doppler_axis,2));                            
+                active.full_cutidx = createCutMatrix(active.detector,active.n_range_bins,size(active.doppler_axis,2));                            
       
             % loop through matrix and operate CFAR to get detections, threshold and noise power estimate    
                 [active.cfar.detections,...
@@ -408,16 +424,16 @@ end
          % loop through matrix and operate CFAR to get range-Doppler CFAR results   
              [active.cfar.range_doppler_slices] = cfarSlices(active.range_doppler_slices,active.detector,active.full_cutidx);
   
-         % create video of CFAR data
-             video_name = exp_dir + "CFAR_active_range-Doppler_Exp_" + Experiment_ID + ".avi";
-             video_title = "CFAR Active Radar Capture";
-             max_range = +150;
-             max_doppler = +inf;
-             frame_rate = 1/(capture_duration/active.number_cpi);   
-             createCFARVideo(active.cfar.range_doppler_slices,frame_rate,...
-                             active.range_axis,max_range,...
-                            -active.doppler_axis,max_doppler,...
-                            video_name,video_title);
+%          % create video of CFAR data
+%              video_name = exp_dir + "CFAR_active_range-Doppler_Exp_" + Experiment_ID + ".avi";
+%              video_title = "CFAR Active Radar Capture";
+%              max_range = +150;
+%              max_doppler = +inf;
+%              frame_rate = 1/(capture_duration/active.number_cpi);   
+%              createCFARVideo(active.cfar.range_doppler_slices,frame_rate,...
+%                              active.range_axis,max_range,...
+%                             -active.doppler_axis,max_doppler,...
+%                             video_name,video_title);
     
     %% Passive CFAR
      % There are two CFAR detectors        
@@ -437,7 +453,7 @@ end
                                              'NoisePowerOutputPort',true,...
                                              'OutputFormat','Detection index');             
        % Create CUT Matrix
-            passive.full_cutidx = createCutMatrix(passive.detector,passive.range_bins,size(passive.doppler_axis,2));                            
+            passive.full_cutidx = createCutMatrix(passive.detector,passive.no_range_bins,size(passive.doppler_axis,2));                            
  
        % Loop through matrix and operate CFAR to get detections, threshold and noise power estimate    
             [passive.cfar.detections,...
@@ -446,7 +462,7 @@ end
                                                 passive.full_cutidx,passive.range_axis,-passive.doppler_velocity_axis);
          
        % Shift passive radar range to align with active radar range
-             passive.range_shift = 10;
+             passive.range_shift = 2 * active.range_bin_size;
             
        % Plot active and passive detections in range and Doppler
             figure
@@ -470,21 +486,18 @@ end
         % loop through matrix and operate CFAR to get range-Doppler CFAR results   
              [passive.cfar.range_doppler_slices] = cfarSlices(passive.CLEANed_range_doppler_slices,passive.detector,passive.full_cutidx);
        
-        % create video of CFAR data
-             video_name = exp_dir + "CFAR_passvie_range-Doppler_Exp_" + Experiment_ID + ".avi";
-             video_title = "CFAR Active Radar Capture";
-             max_range = 200;
-             max_doppler = 200;
-             frame_rate = 1/(capture_duration/passive.number_cpi);    
-             figure;
-             createCFARVideo(passive.cfar.range_doppler_slices,frame_rate,...
-                             passive.range_axis,max_range,...
-                            -passive.doppler_axis,max_doppler,...
-                            video_name,video_title);
+%         % create video of CFAR data
+%              video_name = exp_dir + "CFAR_passvie_range-Doppler_Exp_" + Experiment_ID + ".avi";
+%              video_title = "CFAR Active Radar Capture";
+%              max_range = 200;
+%              max_doppler = 200;
+%              frame_rate = 1/(capture_duration/passive.number_cpi);    
+%              figure;
+%              createCFARVideo(passive.cfar.range_doppler_slices,frame_rate,...
+%                              passive.range_axis,max_range,...
+%                             -passive.doppler_axis,max_doppler,...
+%                             video_name,video_title);
 
-
-             
-             
 %% Hybrid Radar Signal Processing
 
     %% Interpolate passive range-Doppler surfaces to same cell size as active radar 
@@ -498,23 +511,25 @@ end
             passive.interp_doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.interp_doppler_bins);
             passive.interp_doppler_velocity_axis = passive.interp_doppler_axis*passive.velocity_conv;
             passive.interp_range_axis = linspace(0,passive.max_range_m,passive.interp_range_bins);
+            passive.interp_no_range_bins = size(passive.interp_range_axis,2);
+            passive.interp_range_bins = 1:passive.interp_no_range_bins;
 
-    %% Create Hybrid Video of both channels of data 
-       video_name = exp_dir + "hybrid_range-Doppler_Exp_" + Experiment_ID + ".avi";     
-       dynamic_range = 50;
-       range_limit = 200;
-       doppler_limit = 20;
-       createVideos(active.range_doppler_slices,...
-                     passive.inter_range_doppler_slices,...
-                     frame_rate,...
-                     active.range_axis,...
-                     passive.interp_range_axis,...
-                     -active.doppler_velocity_axis,...
-                     passive.interp_doppler_velocity_axis,...
-                     range_limit,...
-                     doppler_limit,...
-                     dynamic_range,...
-                     video_name,video_title);
+%     %% Create Hybrid Video of both channels of data 
+%        video_name = exp_dir + "hybrid_range-Doppler_Exp_" + Experiment_ID + ".avi";     
+%        dynamic_range = 50;
+%        range_limit = 200;
+%        doppler_limit = 20;
+%        createVideos(active.range_doppler_slices,...
+%                      passive.inter_range_doppler_slices,...
+%                      frame_rate,...
+%                      active.range_axis,...
+%                      passive.interp_range_axis,...
+%                      -active.doppler_velocity_axis,...
+%                      passive.interp_doppler_velocity_axis,...
+%                      range_limit,...
+%                      doppler_limit,...
+%                      dynamic_range,...
+%                      video_name,video_title);
                                         
 %% Plot range and Doppler of peak cell in active and passive range-Doppler surfaces.
   % Create empty vectors for detections 
@@ -523,7 +538,7 @@ end
     passive_doppler_detections = zeros(active.number_cpi,1);
     active_doppler_detections = zeros(active.number_cpi,1);
   % Create lookup matrix to find range and doppler of detection on matrix               
-    passive_range_lookup = ones(size(passive.inter_range_doppler_slices {1})).*passive.interp_range_axis;
+    passive_range_lookup = ones(size(passive.inter_range_doppler_slices{1})).*passive.interp_range_axis;
     passive_doppler_lookup = ones(size(passive.inter_range_doppler_slices{1})).*transpose(passive.interp_doppler_velocity_axis);
     active_range_lookup = ones(size(active.range_doppler_slices{1})).*active.range_axis;
     active_doppler_lookup = ones(size(active.range_doppler_slices{1})).*transpose(active.doppler_velocity_axis);
@@ -538,29 +553,31 @@ end
        active_doppler_detections(j) = active_doppler_lookup(index);                  
     end
 
+    passive.range_shift = 2 * passive.interp_range_axis(2);
     % Plot peak detection in range over time   
         time_axis = linspace(0,capture_duration,active.number_cpi);
         fig = figure
         pfa = plot(time_axis,passive_range_detections+passive.range_shift); hold on;
-        a = plot(time_axis,active_range_detections-2);
+        a = plot(time_axis,active_range_detections);hold on;
+        c = plot(time_axis,abs(active_range_detections-(passive_range_detections+passive.range_shift)),'-g');
         pfa.Marker = '*'; a.Marker = '*';
-        plot(0:capture_duration,gt.range,'r-')
+        plot(0:capture_duration,gt.range,'black-')
         grid on; grid minor; ylabel('Range (m)'); xlabel('Time (s)');
         % ylim([-inf 50])
-        legend('Passive Radar Peak Return','Active Radar Peak Return','GPS Ground Truth')
+        legend('Passive Radar Peak Return','Active Radar Peak Return','Relative Sensor Error','GPS Ground Truth')
         fig_name = exp_dir + "Hybrid Data RT - " + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
     
     % Plot peak detection in velocity over time   
         fig = figure
-        plot(time_axis,-passive_doppler_detections,'-bl*');
-        hold on
-        a = plot(time_axis,active_doppler_detections,'-r*');
+        plot(time_axis,-passive_doppler_detections,'-bl*'); hold on;
+        a = plot(time_axis,active_doppler_detections,'-r*'); hold on;
+        c = plot(time_axis,active_doppler_detections+passive_doppler_detections,'g')
         plot(0:capture_duration,2*-gt.sog,'black-')
         grid on; grid minor;
         % ylim([-8 8])
         ylabel('Velocity (m/s)'); xlabel('Time (s)');
-        legend('Passive Radar Peak Return','Active Radar Peak Return','GPS Ground Truth')
+        legend('Passive Radar Peak Return','Active Radar Peak Return','Relative Sensor Error','GPS Ground Truth')
         fig_name = exp_dir + "Hybrid Data DT - " + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
     
