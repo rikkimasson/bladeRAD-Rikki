@@ -1,4 +1,4 @@
-function [interRangeDoppler] = interpolateRangeDoppler(rangeDopplerSlices,rangeFactor,dopplerFactor)
+function [interRangeDoppler] = interpolateRangeDoppler(rangeDopplerSlices,rangeFactor,dopplerFactor,rangetrunc)
 %INTERPOLATERANGEDOPPLER Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -22,12 +22,13 @@ if iscell(rangeDopplerSlices)
 
 
     % Initialise matrix for CLEANed data
-    interRangeDoppler = createArrays(nSurfs, [interpnDopBins interpnRangeBins]);
+    interRangeDoppler = createArrays(nSurfs, [interpnDopBins interpnRangeBins-rangetrunc]);
     
     
     %% loop through all range Doppler Surfaces        
         for i=1:nSurfs
-            interRangeDoppler{i} = interp2(x, y, rangeDopplerSlices{i}, xq, yq,'makima');
+            frame = interp2(x, y, rangeDopplerSlices{i}, xq, yq,'cubic');
+            interRangeDoppler{i} = frame(:,1+rangetrunc:end);
         end
 
 

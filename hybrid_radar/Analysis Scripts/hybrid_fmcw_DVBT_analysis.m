@@ -1,4 +1,4 @@
-% paths to generic functions
+ % paths to generic functions
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts/matlab/CFAR/',...
         '~/repos/bladeRAD/generic_scripts',...
@@ -63,7 +63,7 @@ if process_active_a == true
                         MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
                   end
 %             % IIR Filter
-%                 [b, a] = butter(12, 0.04, 'high');
+%                 [b, a] = butter(10, 0.021, 'high');
 %                   for i=1:active.range_bins
 %                         MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
 %                   end
@@ -166,7 +166,7 @@ if process_active_a == true
 
 %% Process Active data into Range-Doppler Slices
            active.cpi = 0.5; % cohernet proccessing interval (s)
-           active.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
+           active.cpi_overlap = 0.8; % overlap between CPIs (watch this - too large will cause slow exceution)
            active.zero_padding = 1; % 1 = none; 2 = 100%
            active.doppler_window = 'Hann';
            active.dynamic_range = 50
@@ -187,13 +187,13 @@ if process_active_a == true
              active.doppler_velocity_axis = active.doppler_axis * active.velocity_conv;
              active.range_bins_axis = 1:active.range_bins;
 
-%            % Create video of range-Doppler slices
+           % Create video of range-Doppler slices
              video_name = exp_dir + "active_range-Doppler" + Experiment_ID + ".avi";
-             %video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
+             video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
              video_title = "Active Radar Capture";
-             dynamic_range = +50;
-             max_range = 100;
-             max_doppler = 20;
+             dynamic_range = +100;
+             max_range = 200;
+             max_doppler = 60;
              frame_rate = 1/(capture_duration/active.number_cpi);    
              createVideo(active.range_doppler_slices,frame_rate,...
                          active.range_axis-10,max_range,...
@@ -224,68 +224,71 @@ end
              title("Sur channel time series");    
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
              saveas(fig,fig_name,'jpeg')
-           
+
+    % Add Noise to Passive Radar
+        noisy_sur_channel= awgn(sur_channel,-2,'measured');
+
     % Batch process data and cross correlate
-         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding,passive.td_corr);
+         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,noisy_sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding,passive.td_corr);
          save(exp_dir + 'passive_matrix','cc_matrix')
 
-    % RTI Plot
-        RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
-        Range_bin = linspace(0,passive.max_range,size(cc_matrix,1));
-        time_axis = linspace(0,capture_duration,size(cc_matrix,2));
-        figure
-        fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-            grid on            
-            colorbar
-            ylabel('Time (Sec)')
-            xlabel('Range Bin')   
-            fig_title = "Passive RTI - " + Experiment_ID;
-            title(fig_title);
-            fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
-
-      % CAF of entire capture
-        f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
-        t_cc_matrix = transpose(cc_matrix);
-        CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
-        figure
-        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
-            ylim([-500 500])     
-            xlim([1 20])
-            c = colorbar
-            c.Label.String='Norm Power (dB)'
-            ylabel('Doppler Shift (Hz)')
-            xlabel('Range Bin')  
-            title("CAF for entire capture" + Experiment_ID)
-            fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
-        
-     % Spectrogram 
-        int_bins = sum(cc_matrix(2:10,:),1);
-        r_bin = 1;
-        l_fft = 256;
-        pad_factor = 1;
-        overlap_factor = 0.99;
-        [spect,f] = spectrogram(int_bins,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
-        spect= 10*log10(abs(spect./max(spect(:))));
-        figure
-        fig = imagesc(time_axis,f,spect,[-30 0]);   
-            ylim([-500 +500])
-            c = colorbar
-            c.Label.String='Norm Power (dB)'
-            xlabel('Time (Sec)')
-            % ylabel('Radial Velocity (mph)')   
-            ylabel('Doppler Frequency (Hz)')  
-            fig_title = "Passive Spectrogram :- " + Experiment_ID;
-            title(fig_title);
-            fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
-
+%     % RTI Plot
+%         RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
+%         Range_bin = linspace(0,passive.max_range,size(cc_matrix,1));
+%         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
+%         figure
+%         fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
+%             grid on            
+%             colorbar
+%             ylabel('Time (Sec)')
+%             xlabel('Range Bin')   
+%             fig_title = "Passive RTI - " + Experiment_ID;
+%             title(fig_title);
+%             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
+%             saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
+% 
+%       % CAF of entire capture
+%         f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
+%         t_cc_matrix = transpose(cc_matrix);
+%         CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
+%         figure
+%         imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
+%             ylim([-500 500])     
+%             xlim([1 20])
+%             c = colorbar
+%             c.Label.String='Norm Power (dB)'
+%             ylabel('Doppler Shift (Hz)')
+%             xlabel('Range Bin')  
+%             title("CAF for entire capture" + Experiment_ID)
+%             fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
+%             saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
+%         
+%      % Spectrogram 
+%         int_bins = sum(cc_matrix(2:10,:),1);
+%         r_bin = 1;
+%         l_fft = 256;
+%         pad_factor = 1;
+%         overlap_factor = 0.99;
+%         [spect,f] = spectrogram(int_bins,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
+%         spect= 10*log10(abs(spect./max(spect(:))));
+%         figure
+%         fig = imagesc(time_axis,f,spect,[-30 0]);   
+%             ylim([-500 +500])
+%             c = colorbar
+%             c.Label.String='Norm Power (dB)'
+%             xlabel('Time (Sec)')
+%             % ylabel('Radial Velocity (mph)')   
+%             ylabel('Doppler Frequency (Hz)')  
+%             fig_title = "Passive Spectrogram :- " + Experiment_ID;
+%             title(fig_title);
+%             fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
+%             saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
+% 
 
 %% Proccess Passive data into Range-Doppler Slices
            passive.PRF = passive.seg_s; % seg_s
            passive.cpi = 0.5; % coherent proccessing interval (s)
-           passive.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
+           passive.cpi_overlap = 0.8; % overlap between CPIs (watch this - too large will cause slow exceution)
            passive.doppler_window = 'Blackman-Harris';
            passive.dopp_zero_padding = 1;
            passive.dynamic_range = +50;
@@ -328,7 +331,7 @@ end
 %                          passive.range_axis,max_range,...
 %                          passive.doppler_axis,max_doppler,...
 %                          dynamic_range,video_name,video_title);
-                 
+%                  
 %% Direct Signal Interference Cancellation
    % set DSI cancellation parameters
       p = 0.999;        % subtraction parameter - P must be a positive 
@@ -351,7 +354,7 @@ end
                                                threshold,p,...
                                                passive.range_axis,passive.doppler_axis);
 
-%   % create video of CLEANed range-Doppler slices
+% %   % create video of CLEANed range-Doppler slices
 %      video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
 %      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
 %      video_title = "CLEANed Passive Radar Capture";
@@ -412,18 +415,18 @@ end
                 end
                 grid on; grid minor; ylabel('Doppler Shift (Hz)'); xlabel('Range (m)'); xlim([-inf 200]) 
 
-      % 2. Array of vectors with detection in range and Doppler
-        % Create the CFAR detector.
-            active.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
-                                             'GuardBandSize',[3,3],...
-                                             'ThresholdFactor','Auto',...
-                                             'Method','CA', ...
-                                             'ProbabilityFalseAlarm',pfa,...
-                                             'ThresholdOutputPort',true);
-
-         % loop through matrix and operate CFAR to get range-Doppler CFAR results   
-             [active.cfar.range_doppler_slices] = cfarSlices(active.range_doppler_slices,active.detector,active.full_cutidx);
-  
+%       % 2. Array of vectors with detection in range and Doppler
+%         % Create the CFAR detector.
+%             active.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
+%                                              'GuardBandSize',[3,3],...
+%                                              'ThresholdFactor','Auto',...
+%                                              'Method','CA', ...
+%                                              'ProbabilityFalseAlarm',pfa,...
+%                                              'ThresholdOutputPort',true);
+% 
+%          % loop through matrix and operate CFAR to get range-Doppler CFAR results   
+%              [active.cfar.range_doppler_slices] = cfarSlices(active.range_doppler_slices,active.detector,active.full_cutidx);
+%   
 %          % create video of CFAR data
 %              video_name = exp_dir + "CFAR_active_range-Doppler_Exp_" + Experiment_ID + ".avi";
 %              video_title = "CFAR Active Radar Capture";
@@ -435,7 +438,7 @@ end
 %                             -active.doppler_axis,max_doppler,...
 %                             video_name,video_title);
     
-    %% Passive CFAR
+    %% CFAR Passive Data 
      % There are two CFAR detectors        
            % 1. Provides the detections cell array 'active.cfar.detections', 
            %    each cell is vector per CPI of detections in range and doppler.
@@ -445,7 +448,7 @@ end
      % 1. Array of vectors with detection in range and Doppler   
         % Create the CFAR detector.
             passive.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
-                                             'GuardBandSize',[3,3],...
+                                             'GuardBandSize',[5,5],...
                                              'ThresholdFactor','Auto',...
                                              'Method','CA', ...
                                              'ProbabilityFalseAlarm',pfa,...
@@ -474,18 +477,18 @@ end
             grid on; ylabel('Doppler Velocity (m/s)'); xlabel('Range (m)'); legend('Active Radar Detections','Passive Radar Detections');
             xlim([-inf 100]); ylim([-20 20]);
             
-      % 2. Array of vectors with detection in range and Doppler
-        % Create the CFAR detector.
-            passive.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
-                                             'GuardBandSize',[3,3],...
-                                             'ThresholdFactor','Auto',...
-                                             'Method','CA', ...
-                                             'ProbabilityFalseAlarm',pfa,...
-                                             'ThresholdOutputPort',true);
-        
-        % loop through matrix and operate CFAR to get range-Doppler CFAR results   
-             [passive.cfar.range_doppler_slices] = cfarSlices(passive.CLEANed_range_doppler_slices,passive.detector,passive.full_cutidx);
-       
+%       % 2. Array of vectors with detection in range and Doppler
+%         % Create the CFAR detector.
+%             passive.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
+%                                              'GuardBandSize',[3,3],...
+%                                              'ThresholdFactor','Auto',...
+%                                              'Method','CA', ...
+%                                              'ProbabilityFalseAlarm',pfa,...
+%                                              'ThresholdOutputPort',true);
+%         
+%         % loop through matrix and operate CFAR to get range-Doppler CFAR results   
+%              [passive.cfar.range_doppler_slices] = cfarSlices(passive.CLEANed_range_doppler_slices,passive.detector,passive.full_cutidx);
+%        
 %         % create video of CFAR data
 %              video_name = exp_dir + "CFAR_passvie_range-Doppler_Exp_" + Experiment_ID + ".avi";
 %              video_title = "CFAR Active Radar Capture";
@@ -505,22 +508,21 @@ end
             range_factor = passive.range_bin_size/active.range_bin_size; 
             doppler_factor = passive.velocity_conv/active.velocity_conv;  
         % Interpolate passive range-Doppler surfaces
-            passive.inter_range_doppler_slices = interpolateRangeDoppler(passive.CLEANed_range_doppler_slices,range_factor,doppler_factor);
+            passive.interp_range_doppler_slices = interpolateRangeDoppler(passive.CLEANed_range_doppler_slices,range_factor,doppler_factor);
         % Interpolated axis
-            [passive.interp_doppler_bins, passive.interp_range_bins] = size(passive.inter_range_doppler_slices{1});
+            [passive.interp_doppler_bins, passive.no_interp_range_bins] = size(passive.interp_range_doppler_slices{1});
             passive.interp_doppler_axis = linspace(-passive.PRF/2,passive.PRF/2,passive.interp_doppler_bins);
             passive.interp_doppler_velocity_axis = passive.interp_doppler_axis*passive.velocity_conv;
-            passive.interp_range_axis = linspace(0,passive.max_range_m,passive.interp_range_bins);
-            passive.interp_no_range_bins = size(passive.interp_range_axis,2);
+            passive.interp_range_axis = linspace(0,passive.max_range_m,passive.no_interp_range_bins);
             passive.interp_range_bins = 1:passive.interp_no_range_bins;
 
-%     %% Create Hybrid Video of both channels of data 
+% %     %% Create Hybrid Video of both channels of data 
 %        video_name = exp_dir + "hybrid_range-Doppler_Exp_" + Experiment_ID + ".avi";     
 %        dynamic_range = 50;
 %        range_limit = 200;
 %        doppler_limit = 20;
 %        createVideos(active.range_doppler_slices,...
-%                      passive.inter_range_doppler_slices,...
+%                      passive.interp_range_doppler_slices,...
 %                      frame_rate,...
 %                      active.range_axis,...
 %                      passive.interp_range_axis,...
@@ -531,36 +533,110 @@ end
 %                      dynamic_range,...
 %                      video_name,video_title);
                                         
+
+    %% CFAR Interpolated Passive Data
+    pfa = 1e-12;     
+    % There are two CFAR detectors        
+               % 1. Provides the detections cell array 'active.cfar.detections', 
+               %    each cell is vector per CPI of detections in range and doppler.
+               % 2. Provides cell array of binary valued range-Doppler surfaces 
+               %    with detections as 1.
+    
+         % 1. Array of vectors with detection in range and Doppler   
+            % Create the CFAR detector.
+                passive.detector = mod_CFARDetector2D('TrainingBandSize',[8,8], ...
+                                                 'GuardBandSize',[10,10],...
+                                                 'ThresholdFactor','Auto',...
+                                                 'Method','CA', ...
+                                                 'ProbabilityFalseAlarm',pfa,...
+                                                 'ThresholdOutputPort',true,...
+                                                 'NoisePowerOutputPort',true,...
+                                                 'OutputFormat','Detection index');             
+           % Create CUT Matrix
+                passive.interp_full_cutidx = createCutMatrix(passive.detector,passive.interp_no_range_bins,passive.interp_doppler_bins);                            
+     
+           % Loop through matrix and operate CFAR to get detections, threshold and noise power estimate    
+                [passive.cfar.interp_detections,...
+                 passive.cfar.interp_threshold,...
+                 passive.cfar.interp_noise_estimate] = cfarSlicesDetections(passive.interp_range_doppler_slices,passive.detector,...
+                                                     passive.interp_full_cutidx,passive.interp_range_axis,-passive.interp_doppler_velocity_axis);
+             
+           % Shift passive radar range to align with active radar range
+                 passive.range_shift = 2 * active.range_bin_size;
+                
+           % Plot active and passive detections in range and Doppler
+                figure
+                plot(gt.interp_range-10,2*-gt.interp_sog,'black-',LineWidth=2);hold on;      
+                for i=1:active.number_cpi
+                    plot(active.cfar.detections{i}(1,:)-10,active.cfar.detections{i}(2,:),'r*');hold on;        
+                    plot(passive.cfar.interp_detections{i}(1,:)-10+passive.range_shift,passive.cfar.interp_detections{i}(2,:),'b*');hold on;    
+                end
+                grid on; ylabel('Doppler Velocity (m/s)'); xlabel('Range (m)'); legend('Ground Truth','Active Radar Detections','Passive Radar Detections');
+                xlim([0 100]); ylim([-20 20]);
+                
+          % 2. Array of vectors with detection in range and Doppler
+            % Create the CFAR detector.
+                passive.detector = mod_CFARDetector2D('TrainingBandSize',[4,4], ...
+                                                 'GuardBandSize',[3,3],...
+                                                 'ThresholdFactor','Auto',...
+                                                 'Method','CA', ...
+                                                 'ProbabilityFalseAlarm',pfa,...
+                                                 'ThresholdOutputPort',true);
+            
+            % loop through matrix and operate CFAR to get range-Doppler CFAR results   
+                 [passive.cfar.interp_range_doppler_slices] = cfarSlices(passive.interp_range_doppler_slices,passive.detector,passive.full_cutidx);
+           
+       
+        % create video of CFAR data
+             video_name = exp_dir + "CFAR_passvie_range-Doppler_Exp_" + Experiment_ID + ".avi";
+             video_title = "CFAR Active Radar Capture";
+             max_range = 200;
+             max_doppler = 200;
+             frame_rate = 1/(capture_duration/passive.number_cpi);    
+             figure;
+             createCFARVideo(passive.cfar.interp_range_doppler_slices,frame_rate,...
+                             passive.range_axis,max_range,...
+                            -passive.doppler_axis,max_doppler,...
+                            video_name,video_title);
+
+       
 %% Plot range and Doppler of peak cell in active and passive range-Doppler surfaces.
   % Create empty vectors for detections 
     passive_range_detections = zeros(active.number_cpi,1);
     active_range_detections = zeros(active.number_cpi,1);
     passive_doppler_detections = zeros(active.number_cpi,1);
     active_doppler_detections = zeros(active.number_cpi,1);
-  % Create lookup matrix to find range and doppler of detection on matrix               
-    passive_range_lookup = ones(size(passive.inter_range_doppler_slices{1})).*passive.interp_range_axis;
-    passive_doppler_lookup = ones(size(passive.inter_range_doppler_slices{1})).*transpose(passive.interp_doppler_velocity_axis);
+  % Create lookup matrix to find range and doppler of detection on matrix     
+    passive_range_lookup = ones(size(passive.range_doppler_slices{1})).*passive.range_axis;
+    passive_doppler_lookup = ones(size(passive.range_doppler_slices{1})).*transpose(passive.doppler_velocity_axis);
+    passive_range_lookup = ones(size(passive.interp_range_doppler_slices{1})).*passive.interp_range_axis;
+    passive_doppler_lookup = ones(size(passive.interp_range_doppler_slices{1})).*transpose(passive.interp_doppler_velocity_axis);
     active_range_lookup = ones(size(active.range_doppler_slices{1})).*active.range_axis;
     active_doppler_lookup = ones(size(active.range_doppler_slices{1})).*transpose(active.doppler_velocity_axis);
   % Find peak cell on range doppler surface for each CPI
     for j=1:active.number_cpi   
-       [mag, index] = max(passive.inter_range_doppler_slices{j}(:));
+       
+%        [mag, index] = max(passive.CLEANed_range_doppler_slices{j}(:));
+%        passive_range_detections(j) = passive_range_lookup(index);
+%        passive_doppler_detections(j) = passive_doppler_lookup(index);
+        
+       [mag, index] = max(passive.interp_range_doppler_slices{j}(:));
        passive_range_detections(j) = passive_range_lookup(index);
        passive_doppler_detections(j) = passive_doppler_lookup(index);
     
        [mag, index] = max(active.range_doppler_slices{j}(:));
        active_range_detections(j) = active_range_lookup(index);
-       active_doppler_detections(j) = active_doppler_lookup(index);                  
+       active_doppler_detections(j) = active_doppler_lookup(index);         
     end
 
     passive.range_shift = 2 * passive.interp_range_axis(2);
     % Plot peak detection in range over time   
         time_axis = linspace(0,capture_duration,active.number_cpi);
         fig = figure
-        pfa = plot(time_axis,passive_range_detections+passive.range_shift); hold on;
+        pa = plot(time_axis,passive_range_detections+passive.range_shift); hold on;
         a = plot(time_axis,active_range_detections);hold on;
         c = plot(time_axis,abs(active_range_detections-(passive_range_detections+passive.range_shift)),'-g');
-        pfa.Marker = '*'; a.Marker = '*';
+        pa.Marker = '*'; a.Marker = '*';
         plot(0:capture_duration,gt.range,'black-')
         grid on; grid minor; ylabel('Range (m)'); xlabel('Time (s)');
         % ylim([-inf 50])
@@ -568,6 +644,8 @@ end
         fig_name = exp_dir + "Hybrid Data RT - " + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
     
+        std((active_range_detections(7:end)-(passive_range_detections(7:end)+passive.range_shift)))
+
     % Plot peak detection in velocity over time   
         fig = figure
         plot(time_axis,-passive_doppler_detections,'-bl*'); hold on;
@@ -581,6 +659,7 @@ end
         fig_name = exp_dir + "Hybrid Data DT - " + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg'); saveas(fig,fig_name);
     
+        mean((active_doppler_detections(7:end)+(passive_doppler_detections(7:end))))
 
 %% Calculate SNR of peak return 
 
@@ -588,16 +667,16 @@ end
     active_detection_snr = zeros(active.number_cpi,1);
    % loop thorugh CPIs 
     for j=1:active.number_cpi   
-       [target_mag, index] = max(passive.inter_range_doppler_slices{j}(:));
+       [target_mag, index] = max(passive.interp_range_doppler_slices{j}(:));
        passive_range_detections(j) = passive_range_lookup(index)
        passive_target_power = 10*log10(abs(target_mag))
-       passive_noise_estimate = 10*log10(mean(abs(passive.inter_range_doppler_slices{j}(:,110:130)),'all'))   
+       passive_noise_estimate = 10*log10(mean(abs(passive.interp_range_doppler_slices{j}(:,110:130)),'all'))   
        passive_detection_snr(j) = passive_target_power - passive_noise_estimate;
      
        [target_mag, index] = max(active.range_doppler_slices{j}(:));
        active_range_detections(j) = active_range_lookup(index);
        active_target_power = 10*log10(abs(target_mag));
-       active_noise_estimate = 10*log10(mean(abs(active.range_doppler_slices{j}(:,150:170)),'all'));
+       active_noise_estimate = 10*log10(mean(abs(active.range_doppler_slices{j}(:,80:100)),'all'));
        active_detection_snr(j) = active_target_power - active_noise_estimate;
     end  
     
@@ -637,23 +716,26 @@ end
     
     % compute the active sensor probability of detection
         active.cfar.range_error_lim = 2.5; 
-        active.cfar.sog_error_lim = 2;
+        active.cfar.sog_error_lim = 200;
         active.rangeBias = -2;
         [active.cfar.detected, active.cfar.pd] = computePD(active.cfar.detections,gt.interp_range,2*-gt.interp_sog,active.cfar.range_error_lim,active.cfar.sog_error_lim,active.rangeBias);
         figure; plot(active.cfar.detected); ylim([0 2]);title('Active Detections');active.cfar.pd
-    
+        "Active Pd : " + (active.cfar.pd)
+
     % compute the passive sensor probability of detection
-        passive.cfar.range_error_lim = 7.5; 
-        passive.cfar.sog_error_lim = 1;
-        passive.rangeBias = 8;
-        [passive.cfar.detected, passive.cfar.pd] = computePD(passive.cfar.detections,gt.interp_range,2*-gt.interp_sog,passive.cfar.range_error_lim,passive.cfar.sog_error_lim,passive.rangeBias);
-        figure; plot(passive.cfar.detected); ylim([0 2]); title('Passive Detections'); passive.cfar.pd
-     
+        passive.cfar.range_error_lim = 2.5; 
+        passive.cfar.sog_error_lim = 200;
+        passive.rangeBias = passive.range_shift;
+        [passive.cfar.detected, passive.cfar.pd] = computePD(passive.cfar.interp_detections,gt.interp_range,2*-gt.interp_sog,passive.cfar.range_error_lim,passive.cfar.sog_error_lim,passive.rangeBias);
+        figure; plot(passive.cfar.detected); ylim([0 2]); title('Passive Detections'); 
+        "Passive Pd : " + (passive.cfar.pd)
+         
+
     % fused detection result
         fused = active.cfar.detected + passive.cfar.detected;
         fused = ceil(fused/2);
-        fused_pd = (sum(fused)/active.number_cpi)*100
+        fused_pd = (sum(fused)/active.number_cpi)*100;
         figure; plot(fused); ylim([0 2]);title('Fused Detections');
-        
+        "Hybrid Pd : " + (fused_pd)
     
 

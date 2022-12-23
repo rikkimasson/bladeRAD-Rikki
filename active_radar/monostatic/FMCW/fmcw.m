@@ -1,5 +1,5 @@
 % clear all
-% % close all
+% % close allCLOSE 
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
@@ -7,8 +7,8 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1;    % Expeiment Name
-capture_duration = 2;        % capture duration
+Experiment_ID = 7;    % Expeiment Name
+capture_duration = 0.1;        % capture duration
 save_directory = "/media/piers/T7/FMCW_Loopback_Range_Calibration"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
@@ -18,8 +18,8 @@ active.Fs = 30e6;          % Sample Rate of SDR per I & Q (in reality Fs is doub
 active.pulse_duration = 1e-3;   % Desired Pulse Duration 
 active.Bw = 30e6;          % LFM Bandwidth 
 active.Fc = 2.44e9;   % Central RF 
-active.Tx_gain = 60;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-active.Rx1_gain = 0;      % [-16, 60]
+active.Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+active.Rx1_gain = 5;      % [-16, 60]
 active.Rx2_gain = 0;       % [-16, 60]
 Rx_1_lna = true;
 Rx_2_lna = true;
@@ -68,6 +68,11 @@ clear chirp
 %      "error configuring device"
 %      return
 %  end
+
+data_set= createArrays(21, [100 100]);
+
+
+for Experiment_ID = 101:150
 
 %% Setup FMCW Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
@@ -148,44 +153,44 @@ clear chirp
         w = window('blackman',size(deramped_signal,1));
         windowed_signal = deramped_signal.*w;
     % fft signal
-        zero_padding = 1; % 1 = none; 2 = 100%
+        zero_padding = 4; % 1 = none; 2 = 100%
         processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
         beat_frequncies = processed_signal(1:(size(processed_signal,1)/2),:); % keep +ve beat frequencies
 
-    % MTI Filtering 
-        % Single Delay Line Filter 
-            MTI_Data = zeros(size(beat_frequncies));
-            active.range_bins = size(MTI_Data,1);
-                  for i=2:active.number_pulses
-                        MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
-                  end
-            % IIR Filter
-                [b, a] = butter(12, 0.04, 'high');
-                  for i=1:active.range_bins
-                        MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
-                  end
-
-    % Derive range and time axis 
-        active.range_bins = 1:size(processed_signal,1);
-        active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
-        active.slope = active.Bw/active.pulse_duration;
-        ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
-        active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
-        active.range_bin_size = ranges(2)
-        active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
-      
-     % Plot RTI
+%     % MTI Filtering 
+%         % Single Delay Line Filter 
+%             MTI_Data = zeros(size(beat_frequncies));
+%             active.range_bins = size(MTI_Data,1);
+%                   for i=2:active.number_pulses
+%                         MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
+%                   end
+%             % IIR Filter
+%                 [b, a] = butter(12, 0.04, 'high');
+%                   for i=1:active.range_bins
+%                         MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
+%                   end
+% 
+%     % Derive range and time axis 
+%         active.range_bins = 1:size(processed_signal,1);
+%         active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
+%         active.slope = active.Bw/active.pulse_duration;
+%         ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
+%         active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
+%         active.range_bin_size = ranges(2)
+%         active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
+%       
+%      % Plot RTI
         RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
-        figure
-        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
-            ylabel('Time (s)')
-            xlabel('Range (m)')
-            title("FMCW RTI - " + Experiment_ID)
-%             xlim([0 200])
-            fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)    
-    
+%         figure
+%         fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
+%             ylabel('Time (s)')
+%             xlabel('Range (m)')
+%             title("FMCW RTI - " + Experiment_ID)
+% %             xlim([0 200])
+%             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
+%             saveas(fig,fig_name,'jpeg')
+%             saveas(fig,fig_name)    
+%     
      % Plot series of pulses
         fig = figure
         ranges_2_plot = floor(linspace(1,active.number_pulses,5));
@@ -193,15 +198,46 @@ clear chirp
             plot(active.range_axis,RTI_plot(i,:));
             hold on
         end
-            title("Single Pulse - " + Experiment_ID);
+%             title("Single Pulse - " + Experiment_ID);
             xlim([0 200])
             grid on; grid minor;
             ylabel('Relative Power (dB)')
             xlabel('Range (m)')  
+            legend('Pulse 1', 'Pulse 25', 'Pulse 50', 'Pulse 75', 'Pulse 100')
             fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg') 
 
-            
+data_set{Experiment_ID} = RTI_plot;
+
+end
+     % Plot series of pulses
+       
+        fig = figure
+        for i = 101:150
+            plot(active.range_axis-2*active.range_bin_size,data_set{i}(2,:));
+            [target_mag, index] = max(data_set{i}(2,:));
+            range(i-100) = active.range_axis(index)-2*active.range_bin_size;
+            hold on
+        end          
+% plot(range)
+mean_range = mean(range);
+max_range = max(range);
+min_range = min(range);
+cable_delay_pm = 4.02e-9;
+radar_range_40 = cable_delay_pm * 40 * C /2;
+hold on;
+xlim([0 100])
+grid on; grid minor;
+ylabel('Relative Power (dB)')
+xlabel('Range (m)')  
+set(groot,'defaultLegendAutoUpdate','off')
+xline(mean_range,'--black',"Mean = " + mean_range + " m",'LabelVerticalAlignment','bottom')
+xline(max_range,'--black',"Max = " + max_range + " m",'LabelVerticalAlignment','bottom')
+xline(min_range,'--black',"Min = " + min_range + " m",'LabelVerticalAlignment','bottom')
+
+
+
+
  % Spectrogram 
          % Parameters
             r_start = 5;
@@ -240,7 +276,7 @@ clear chirp
                 c.Label.String='Norm Power (dB)'
                 xlabel('Time (Sec)')
                 % ylabel('Radial Velocity (mph)')   
-                ylabel('Doppler Frequency (Hz)')  
+                ylabel('Doppler FinterpnDopBinsrequency (Hz)')  
                 fig_title = "MTI FMCW Spectrogram - " + Experiment_ID;
                 title(fig_title);
                 fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID + ".jpg";

@@ -6,12 +6,16 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
      writerObj.FrameRate = frame_rate;           
      open(writerObj)   
      fig = figure();
-     fig.WindowState = 'maximized';
+%     [A B C D] = fig.Position;
+    fig.Position(3:4) = [1400 700];
+
+
+%      fig.WindowState = 'maximized';
 
      for i=1:size(active_array,2)-1   
 
-        active_frame =  10*log(abs(active_array{i}./max(active_array{i}(:))));
-        passive_frame = 10*log(abs(passive_array{i}./max(passive_array{i}(:))));
+        active_frame =  10*log10(abs(active_array{i}./max(active_array{i}(:))));
+        passive_frame = 10*log10(abs(passive_array{i}./max(passive_array{i}(:))));
 
         
         
@@ -45,7 +49,7 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         
         saveas(fig,'/tmp/frame','png');
         im = imread('/tmp/frame.png');
-        im = imresize(im,[875 1200]);
+        im = imresize(im,[2187 1094]);
         writeVideo(writerObj, im);
      end
  

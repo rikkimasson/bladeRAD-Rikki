@@ -1,12 +1,12 @@
-function [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_process(ref_channel,sur_channel,xcorr_len,nSurfs,doppler_range,doppler_resolution,Fs,range_bins,exp_dir,range_zero_padding,td_corr)
+function [range_doppler_slice] = passive_process(ref_channel,sur_channel,xcorr_len,nSurfs,doppler_range,doppler_resolution,Fs,range_bins,exp_dir,range_zero_padding,td_corr)
 
 %PASSIVE_PROCESS Summary of this function goes here
 
 % first determine the truncation factor 
     Ts = 1/Fs;                                % Sample duration
-    cap_dur = size(ref_channel,1)/Ts;       % Capture Duration
+    cap_dur = size(ref_channel,1)/Fs;       % Capture Duration
     xcorr_samps = ceil(xcorr_len/Ts);       % Number of samples to xcorr
-    surf_per_sec = cap_dur / nSurfs; % surfaces per second
+    surf_per_sec = nSurfs/cap_dur; % surfaces per second
     cpi_stride = Fs * (1/surf_per_sec);    % number of samples to advance per CPI
 
 
@@ -25,7 +25,7 @@ function [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_process(ref_channel
     range_doppler_slices = createArrays(nSurfs, [range_bins doppler_bins]);
 
 
-for i=1:nSurfs
+for i=1
 
 %% truncate CPI in to segments
         seg_ref_channel = ref_channel(1 + ((i-1)*cpi_stride) :xcorr_samps + (i-1)*cpi_stride);
@@ -50,24 +50,26 @@ for i=1:nSurfs
 %         end
 
 %% Cross-correlate
-    range_doppler_slice = zeros(range_bins, doppler_bins);
-     parpool(6)
-     parfor  fD__index=1:doppler_bins 
+    range_doppler_slice = zeros(range_bins+1, doppler_bins);
+     for  fD__index=1:doppler_bins 
             fD__index            
             res = xcorr(seg_sur_channel,matched_filter_bank(:,fD__index),range_bins);
-            range_doppler_slice(:,fD__index) = res(range_bins:(2*range_bins)-1);
+            if fD__index == 1
+                 [~,bin_zero] = max(res(:,1));                
+            end
+            range_doppler_slice(:,fD__index) = res(range_bins+1:end,:);
                
      end
-
-        frame =  10*log(abs(range_doppler_slice./max(range_doppler_slice(:))));
-
-        fig = imagesc(transpose(frame));
-        hold on
-        ylabel('Doppler Velocity [m/s]')
-        xlabel('Range (m)')   
-        c = colorbar;
-        c.Label.String='Norm Power [dB]';
-        colormap jet;
+% 
+%         figure
+%         frame =  10*log(abs(range_doppler_slice./max(range_doppler_slice(:))));
+%         fig = imagesc(transpose(frame));
+%         hold on
+%         ylabel('Doppler Velocity [m/s]')
+%         xlabel('Range (m)')   
+%         c = colorbar;
+%         c.Label.String='Norm Power [dB]';
+%         colormap jet;
         
 
      

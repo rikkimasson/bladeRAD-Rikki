@@ -1,8 +1,8 @@
 
 
 % Opens the file gpsLog.txt with read access.
-    fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/geode_logger/Nmea_20220915_114115.txt','r');
-%     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 15_07_51.nmea','r');
+%     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/geode_logger/Nmea_20220915_114115.txt','r');
+    fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 15_07_51.nmea','r');
 %     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 16_10_52.nmea','r');
 % Read the text file.
     gpsData = fscanf(fileID,'%c');

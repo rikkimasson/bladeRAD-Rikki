@@ -27,8 +27,8 @@ function [outputArg1] = windowing(data, window_function)
             window = hamming(size(data,1));
         elseif window_function == "Hann"
             window = hann(size(data,1));
-%         elseif window_function == "Tukey":
-%             window = signal.tukey(size(surv_ch))
+        elseif window_function == "chebwin"
+            window = chebwin(size(data,1));
         elseif window_function == "Blackman"
             window = blackman(size(data,1));
         elseif window_function == "Blackman-Harris"

@@ -321,12 +321,12 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
                 {'double','single'},{'<=',obj.pMaximumCellColIndex});
               
             if obj.ThresholdFactor(1) ~= 'I'
-                ThFac = obj.pFactor;
+                ThFac = obj.pFactor
             else
                 validateattributes(ThFac,{'double','single'},{'positive','scalar'},...
                     'step','K');
             end
-            ThFac = cast(ThFac,classtoUse);
+            ThFac = cast(ThFac,classtoUse)
             
             % Validate CUTS
 %             validateCUTS(obj,X,Idx);
@@ -396,7 +396,10 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
                 % Form the threshold for this CUT
                 if ~isempty(trninds)
                     th(m,:) = noisePowEst * ThFac;
+                    noisePowEst;
+                    threshold = noisePowEst * ThFac;
                     noise(m,:) = noisePowEst;
+
                 end
             end
             
