@@ -35,7 +35,7 @@ for i = 37
         w = window('hann',size(decimated_signal,1));
         windowed_signal = decimated_signal.*w;
     % fft signal
-        zero_padding = 1;
+        zero_padding = 4;
         processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
     
     

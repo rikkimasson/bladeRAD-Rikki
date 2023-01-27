@@ -141,7 +141,8 @@ save(exp_dir + 'deramped_signal','deramped_signal')
               for i=2:number_pulses
                     MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
               end
-
+        % IIR Filter
+            
 
 
 %% Plot RTI

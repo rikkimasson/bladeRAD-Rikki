@@ -203,100 +203,105 @@ if process_active == true
         refsig = load_refsig(active.Bw_M,active.Fs,active.Fc,active.pulse_duration);    
     % load Signal, Mix and Dermap Signal  
         file_location = exp_dir + 'active_' + Experiment_ID;
-        lp_filter = false;
-        [max_range_actual,deramped_signal] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
+        lp_filter = true;
+        [max_range_actual,deramped_signal,decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
         save(exp_dir + 'deramped_signal','deramped_signal')
     
     % Window and FFT Signal 
     % window signal
-        w = window('hann',size(deramped_signal,1));
+        w = window('blackman',size(deramped_signal,1));
         windowed_signal = deramped_signal.*w;
     % fft signal
         zero_padding = 1; % 1 = none; 2 = 100%
         processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
+        beat_frequncies = processed_signal(1:(size(processed_signal,1)/2),:); % keep +ve beat frequencies
 
     % MTI Filtering 
         % Single Delay Line Filter 
-        MTI_Data = zeros(size(processed_signal));
-              for i=2:active.number_pulses
-                    MTI_Data(:,i) = processed_signal(:,i)-processed_signal(:,i-1);
-              end
-        
-      % Plot RTI
-        Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
-        Range_bin = 1:size(processed_signal,1);
-        time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
-        RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
+            MTI_Data = zeros(size(beat_frequncies));
+            active.range_bins = size(MTI_Data,1);
+                  for i=2:active.number_pulses
+                        MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
+                  end
+            % IIR Filter
+                [b, a] = butter(12, 0.04, 'high');
+                  for i=1:active.range_bins
+                        MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
+                  end
+
+    % Derive range and time axis 
+        active.range_bins = 1:size(processed_signal,1);
+        active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
+        active.slope = active.Bw/active.pulse_duration;
+        ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
+        active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
+        active.range_bin_size = ranges(2)
+        active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
+      
+     % Plot RTI
+        RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
         figure
-        fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-            ylabel('Time (Sec)')
-            xlabel('Range Bin')
+        fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
+            ylabel('Time (s)')
+            xlabel('Range (m)')
             title("FMCW RTI - " + Experiment_ID)
-            xlim([0 200])
+%             xlim([0 200])
             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
             saveas(fig,fig_name)    
     
-    fig = figure
-    ranges_2_plot = floor(linspace(1,active.number_pulses,5));
-    for i = ranges_2_plot
-        plot(RTI_plot(i,:));
-        hold on
-    end
-        title("Single Pulse - " + Experiment_ID);
-        xlim([0 200])
-        grid on
-        ylabel('Relative Power (dB)')
-        xlabel('Range (m)')  
-        fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg') 
-
-            
-     % Plot MTI RTI
-        RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
-        figure
-        fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-            ylabel('Time (Sec)')
-            xlabel('Range Bin')
-            title("MTI FMCW RTI - " + Experiment_ID)
+     % Plot series of pulses
+        fig = figure
+        ranges_2_plot = floor(linspace(1,active.number_pulses,5));
+        for i = ranges_2_plot
+            plot(active.range_axis,RTI_plot(i,:));
+            hold on
+        end
+            title("Single Pulse - " + Experiment_ID);
             xlim([0 200])
-            fig_name = exp_dir + "MTI RTI -" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)    
+            grid on; grid minor;
+            ylabel('Relative Power (dB)')
+            xlabel('Range (m)')  
+            fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
+            saveas(fig,fig_name,'jpeg') 
 
-      % Spectrogram 
-        r_start = 1;
-        r_stop = 100;
-        l_fft = 1024;
-        pad_factor = 4;
-        overlap_factor = 0.99;
-        
-        integrated_data = sum(processed_signal(r_start:r_stop,:));
-        [spect,f] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
-        v=dop2speed(f,C/passive.Fc)*2.237;
-        spect= 10*log10(abs(spect./max(spect(:))));
-        figure
-        fig = imagesc(time_axis,f,spect,[-50 0]);   
-            ylim([-500 500])
-            colorbar
-            xlabel('Time (Sec)')
-            % ylabel('Radial Velocity (mph)')   
-            ylabel('Doppler Frequency (Hz)')  
-            fig_title = "FMCW Spectrogram -" + Experiment_ID;
-            title(fig_title);
-            fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID;
-            saveas(fig,fig_name)
             
-            MTI_integrated_data = sum(MTI_Data(r_start:r_stop,:));
-            [spect,f] = spectrogram(MTI_integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
-            v=dop2speed(f,C/passive.Fc)*2.237;
+ % Spectrogram 
+         % Parameters
+            r_start = 5;
+            r_stop = 12;
+            l_fft = 256;
+            pad_factor = 1;
+            overlap_factor = 0.90;
+     
+         % Plot Spectrogram pre-MTI filtering
+            integrated_data = sum(beat_frequncies(r_start:r_stop,:));
+            [spect,active.doppler_axis] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
             spect= 10*log10(abs(spect./max(spect(:))));
             figure
-            fig = imagesc(time_axis,f,spect,[-50 0]);   
+            fig = imagesc(active.time_axis,-active.doppler_axis,spect,[-50 0]);   
                 ylim([-500 500])
-                colorbar
+                c = colorbar
+                c.Label.String='Norm Power (dB)'
+                xlabel('Time (Sec)')
+                % ylabel('Radial Velocity (mph)')   
+                ylabel('Doppler Frequency (Hz)')  
+                fig_title = "FMCW Spectrogram -" + Experiment_ID;
+                title(fig_title);
+                fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID + ".jpg";
+                saveas(fig,fig_name,'jpeg')
+                fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID;
+                saveas(fig,fig_name)
+                
+          % Plot Spectrogram post-MTI filtering
+            MTI_integrated_data = sum(MTI_Data(r_start:r_stop,:));
+            [spect,f] = spectrogram(MTI_integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
+            spect= 10*log10(abs(spect./max(spect(:))));
+            figure
+            fig = imagesc(active.time_axis,-f,spect,[-50 0]);   
+                ylim([-500 500])
+                c = colorbar
+                c.Label.String='Norm Power (dB)'
                 xlabel('Time (Sec)')
                 % ylabel('Radial Velocity (mph)')   
                 ylabel('Doppler Frequency (Hz)')  
@@ -306,7 +311,6 @@ if process_active == true
                 saveas(fig,fig_name,'jpeg')
                 fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID;
                 saveas(fig,fig_name)
-
 
 end
 

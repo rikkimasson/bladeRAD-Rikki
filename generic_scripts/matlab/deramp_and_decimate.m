@@ -1,4 +1,4 @@
-function [actual_max_range,decimated_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter)
+function [actual_max_range,decimated_signal,decimation_factor_actual] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter)
 % MIX_AND_DERAMP - for bladeRAD FMCW Signal Processing  
 
 %   1. Load receive file - location passed in as 'file_location'
@@ -16,6 +16,7 @@ if capture_duration < 31
             raw_data = load_sc16q11(rx_file);
             % plot(real(raw_data)) check the bits toggled at ADC
 
+        
         %% Reshape array into matrix of pulses
             pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
             clear raw_data
@@ -45,7 +46,7 @@ if capture_duration < 31
        % allocate memory 
             decimated_signal_size = size(decimate(deramped_signal(:,1),decimation_factor_actual),1);
             decimated_signal = zeros(decimated_signal_size,size(deramped_signal,2)); %initiate array
-       
+
        % low-pass filter then decimate (requires alot of computation)
        if lp_filter == true
             tic
@@ -54,7 +55,6 @@ if capture_duration < 31
             end
             clear Data_Deramped
             Filter_and_Decimation_time = toc
-            return
         else 
             tic 
             for i=1:number_pulses
@@ -64,15 +64,9 @@ if capture_duration < 31
             Decimation_time = toc
         end
         
-%         if hp_filter == true
-%             tic
-%             for i=1:number_pulses
-%                  decimated_signal(:,i) = decimate(deramped_signal(:,i),decimation_factor_actual);
-%             end
-%             clear Data_Deramped
-%             Filter_and_Decimation_time = toc
-%             return
-%         end
+        
+        return
+    
 
 
 end 

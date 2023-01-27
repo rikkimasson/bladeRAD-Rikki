@@ -6,7 +6,7 @@ function createCFARVideo(frame_array,frame_rate,x_axis,x_limit,y_axis,y_limit,fi
      writerObj.FrameRate = frame_rate;           
      open(writerObj)   
      
-     for i=1:size(frame_array,2)-1   
+     for i=1:size(frame_array,2)   
 
         fig =  transpose(imagesc(x_axis,y_axis, frame_array{i}));
         title(video_title +  " CPI Number: " + i)
@@ -14,8 +14,9 @@ function createCFARVideo(frame_array,frame_rate,x_axis,x_limit,y_axis,y_limit,fi
         xlabel('Range (m)')   
         ylim([-y_limit y_limit]);
         xlim([-inf x_limit]);
-        saveas(fig,'frame','png');
-        im = imread('frame.png');
+        saveas(fig,'/tmp/frame','png');
+        im = imread('/tmp/frame.png');
+        im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end
  
