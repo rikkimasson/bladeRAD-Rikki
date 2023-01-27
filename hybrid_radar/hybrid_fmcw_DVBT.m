@@ -4,195 +4,195 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
 
-% %% Parameters - Configurable by User
-% 
-% % Capture parameters 
-% Experiment_ID = 23;    % Expeiment Name
-% capture_duration = 10;        % capture duration
-% save_directory = "~/Documents/bladeRAD_Captures/15_09_2022_farm/hybrid/"; % each experiment will save as a new folder in this directory
-% exp_dir = save_directory + Experiment_ID + '/';
-% 
-% 
-% % FMCW Parameters 
-% active.Fs = 30e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
-% active.pulse_duration = 1e-3;   % Desired Pulse Duration 
-% active.Bw = 30e6;          % LFM Bandwidth 
-% active.Fc = 2.44e9;   % Central RF 
-% active.Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-% active.Rx1_gain = 3;      % [-16, 60]
-% active.Rx2_gain = 0;       % [-16, 60]
-% Rx_1_lna = true;
-% Rx_2_lna = true;
-% active.Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
-% active.Rx_SDR = 2;   % SDR to use for RX
-% % Procesing Parameters
-% active.max_range = 1000; %max range to LPF filter data to
-% 
-% % Passive Radar Parameters
-% passive.Fc = 690e6;   % Central RF    sample_duration
-% passive.Ref_gain = 0; % 26dB seems good for C-Band Patch Antennas [-16, 60]
-% passive.Sur_gain = 26; % 40dB seems good for C-Band Patch Antennas [-16, 60]
-% passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
-% passive.Bw = 10e6;
-% passive.Fs = passive.Bw;
-% passive.max_range = 1000; %max range to cross-correlate to
-% 
+%% Parameters - Configurable by User
+
+% Capture parameters 
+Experiment_ID = 101;    % Expeiment Name
+capture_duration = 1;        % capture duration
+save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
+exp_dir = save_directory + Experiment_ID + '/';
+
+
+% FMCW Parameters 
+active.Fs = 30e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
+active.pulse_duration = 1e-3;   % Desired Pulse Duration 
+active.Bw = 30e6;          % LFM Bandwidth 
+active.Fc = 2.44e9;   % Central RF 
+active.Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+active.Rx1_gain = 3;      % [-16, 60]
+active.Rx2_gain = 0;       % [-16, 60]
+Rx_1_lna = true;
+Rx_2_lna = true;
+active.Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
+active.Rx_SDR = 2;   % SDR to use for RX
+% Procesing Parameters
+active.max_range = 1000; %max range to LPF filter data to
+
+% Passive Radar Parameters
+passive.Fc = 690e6;   % Central RF    sample_duration
+passive.Ref_gain = 0; % 26dB seems good for C-Band Patch Antennas [-16, 60]
+passive.Sur_gain = 26; % 40dB seems good for C-Band Patch Antennas [-16, 60]
+passive.SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
+passive.Bw = 10e6;
+passive.Fs = passive.Bw;
+passive.max_range = 1000; %max range to cross-correlate to
+
 process_active = true;
 process_passive = true;
-%  
-% % Parameters not configurable by user 
-%     C = physconst('LightSpeed');
-%     % FMCW parameters
-%     active.PRF = 1/active.pulse_duration;
-%     active.slope = active.Bw/active.pulse_duration;
-%     active.F_Max = active.Bw/2;
-%     R_Max = beat2range(active.F_Max,active.slope);
-%     active.sample_duration = 1/active.Fs;
-%     active.active.samples_per_pulse = active.pulse_duration/active.sample_duration;
-%     active.number_pulses = capture_duration / active.pulse_duration;
-%     active.number_cap_samps = capture_duration/active.sample_duration;
-%     active.RF_freq = active.Fc/1e6;   % RF in MHz 
-%     active.Bw_M = active.Bw/1e6;      % BW in MHz
-%     
-%     % passive parameters
-%     passive_Fs = passive.Bw;
-%     passive_sample_duration = 1/passive_Fs;
-%     passive_number_cap_samps = (2*capture_duration)/passive_sample_duration;
-%     passive_RF_freq = passive.Fc/1e6;   % RF in MHz 
-%     passive.Bw_M = passive.Bw/1e6;      % BW in MHz
-% 
-% 
-% %% Create Sawtooth Chirp for bladeRF
-% chirp = saw_LFM_chirp(active.Bw,active.pulse_duration,active.Fs);
-% save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
-% clear chirp
+ 
+% Parameters not configurable by user 
+    C = physconst('LightSpeed');
+    % FMCW parameters
+    active.PRF = 1/active.pulse_duration;
+    active.slope = active.Bw/active.pulse_duration;
+    active.F_Max = active.Bw/2;
+    R_Max = beat2range(active.F_Max,active.slope);
+    active.sample_duration = 1/active.Fs;
+    active.active.samples_per_pulse = active.pulse_duration/active.sample_duration;
+    active.number_pulses = capture_duration / active.pulse_duration;
+    active.number_cap_samps = capture_duration/active.sample_duration;
+    active.RF_freq = active.Fc/1e6;   % RF in MHz 
+    active.Bw_M = active.Bw/1e6;      % BW in MHz
+    
+    % passive parameters
+    passive_Fs = passive.Bw;
+    passive_sample_duration = 1/passive_Fs;
+    passive_number_cap_samps = (2*capture_duration)/passive_sample_duration;
+    passive_RF_freq = passive.Fc/1e6;   % RF in MHz 
+    passive.Bw_M = passive.Bw/1e6;      % BW in MHz
 
-% % %% Setup clock distribution
-%  exit_code = setup_ref(1,3);
-%  if exit_code > 0
-%      "error configuring device"
-%      return
-%  end
-%  pause(5);
-%  exit_code = setup_ref(2,1);
-%   if exit_code > 0
-%      "error configuring device"
-%      return
-%  end
-%  pause(5);
-%  exit_code = setup_ref(3,1);
-%  if exit_code > 0
-%      "error configuring device"
-%      return
-%  end
 
-% %% Setup FMCW Radar
-%     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
-%     % Setup Tx SDR 
-%     [trig_flag_1,tx_command] = create_shell_command(true,...
-%                                    Experiment_ID,...
-%                                    active.number_cap_samps,... 
-%                                    active.number_pulses,...
-%                                    0,...
-%                                    active.Tx_gain,...
-%                                    active.Rx1_gain,...
-%                                    active.Rx2_gain,...
-%                                    active.RF_freq,...
-%                                    active.Bw_M,...
-%                                    active.Tx_SDR,...
-%                                    'slave',...
-%                                    3,...
-%                                    'tx');
-%     tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
-%     status = system(tx_command);
-%     pause(5);
-% 
-% 
-%     % Setup Rx SDR 
-%     [trig_flag_2,rx_command] = create_shell_command(true,...
-%                                    Experiment_ID,...
-%                                    active.number_cap_samps,... 
-%                                    active.number_pulses,...
-%                                    0,...
-%                                    active.Tx_gain,...
-%                                    active.Rx1_gain,...
-%                                    active.Rx2_gain,...
-%                                    active.RF_freq,...
-%                                    active.Bw_M,...
-%                                    active.Rx_SDR,...
-%                                    'slave',...
-%                                    1,...
-%                                    'rx'); 
-%     if trig_flag_1 && trig_flag_2
-%         "Trigger Conflict - FMCW Radar"
-%         return
-%     end
-%     rx_command = rx_command + "&"; % uncomment for non-blocking system command execution                                                              
-%     system(rx_command); % Blocking system command execution 
-%     pause(5);
-%     
-% % %% Setup Passive Radar
-%     % by default clock out is always enabled 
-%     % 1 'set clock_sel external'; 
-%     % 2 'set clock_ref enable';
-% 
-%     % Setup Passive SDR 
-%    [trig_flag_3, passive_command] = create_shell_command(false,...
-%                                    Experiment_ID,...
-%                                    passive_number_cap_samps,... 
-%                                    0,...
-%                                    0,...
-%                                    0,...
-%                                    passive.Ref_gain,...
-%                                    passive.Sur_gain,...
-%                                    passive_RF_freq,...
-%                                    passive.Bw_M,...
-%                                    passive.SDR,...
-%                                    'master',...
-%                                    1,...
-%                                    'pass');
-%                                
-%     if trig_flag_1 && trig_flag_3 || trig_flag_2 && trig_flag_3
-%         "Trigger Conflict - Passive"
-%         return
-%     end
-% %     passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
-%     status = system(passive_command);
-%     pause(2)
-% 
-% 
-% 
-% 
-% 
-%     
-%     
-%     
-%     
-%  %% Save Raw Data and create header to directory 
-%     % make save directory
-%         make_dir = 'mkdir ' + exp_dir;
-%         system(make_dir);
-%     % move FMCW receive file to save directory
-%         move_file = 'mv /tmp/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
-%         rtn = system(move_file);
-%         if rtn == 0
-%             "FMCW Data Copied to Save directory"
-%         else 
-%             "FMCW Copy Failed"
-%             return
-% 
-%         end
-%     % move passive file to save directory
-%     move_file = 'mv /tmp/passive_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
-%     rtn = system(move_file);
-%     if rtn == 0
-%         "Passive Data Copied to Save directory"
-%     else 
-%         "Passive Copy Failed"
-%         return
-%     end
-%     save(exp_dir + 'Experimental Configuration') 
-% 
+%% Create Sawtooth Chirp for bladeRF
+chirp = saw_LFM_chirp(active.Bw,active.pulse_duration,active.Fs);
+save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
+clear chirp
+
+% %% Setup clock distribution
+ exit_code = setup_ref(1,3);
+ if exit_code > 0
+     "error configuring device"
+     return
+ end
+ pause(5);
+ exit_code = setup_ref(2,1);
+  if exit_code > 0
+     "error configuring device"
+     return
+ end
+ pause(5);
+ exit_code = setup_ref(3,1);
+ if exit_code > 0
+     "error configuring device"
+     return
+ end
+
+%% Setup FMCW Radar
+    % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
+    % Setup Tx SDR 
+    [trig_flag_1,tx_command] = create_shell_command(true,...
+                                   Experiment_ID,...
+                                   active.number_cap_samps,... 
+                                   active.number_pulses,...
+                                   0,...
+                                   active.Tx_gain,...
+                                   active.Rx1_gain,...
+                                   active.Rx2_gain,...
+                                   active.RF_freq,...
+                                   active.Bw_M,...
+                                   active.Tx_SDR,...
+                                   'slave',...
+                                   3,...
+                                   'tx');
+    tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
+    status = system(tx_command);
+    pause(5);
+
+
+    % Setup Rx SDR 
+    [trig_flag_2,rx_command] = create_shell_command(true,...
+                                   Experiment_ID,...
+                                   active.number_cap_samps,... 
+                                   active.number_pulses,...
+                                   0,...
+                                   active.Tx_gain,...
+                                   active.Rx1_gain,...
+                                   active.Rx2_gain,...
+                                   active.RF_freq,...
+                                   active.Bw_M,...
+                                   active.Rx_SDR,...
+                                   'slave',...
+                                   1,...
+                                   'rx'); 
+    if trig_flag_1 && trig_flag_2
+        "Trigger Conflict - FMCW Radar"
+        return
+    end
+    rx_command = rx_command + "&"; % uncomment for non-blocking system command execution                                                              
+    system(rx_command); % Blocking system command execution 
+    pause(5);
+    
+% %% Setup Passive Radar
+    % by default clock out is always enabled 
+    % 1 'set clock_sel external'; 
+    % 2 'set clock_ref enable';
+
+    % Setup Passive SDR 
+   [trig_flag_3, passive_command] = create_shell_command(false,...
+                                   Experiment_ID,...
+                                   passive_number_cap_samps,... 
+                                   0,...
+                                   0,...
+                                   0,...
+                                   passive.Ref_gain,...
+                                   passive.Sur_gain,...
+                                   passive_RF_freq,...
+                                   passive.Bw_M,...
+                                   passive.SDR,...
+                                   'slave',...
+                                   1,...
+                                   'pass');
+                               
+    if trig_flag_1 && trig_flag_3 || trig_flag_2 && trig_flag_3
+        "Trigger Conflict - Passive"
+        return
+    end
+%     passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
+    status = system(passive_command);
+    pause(2)
+
+
+
+
+
+    
+    
+    
+    
+ %% Save Raw Data and create header to directory 
+    % make save directory
+        make_dir = 'mkdir ' + exp_dir;
+        system(make_dir);
+    % move FMCW receive file to save directory
+        move_file = 'mv /tmp/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+        rtn = system(move_file);
+        if rtn == 0
+            "FMCW Data Copied to Save directory"
+        else 
+            "FMCW Copy Failed"
+            return
+
+        end
+    % move passive file to save directory
+    move_file = 'mv /tmp/passive_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+    rtn = system(move_file);
+    if rtn == 0
+        "Passive Data Copied to Save directory"
+    else 
+        "Passive Copy Failed"
+        return
+    end
+    save(exp_dir + 'Experimental Configuration') 
+
 
 
 
