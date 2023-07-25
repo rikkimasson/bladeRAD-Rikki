@@ -87,7 +87,7 @@ then
 			rx wait'
 fi
 
-
+# trigger '$triggerctrl' '$chain' '$fire';
 # if Reception on Rx1 & Rx2 channels are required run the following
 if [ "$tx_rx" = 'pass' ]
 then 
@@ -107,10 +107,9 @@ then
     			'$clock_ref';
     			set clock_out enable;
 			trigger j51-1 rx '$trigger';
-            		set biastee on;
-
+			print;
             
 			rx start;
-            		trigger '$triggerctrl' '$chain' '$fire';
+
 			rx wait'
 fi

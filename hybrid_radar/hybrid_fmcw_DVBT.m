@@ -1,5 +1,5 @@
-% clear all
-% % close all
+clear all
+% close all
 addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
@@ -7,7 +7,7 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 101;    % Expeiment Name
+Experiment_ID = 1001;    % Expeiment Name
 capture_duration = 1;        % capture duration
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
@@ -15,10 +15,10 @@ exp_dir = save_directory + Experiment_ID + '/';
 
 % FMCW Parameters 
 active.Fs = 30e6;          % Sample Rate of SDR per I & Q (in reality Fs is double this)
-active.pulse_duration = 1e-3;   % Desired Pulse Duration 
+active.pulse_duration = 0.2e-3;   % Desired Pulse Duration 
 active.Bw = 30e6;          % LFM Bandwidth 
 active.Fc = 2.44e9;   % Central RF 
-active.Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+active.Tx_gain = 50;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 active.Rx1_gain = 3;      % [-16, 60]
 active.Rx2_gain = 0;       % [-16, 60]
 Rx_1_lna = true;
@@ -26,7 +26,7 @@ Rx_2_lna = true;
 active.Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 active.Rx_SDR = 2;   % SDR to use for RX
 % Procesing Parameters
-active.max_range = 1000; %max range to LPF filter data to
+active.max_range = 1.4e5; %max range to LPF filter data to
 
 % Passive Radar Parameters
 passive.Fc = 690e6;   % Central RF    sample_duration
@@ -38,7 +38,7 @@ passive.Fs = passive.Bw;
 passive.max_range = 1000; %max range to cross-correlate to
 
 process_active = true;
-process_passive = true;
+process_passive = false;
  
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
@@ -66,25 +66,25 @@ process_passive = true;
 chirp = saw_LFM_chirp(active.Bw,active.pulse_duration,active.Fs);
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 clear chirp
-
-% %% Setup clock distribution
- exit_code = setup_ref(1,3);
- if exit_code > 0
-     "error configuring device"
-     return
- end
- pause(5);
- exit_code = setup_ref(2,1);
-  if exit_code > 0
-     "error configuring device"
-     return
- end
- pause(5);
- exit_code = setup_ref(3,1);
- if exit_code > 0
-     "error configuring device"
-     return
- end
+% 
+% % %% Setup clock distribution
+%  exit_code = setup_ref(1,3);
+%  if exit_code > 0
+%      "error configuring device"
+%      return
+%  end
+%  pause(5);
+%  exit_code = setup_ref(2,1);
+%   if exit_code > 0
+%      "error configuring device"
+%      return
+%  end
+%  pause(5);
+%  exit_code = setup_ref(3,1);
+%  if exit_code > 0
+%      "error configuring device"
+%      return
+%  end
 
 %% Setup FMCW Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
@@ -148,7 +148,7 @@ clear chirp
                                    passive_RF_freq,...
                                    passive.Bw_M,...
                                    passive.SDR,...
-                                   'slave',...
+                                   'master',...
                                    1,...
                                    'pass');
                                
@@ -204,7 +204,7 @@ if process_active == true
     % load Signal, Mix and Dermap Signal  
         file_location = exp_dir + 'active_' + Experiment_ID;
         lp_filter = true;
-        [max_range_actual,deramped_signal,decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
+        [max_range_actual,deramped_signal,active.decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
         save(exp_dir + 'deramped_signal','deramped_signal')
     
     % Window and FFT Signal 
@@ -239,31 +239,43 @@ if process_active == true
         active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
       
      % Plot RTI
-        RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
+        RTI_plot= transpose(20*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
         figure
         fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
-            ylabel('Time (s)')
-            xlabel('Range (m)')
-            title("FMCW RTI - " + Experiment_ID)
-%             xlim([0 200])
+            ylabel('Time (s)');
+            xlabel('Range (m)');
+            title("FMCW RTI - " + Experiment_ID);
+            xlim([0 200]);
+            c = colorbar;
+            c.Label.String='Norm Power [dB]';
             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)    
+            saveas(fig,fig_name,'jpeg');
+            saveas(fig,fig_name);    
     
      % Plot series of pulses
         fig = figure
         ranges_2_plot = floor(linspace(1,active.number_pulses,5));
         for i = ranges_2_plot
             plot(active.range_axis,RTI_plot(i,:));
+            xlim([0 200]);
             hold on
         end
             title("Single Pulse - " + Experiment_ID);
-            xlim([0 200])
+            xlim([0 200]);
             grid on; grid minor;
-            ylabel('Relative Power (dB)')
-            xlabel('Range (m)')  
+            ylabel('Relative Power (dB)');
+            xlabel('Range (m)');  
             fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg') 
+            saveas(fig,fig_name,'jpeg'); 
+
+
+         coh_pulses = sum(transpose(beat_frequncies(:,1:1000)));
+         coh_pulses = coh_pulses./max(coh_pulses(:));
+         singlepulse = abs(transpose(beat_frequncies(:,1)./max(beat_frequncies(:,1))))
+
+         figure
+         plot(20*log10(singlepulse)); hold on;
+         plot(20*log10(abs(coh_pulses))); 
 
             
  % Spectrogram 
@@ -277,15 +289,15 @@ if process_active == true
          % Plot Spectrogram pre-MTI filtering
             integrated_data = sum(beat_frequncies(r_start:r_stop,:));
             [spect,active.doppler_axis] = spectrogram(integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
-            spect= 10*log10(abs(spect./max(spect(:))));
+            spect= 20*log10(abs(spect./max(spect(:))));
             figure
             fig = imagesc(active.time_axis,-active.doppler_axis,spect,[-50 0]);   
-                ylim([-500 500])
-                c = colorbar
-                c.Label.String='Norm Power (dB)'
-                xlabel('Time (Sec)')
+%                 ylim([-500 500]);
+                c = colorbar;
+                c.Label.String='Norm Power (dB)';
+                xlabel('Time (Sec)');
                 % ylabel('Radial Velocity (mph)')   
-                ylabel('Doppler Frequency (Hz)')  
+                ylabel('Doppler Frequency (Hz)');  
                 fig_title = "FMCW Spectrogram -" + Experiment_ID;
                 title(fig_title);
                 fig_name = exp_dir + "FMCW Spectrogram_" + Experiment_ID + ".jpg";
@@ -296,21 +308,21 @@ if process_active == true
           % Plot Spectrogram post-MTI filtering
             MTI_integrated_data = sum(MTI_Data(r_start:r_stop,:));
             [spect,f] = spectrogram(MTI_integrated_data,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,active.PRF,'centered','yaxis');
-            spect= 10*log10(abs(spect./max(spect(:))));
+            spect= 20*log10(abs(spect./max(spect(:))));
             figure
             fig = imagesc(active.time_axis,-f,spect,[-50 0]);   
                 ylim([-500 500])
-                c = colorbar
-                c.Label.String='Norm Power (dB)'
-                xlabel('Time (Sec)')
+                c = colorbar;
+                c.Label.String='Norm Power (dB)';
+                xlabel('Time (Sec)');
                 % ylabel('Radial Velocity (mph)')   
-                ylabel('Doppler Frequency (Hz)')  
+                ylabel('Doppler Frequency (Hz)');  
                 fig_title = "MTI FMCW Spectrogram - " + Experiment_ID;
                 title(fig_title);
                 fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID + ".jpg";
-                saveas(fig,fig_name,'jpeg')
+                saveas(fig,fig_name,'jpeg');
                 fig_name = exp_dir + "MTI FMCW Spectrogram_" + Experiment_ID;
-                saveas(fig,fig_name)
+                saveas(fig,fig_name);
 
 end
 
@@ -329,15 +341,15 @@ end
             title("Ref channel time series");
          hold on
          subplot(2,1,2)
-             plot(real(sur_channel(1:4000000)))
+             plot(real(sur_channel(1:4000000)));
              title("Sur channel time series");    
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
-             saveas(fig,fig_name,'jpeg')
+             saveas(fig,fig_name,'jpeg');
    % Batch process data and cross correlate  
          [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir);
          save(exp_dir + 'passive_matrix','cc_matrix')
     % RTI Plot
-        RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
+        RTI_plot= transpose(20*log10(abs(cc_matrix./max(cc_matrix(:)))));
         Range_bin = linspace(0,passive.max_range,size(cc_matrix,1));
         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
         figure
@@ -345,24 +357,26 @@ end
             % xlim([1 20])
             %ylim([0 0.0005])
             grid on            
-            colorbar
-            ylabel('Time (Sec)')
-            xlabel('Range Bin')   
+            c = colorbar;
+            c.Label.String='Norm Power [dB]';
+            ylabel('Time (Sec)');
+            xlabel('Range Bin');
             fig_title = "Passive RTI - " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)
+            saveas(fig,fig_name,'jpeg');
+            saveas(fig,fig_name);
 
       % CAF of entire capture
         f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
         t_cc_matrix = transpose(cc_matrix);
         CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
         figure
-        imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
+        imagesc(Range_bin,f_axis,20*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
             ylim([-50 50])     
             % xlim([1 20])
-            colorbar
+            c = colorbar;
+            c.Label.String='Norm Power [dB]';
             ylabel('Doppler Shift (Hz)')
             xlabel('Range Bin')  
             title("CAF for entire capture" + Experiment_ID)
@@ -380,19 +394,20 @@ end
         [spect,f] = spectrogram(int_bins,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
         % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
         v=dop2speed(f,C/passive.Fc)*2.237;
-        spect= 10*log10(abs(spect./max(spect(:))));
+        spect= 20*log10(abs(spect./max(spect(:))));
         figure
         fig = imagesc(time_axis,f,spect,[-inf 0]);   
-            ylim([-inf +inf])
-            colorbar
-            xlabel('Time (Sec)')
+            ylim([-inf +inf]);
+            c = colorbar;
+            c.Label.String='Norm Power [dB]';
+            xlabel('Time (Sec)');
             % ylabel('Radial Velocity (mph)')   
-            ylabel('Doppler Frequency (Hz)')  
+            ylabel('Doppler Frequency (Hz)');  
             fig_title = "Passive Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)
+            saveas(fig,fig_name,'jpeg');
+            saveas(fig,fig_name);
 
 
 %% Proccess Passive data into Range-Doppler Slices
