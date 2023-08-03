@@ -8,7 +8,7 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 1005;    % Expeiment Name
-capture_duration = 1;        % capture duration
+capture_duration = 30;        % capture duration
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
@@ -18,7 +18,7 @@ active.Fs = 30e6;          % Sample Rate of SDR per I & Q (in reality Fs is doub
 active.pulse_duration = 0.2e-3;   % Desired Pulse Duration 
 active.Bw = 30e6;          % LFM Bandwidth 
 active.Fc = 2.44e9;   % Central RF 
-active.Tx_gain = 50;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+active.Tx_gain = 66;       % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 active.Rx1_gain = 3;      % [-16, 60]
 active.Rx2_gain = 0;       % [-16, 60]
 Rx_1_lna = true;
@@ -37,7 +37,8 @@ passive.Bw = 10e6;
 passive.Fs = passive.Bw;
 passive.max_range = 1000; %max range to cross-correlate to
 
-process_active = true;
+process_active = false;
+active_rd_slice = false;
 process_passive = false;
  
 % Parameters not configurable by user 
@@ -205,16 +206,18 @@ if process_active == true
         file_location = exp_dir + 'active_' + Experiment_ID;
         lp_filter = true;
         [max_range_actual,deramped_signal,active.decimation_factor_actual] = deramp_and_decimate(file_location,active.max_range,refsig,capture_duration,active.number_pulses,active.Fs,active.slope,lp_filter);
-        save(exp_dir + 'deramped_signal','deramped_signal')
+        %save(exp_dir + 'deramped_signal','deramped_signal')
     
     % Window and FFT Signal 
     % window signal
         w = window('blackman',size(deramped_signal,1));
-        windowed_signal = deramped_signal.*w;
+        deramped_signal = deramped_signal.*w;
     % fft signal
         zero_padding = 1; % 1 = none; 2 = 100%
-        processed_signal = fft(windowed_signal,size(windowed_signal,1)*zero_padding);
-        beat_frequncies = processed_signal(1:(size(processed_signal,1)/2),:); % keep +ve beat frequencies
+        pre_processed_size = size(deramped_signal,1);
+        deramped_signal = fft(deramped_signal,size(deramped_signal,1)*zero_padding);
+        beat_frequncies = deramped_signal(1:(size(deramped_signal,1)/2),:); % keep +ve beat frequencies
+        clear deramped_signal w
 
     % MTI Filtering 
         % Single Delay Line Filter 
@@ -230,17 +233,17 @@ if process_active == true
                   end
 
     % Derive range and time axis 
-        active.range_bins = 1:size(processed_signal,1);
-        active.fftfrequncies =fftfreq(size(processed_signal,1),1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
+        active.range_bins = 1:pre_processed_size;
+        active.fftfrequncies =fftfreq(pre_processed_size,1/(active.Fs/active.decimation_factor_actual)); % possible beat frequencies
         active.slope = active.Bw/active.pulse_duration;
         ranges = (active.fftfrequncies*C)/(2*active.slope); % calculate true range bin size    
         active.range_axis = ranges(1:(size(ranges,2)/2)); % truncate to only +ve beat frequencies
-        active.range_bin_size = ranges(2)
-        active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
+        active.range_bin_size = ranges(2);
+        active.time_axis = linspace(0,size(beat_frequncies,2)*active.pulse_duration,size(beat_frequncies,2));
       
      % Plot RTI
         RTI_plot= transpose(20*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
-        figure
+        figure;
         fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]);   
             ylabel('Time (s)');
             xlabel('Range (m)');
@@ -250,10 +253,11 @@ if process_active == true
             c.Label.String='Norm Power [dB]';
             fig_name = exp_dir + "RTI -" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg');
-            saveas(fig,fig_name);    
+            saveas(fig,fig_name);
+
     
      % Plot series of pulses
-        fig = figure
+        fig = figure;
         ranges_2_plot = floor(linspace(1,active.number_pulses,5));
         for i = ranges_2_plot
             plot(active.range_axis,RTI_plot(i,:));
@@ -267,15 +271,15 @@ if process_active == true
             xlabel('Range (m)');  
             fig_name = exp_dir + "Single_Pulse" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg'); 
-
-
-         coh_pulses = sum(transpose(beat_frequncies(:,1:1000)));
+         clear RTI_plot
+    % Cohernet Intgration
+         coh_pulses = sum(transpose(beat_frequncies(:,1:10)));
          coh_pulses = coh_pulses./max(coh_pulses(:));
-         singlepulse = abs(transpose(beat_frequncies(:,1)./max(beat_frequncies(:,1))))
-
+         singlepulse = abs(transpose(beat_frequncies(:,1)./max(beat_frequncies(:,1))));
          figure
          plot(20*log10(singlepulse)); hold on;
          plot(20*log10(abs(coh_pulses))); 
+         grid on; grid minor; legend('Single Pulse','10 Integrated pulses')
 
             
  % Spectrogram 
@@ -292,7 +296,7 @@ if process_active == true
             spect= 20*log10(abs(spect./max(spect(:))));
             figure
             fig = imagesc(active.time_axis,-active.doppler_axis,spect,[-50 0]);   
-%                 ylim([-500 500]);
+                %ylim([-500 500]);
                 c = colorbar;
                 c.Label.String='Norm Power (dB)';
                 xlabel('Time (Sec)');
@@ -311,7 +315,7 @@ if process_active == true
             spect= 20*log10(abs(spect./max(spect(:))));
             figure
             fig = imagesc(active.time_axis,-f,spect,[-50 0]);   
-                ylim([-500 500])
+                %ylim([-500 500])
                 c = colorbar;
                 c.Label.String='Norm Power (dB)';
                 xlabel('Time (Sec)');
@@ -326,9 +330,52 @@ if process_active == true
 
 end
 
+%% Process Active data into Range-Doppler Slices
+if active_rd_slice == true 
+           active.cpi = 0.5; % cohernet proccessing interval (s)
+           active.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
+           active.zero_padding = 1; % 1 = none; 2 = 100%
+           active.doppler_window = 'Hann';
+           active.dynamic_range = 50;
+           active.velocity_conv = C*(((1/C)/(active.Fc/C)));
+                 active.range_bins = size(MTI_Data,1);
+                 active.max_range_actual = max_range_actual; %1000;
+  
+          [active.number_cpi,....
+           active.pulses_per_cpi,...
+           active.range_doppler_slices] = rangeDopplerSlice(MTI_Data,active.cpi,active.PRF,...
+                                                                 active.cpi_overlap,...
+                                                                 active.zero_padding,...
+                                                                 active.doppler_window);   
+           
+           % Determine Active Data Range and Doppler Axis                                              
+             active.doppler_bins = 1:size(active.range_doppler_slices{1},1);
+             active.doppler_axis = linspace(-active.PRF/2,active.PRF/2,size(active.doppler_bins,2));
+             active.doppler_velocity_axis = active.doppler_axis * active.velocity_conv;
+             active.range_axis = linspace(0,active.max_range_actual,active.range_bins);
+             active.range_bins_axis = 1:active.range_bins;
+
+           % Create video of range-Doppler slices
+             video_name = exp_dir + "active_range-Doppler" + Experiment_ID + ".avi";
+             %video_name = "range-Doppler_log_Exp_" + Experiment_ID + ".avi";       
+             video_title = "Active Radar Capture";
+             dynamic_range = +50;
+             max_range = 100;
+             max_doppler = +inf;
+             frame_rate = 1/(capture_duration/active.number_cpi);    
+
+             createVideo(active.range_doppler_slices,frame_rate,...
+                         active.range_axis-10,max_range,...
+                         -active.doppler_velocity_axis,max_doppler,...
+                         dynamic_range,video_name,video_title);
+end
+
  %% Passive Processing
  if process_passive == true
-    passive.seg_s = 5000; % number of segments per second - analagos to PRF.
+    passive.max_range = 50
+    passive.range_zero_padding = 1; % 1 = none, 2 = 100%
+    passive.td_corr = true; % if True Cross correlation done in the time domain; if flase FD correlation
+    passive.seg_s = 1000; % number of segments per second - analagos to PRF.
     passive.seg_percent = 100;  % percentage of segment used for cross coreclation of 
                             % survallance and reference. Will affect SNR dramatically.
     % load signal and split ref and sur
@@ -338,34 +385,36 @@ end
          figure
          fig = subplot(2,1,1);
             plot(real(ref_channel(1:4000000)));
-            title("Ref channel time series");
+            title("Ref channel time series: " + max(abs(real(ref_channel))));
          hold on
          subplot(2,1,2)
-             plot(real(sur_channel(1:4000000)));
-             title("Sur channel time series");    
+             plot(real(sur_channel(1:4000000)))
+             title("Sur channel time series: " + max(abs(real(sur_channel))));    
              fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
-             saveas(fig,fig_name,'jpeg');
-   % Batch process data and cross correlate  
-         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir);
+             saveas(fig,fig_name,'jpeg')
+             
+    % Batch process data and cross correlate
+         [ref_matrix ,self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding,passive.td_corr);
          save(exp_dir + 'passive_matrix','cc_matrix')
+         clear ref_channel sur_channel
+
     % RTI Plot
         RTI_plot= transpose(20*log10(abs(cc_matrix./max(cc_matrix(:)))));
         Range_bin = linspace(0,passive.max_range,size(cc_matrix,1));
         time_axis = linspace(0,capture_duration,size(cc_matrix,2));
         figure
-        fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-            % xlim([1 20])
-            %ylim([0 0.0005])
+        fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]); 
+            %xlim([1 20])
             grid on            
-            c = colorbar;
-            c.Label.String='Norm Power [dB]';
-            ylabel('Time (Sec)');
-            xlabel('Range Bin');
+            colorbar
+            ylabel('Time (Sec)')
+            xlabel('Range Bin')   
             fig_title = "Passive RTI - " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg');
-            saveas(fig,fig_name);
+            saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
+         clear RTI_plot
 
       % CAF of entire capture
         f_axis = linspace(-passive.seg_s/2,passive.seg_s/2,size(cc_matrix,2));
@@ -373,48 +422,48 @@ end
         CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
         figure
         imagesc(Range_bin,f_axis,20*log10(abs(CAF./max(CAF(:)))),[-50 1]); 
-            ylim([-50 50])     
-            % xlim([1 20])
-            c = colorbar;
-            c.Label.String='Norm Power [dB]';
+            ylim([-500 500])     
+            xlim([1 20])
+            c = colorbar
+            c.Label.String='Norm Power (dB)'
             ylabel('Doppler Shift (Hz)')
             xlabel('Range Bin')  
             title("CAF for entire capture" + Experiment_ID)
             fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
             saveas(fig,fig_name,'jpeg')
             saveas(fig,fig_name)
+        clear CAF
         
 
      % Spectrogram 
-        int_bins = sum(cc_matrix(1:15,:),1)
+        int_bins = sum(cc_matrix(2:10,:),1);
         r_bin = 1;
-        l_fft = 1024;
+        l_fft = 256;
         pad_factor = 1;
         overlap_factor = 0.99;
         [spect,f] = spectrogram(int_bins,l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,passive.seg_s,'centered','yaxis');
-        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
+        % spect(pad_factor*l_fft/2-1Blackman-Harris:pad_factor*l_fft/2+1,:) = 0;
         v=dop2speed(f,C/passive.Fc)*2.237;
         spect= 20*log10(abs(spect./max(spect(:))));
         figure
-        fig = imagesc(time_axis,f,spect,[-inf 0]);   
-            ylim([-inf +inf]);
-            c = colorbar;
-            c.Label.String='Norm Power [dB]';
-            xlabel('Time (Sec)');
+        fig = imagesc(time_axis,f,spect,[-30 0]);   
+            ylim([-500 +500])
+            c = colorbar
+            c.Label.String='Norm Power (dB)'
+            xlabel('Time (Sec)')
             % ylabel('Radial Velocity (mph)')   
-            ylabel('Doppler Frequency (Hz)');  
-            fig_title = "Passive Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
+            ylabel('Doppler Frequency (Hz)')  
+            fig_title = "Passive Spectrogram :- " + Experiment_ID;
             title(fig_title);
             fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg');
-            saveas(fig,fig_name);
-
+            saveas(fig,fig_name,'jpeg')
+            saveas(fig,fig_name)
 
 %% Proccess Passive data into Range-Doppler Slices
            passive.PRF = passive.seg_s; %seg_s
            passive.cpi = 0.5; % cohernet proccessing interval (s)
            passive.cpi_overlap = 0.5; % overlap between CPIs (watch this - too large will cause slow exceution)
-           passive.doppler_window = 'hann';
+           passive.doppler_window = 'Hann';
            passive.zero_padding = 1;
            passive.dynamic_range = +inf;
            passive.max_range = passive.max_range;       

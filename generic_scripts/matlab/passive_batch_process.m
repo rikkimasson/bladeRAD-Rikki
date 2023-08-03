@@ -16,7 +16,7 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
     % plot spectrum of segment of ref and sur channel
         freq_axis = linspace(-Fs/2,Fs/2,size(seg_sur_channel,1));
         figure
-        fig = plot(freq_axis,fftshift(10*log10(abs(fft(seg_ref_channel(:,1000))))));
+        fig = plot(freq_axis,fftshift(20*log10(abs(fft(seg_ref_channel(:,1000))))));
         hold on 
         plot(freq_axis,fftshift(10*log10(abs(fft(seg_sur_channel(:,1000))))))
         ylabel('Relative Power (dB)')
@@ -101,7 +101,7 @@ else
             sa = ifft(X5,zero_padding*size(X,2));
             ref_self_ambg(:,i) = sa;    
         end
-         [~,bin_zero] = max(cc_matrix(:,1));
+         [~,bin_zero] = max(ref_self_ambg(:,1));
          cc_matrix = cc_matrix(bin_zero:bin_zero+max_range,:);
          self_ambg_matrix = ref_self_ambg(bin_zero:bin_zero+max_range,:);
 
