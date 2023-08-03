@@ -22,7 +22,7 @@ if capture_duration < 31
             max_val = max(abs(real(raw_data)));
             clear raw_data
             figure
-            plot(real(pulse_matrix(:,10)));
+            plot(real(pulse_matrix(:,1)));
                 ylabel('ADV Value (0-1)')
                 xlabel('Samples')      
                 title("Receive Channel Time Series - Max val: " + max_val);

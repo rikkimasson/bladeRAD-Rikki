@@ -7,9 +7,10 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1005;    % Expeiment Name
-capture_duration = 30;        % capture duration
+Experiment_ID = 1;    % Expeiment Name
+capture_duration = 1;        % capture duration
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
+save_directory = "/media/sdrlaptop1/T7/07_08_2023_farm_n0/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
 
@@ -37,9 +38,9 @@ passive.Bw = 10e6;
 passive.Fs = passive.Bw;
 passive.max_range = 1000; %max range to cross-correlate to
 
-process_active = false;
-active_rd_slice = false;
-process_passive = false;
+process_active = true;
+active_rd_slice = true;
+process_passive = true;
  
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
