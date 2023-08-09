@@ -4,6 +4,9 @@
 %     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/geode_logger/Nmea_20220915_114115.txt','r');
     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 15_07_51.nmea','r');
 %     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/iphone_logger/2022-09-15 16_10_52.nmea','r');
+%     fileID = fopen('/media/piers/T7/15_09_2022_farm/gps_ground_truth _data/geode_logger/Nmea_20220915_123004.txt','r');
+
+
 % Read the text file.
     gpsData = fscanf(fileID,'%c');
 % Create NMEA parser
@@ -17,10 +20,6 @@
 
 
 %% Drone GPS Ground Truth 
-
-% drone_file_name = 'DJIFlightRecord_2019-12-11_(09-55-56).xls'; % Drone .csv data file name
-time_shift =  - 16; %time shift in 10ths of a second
-range_shift = 2; %meters
 
 %DVB-T Tx Cordinates
 Tx_lat = 52.130139;

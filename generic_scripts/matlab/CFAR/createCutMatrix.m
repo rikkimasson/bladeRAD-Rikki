@@ -29,8 +29,8 @@ function [full_cutidx] = createCutMatrix(detector,range_bins,doppler_bins)
             for k = 1:ncutcells
                 cutimage(full_cutidx(1,k),full_cutidx(2,k)) = 1;
             end
-            figure
-            imagesc(cutimage)
-            axis equal
+%             figure
+%             imagesc(cutimage)
+%             axis equal
 end
 

@@ -12,7 +12,7 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
 
      for i=1:size(frame_array,2)   
         i
-        frame = 10*log10(abs(frame_array{i}./max(frame_array{i}(:))));
+        frame = 20*log10(abs(frame_array{i}./max(frame_array{i}(:))));
 
         fig = transpose(imagesc(x_axis,y_axis,frame, [-dynamic_range 0]));
         hold on
@@ -21,8 +21,10 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
         xlabel('Range (m)')   
         c = colorbar;
         c.Label.String='Norm Power [dB]';
-        ylim([-y_limit y_limit]);
-        xlim([0 x_limit]);
+
+        ylim([-y_limit y_limit]); % Doppler Limit
+        xlim([-inf x_limit]);   % Range Limit
+        
         colormap jet;
         saveas(fig,'/tmp/frame','png');
         im = imread('/tmp/frame.png');

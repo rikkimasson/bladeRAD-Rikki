@@ -1,12 +1,12 @@
 function [range_doppler_slice] = passive_process(ref_channel,sur_channel,xcorr_len,nSurfs,doppler_range,doppler_resolution,Fs,range_bins,exp_dir,range_zero_padding,td_corr)
 
-%PASSIVE_PROCESS Summary of this function goes here
+%PASSIVE_PROCESS 
 
 % first determine the truncation factor 
     Ts = 1/Fs;                                % Sample duration
-    cap_dur = size(ref_channel,1)/Fs;       % Capture Duration
-    xcorr_samps = ceil(xcorr_len/Ts);       % Number of samples to xcorr
-    surf_per_sec = nSurfs/cap_dur; % surfaces per second
+    cap_dur = size(ref_channel,1)/Fs;      % Capture Duration
+    xcorr_samps = ceil(xcorr_len/Ts);      % Number of samples to xcorr
+    surf_per_sec = nSurfs/cap_dur;         % surfaces per second
     cpi_stride = Fs * (1/surf_per_sec);    % number of samples to advance per CPI
 
 
@@ -32,8 +32,8 @@ for i=1
         seg_sur_channel = sur_channel(1 + ((i-1)*cpi_stride) :xcorr_samps + (i-1)*cpi_stride);
     
 %% Window Sur channel
-        seg_ref_channel = windowing(seg_ref_channel, "Blackman-Harris");
-        seg_sur_channel = windowing(seg_sur_channel, "Blackman-Harris");
+%         seg_ref_channel = windowing(seg_ref_channel, "Blackman-Harris");
+%         seg_sur_channel = windowing(seg_sur_channel, "Blackman-Harris");
 
 %% Create bank of matached filters 
         matched_filter_bank = zeros(xcorr_samps,doppler_bins); % bank of refernce segments
@@ -42,12 +42,6 @@ for i=1
         matched_filter_bank(:,b) = seg_ref_channel .* shift_bank(:,b);
         b
         end
-%         for  fD__index=1:doppler_bins 
-%             fD__index
-%             for l=1:xcorr_samps            
-%                 matched_filter_bank(:,fD__index) = seg_ref_channel(l)*exp(l*1j*2*pi*doppler_shifts(fD__index)/Fs);
-%             end        
-%         end
 
 %% Cross-correlate
     range_doppler_slice = zeros(range_bins+1, doppler_bins);

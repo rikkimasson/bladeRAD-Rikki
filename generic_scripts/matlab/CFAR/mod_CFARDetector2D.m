@@ -306,7 +306,7 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
             obj.pSizeInitialized = false;
         end
                 
-        function [yout,varargout] = stepImpl(obj,X,Idx,ThFac)
+        function [yout,varargout] = stepImpl(obj,X,Idx,ThFac,trninds)
             
             classtoUse = class(X);
             if ~obj.pSizeInitialized
@@ -321,12 +321,12 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
                 {'double','single'},{'<=',obj.pMaximumCellColIndex});
               
             if obj.ThresholdFactor(1) ~= 'I'
-                ThFac = obj.pFactor
+                ThFac = obj.pFactor;
             else
                 validateattributes(ThFac,{'double','single'},{'positive','scalar'},...
                     'step','K');
             end
-            ThFac = cast(ThFac,classtoUse)
+            ThFac = cast(ThFac,classtoUse);
             
             % Validate CUTS
 %             validateCUTS(obj,X,Idx);
@@ -343,19 +343,9 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
             if isrow(X)
                 X = [X; X];
             end
-            
             for m = 1:numCUT
                 if obj.Method(1) == 'C' %'CA'
-                    if m == 1
-                        % get the training cell index indicies, trnids
-                        trninds = cast(get2DTrainingInds(obj,X,Idx(:,m)),class(Idx));
-                        % casting to class of Idx because of codegen error
-                    else
-                        % Use last training indices to improve performance
-                        dIdx = Idx(:,m)-Idx(:,m-1);
-                        trninds = trninds + dIdx(1) + size(X,1)*dIdx(2);
-                        trninds = trninds(trninds <= size(Idx,2) );
-                    end
+                    trninds= cast(get2DTrainingInds(obj,X,Idx(:,m)),class(Idx));
                     noisePowEst = mean(X(trninds),1);
                     
                 elseif obj.Method(1) == 'S' %'SOCA'
@@ -395,6 +385,9 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
                 
                 % Form the threshold for this CUT
                 if ~isempty(trninds)
+                    noTrainCells = size(trninds,1);
+                    pfa = 1e-6;
+                    ThFac = sqrt(noTrainCells * (pfa^(-1/noTrainCells) -1) * ( ( (4/pi) - ((4/pi) -1)* exp(1-noTrainCells) )));
                     th(m,:) = noisePowEst * ThFac;
                     noisePowEst;
                     threshold = noisePowEst * ThFac;
@@ -449,6 +442,7 @@ classdef (Sealed,StrictDefaults) mod_CFARDetector2D < phased.internal.AbstractDe
                 thout(1:numAvail) = tmp(1:numAvail);
                 tmp = noise(y);
                 noiseout(1:numAvail) = tmp(1:numAvail);
+%                 save('trninds','trninds');
             end
             
             iVarg = 1;

@@ -24,20 +24,14 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
         title("FFT of Single Passive Segment");    
         legend("Reference Channel","Surveillance Channel")
         grid on
-        fig_name = exp_dir + "FFT_Segment" + ".jpg";
-        saveas(fig,fig_name,'jpeg')
+%         fig_name = exp_dir + "FFT_Segment" + ".jpg";
+%         saveas(fig,fig_name,'jpeg')
 
  %% Decimate segments in to smaller portions
         cc_size = seg_size*(seg_percent/100);  
         dec_ref_channel = seg_ref_channel(1:cc_size,:);
         dec_sur_channel = seg_sur_channel(1:cc_size,:);
         
-%% Window Sur channel
-        for i=1:size(seg_ref_channel,2)
-        dec_sur_channel(:,i) = windowing(dec_sur_channel(:,i), "Blackman-Harris");
-        dec_ref_channel(:,i) = windowing(dec_ref_channel(:,i), "Blackman-Harris");
-        end
-
 %% Cross-Correlate segments of ref and sur
 if td_corr == true
 'Time Domain Based XCORR'
@@ -65,6 +59,12 @@ if td_corr == true
          return
 else
 'Frequency Based XCORR'
+
+%% Window Sur channel
+        for i=1:size(seg_ref_channel,2)
+        dec_sur_channel(:,i) = windowing(dec_sur_channel(:,i), "chebwin");
+        dec_ref_channel(:,i) = windowing(dec_ref_channel(:,i), "chebwin");
+        end
     % Frequency domain implementation
         cc_matrix = complex(zeros((seg_size*zero_padding), (size(ref_channel,1)/seg_size)));
         ref_self_ambg = complex(zeros((seg_size*zero_padding), (size(ref_channel,1)/seg_size)));

@@ -28,7 +28,7 @@ function [outputArg1] = windowing(data, window_function)
         elseif window_function == "Hann"
             window = hann(size(data,1));
         elseif window_function == "chebwin"
-            window = chebwin(size(data,1));
+            window = chebwin(size(data,1),50);
         elseif window_function == "Blackman"
             window = blackman(size(data,1));
         elseif window_function == "Blackman-Harris"

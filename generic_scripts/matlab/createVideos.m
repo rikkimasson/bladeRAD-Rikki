@@ -30,7 +30,7 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         c.Label.String='Norm Power (dB)';
         ylim([-doppler_limit doppler_limit]);
         xlim([-inf range_limit]);
-        colormap jet;
+%         colormap jet;
 
         
         subplot(1,2,2);
@@ -44,12 +44,12 @@ function createVideo(active_array,passive_array,frame_rate,active_range_axis, pa
         c.Label.String='Norm Power (dB)';
         ylim([-doppler_limit doppler_limit]);
         xlim([-inf range_limit]);
-        colormap jet;
+%         colormap jet;
         
         
         saveas(fig,'/tmp/frame','png');
         im = imread('/tmp/frame.png');
-        im = imresize(im,[2187 1094]);
+        im = imresize(im,[1187 1094]);
         writeVideo(writerObj, im);
      end
  
