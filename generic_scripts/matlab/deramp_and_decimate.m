@@ -9,7 +9,7 @@ function [actual_max_range,decimated_signal,decimation_factor_actual] = deramp_a
 
 C = physconst('LightSpeed');
 
-if capture_duration < 31
+if capture_duration < 61
      
     %% load rx file
             rx_file= file_location + ".sc16q11";
@@ -99,7 +99,7 @@ end
 
 
 
-if capture_duration > 31
+if capture_duration > 62
     %If capture duration is over 30s, load capture in indiviual 30s sections to
     %process and concatanate at the end.
     window_size = 5; %window size in s
