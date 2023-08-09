@@ -19,12 +19,13 @@ if capture_duration < 31
         
         %% Reshape array into matrix of pulses
             pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
+            max_val = max(abs(real(raw_data)));
             clear raw_data
             figure
             plot(real(pulse_matrix(:,1)));
                 ylabel('ADV Value (0-1)')
                 xlabel('Samples')      
-                title("Receive Channel Time Series ");
+                title("Receive Channel Time Series - Max val: " + max_val);
 
         %% Deramp Signal
             deramped_signal = zeros(size(pulse_matrix,1),size(pulse_matrix,2));

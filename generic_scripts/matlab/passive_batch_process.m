@@ -101,7 +101,7 @@ else
             sa = ifft(X5,zero_padding*size(X,2));
             ref_self_ambg(:,i) = sa;    
         end
-         [~,bin_zero] = max(cc_matrix(:,1));
+         [~,bin_zero] = max(ref_self_ambg(:,1));
          cc_matrix = cc_matrix(bin_zero:bin_zero+max_range,:);
          self_ambg_matrix = ref_self_ambg(bin_zero:bin_zero+max_range,:);
 

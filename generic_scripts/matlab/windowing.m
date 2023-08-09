@@ -20,22 +20,22 @@ function [outputArg1] = windowing(data, window_function)
 %         --------------
 %         
         if window_function == "Rectangular"
-            window = ones(size(data,1));
+            w = ones(size(data,1));
         elseif window_function == "Flat top"
-            window = flattopwin(size(data,1));
+            w = flattopwin(size(data,1));
         elseif window_function == "Hamming"
-            window = hamming(size(data,1));
+            w = hamming(size(data,1));
         elseif window_function == "Hann"
-            window = hann(size(data,1));
+            w = hann(size(data,1));
         elseif window_function == "chebwin"
-            window = chebwin(size(data,1),50);
+            w = chebwin(size(data,1));
         elseif window_function == "Blackman"
-            window = blackman(size(data,1));
+            w = blackman(size(data,1));
         elseif window_function == "Blackman-Harris"
-            window = blackmanharris(size(data,1));
+            w = blackmanharris(size(data,1));
         else
-            print("Window function is not identified");
+            "Window function is not identified";
         end
-        outputArg1 = data .* window;
+        outputArg1 = data .* w;
 
         end

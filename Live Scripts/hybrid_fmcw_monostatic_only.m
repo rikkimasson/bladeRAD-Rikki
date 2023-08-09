@@ -7,8 +7,8 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1001;    % Expeiment Name
-capture_duration = 1;        % capture duration
+Experiment_ID = 1004;    % Expeiment Name
+capture_duration = 30;        % capture duration
 save_directory = "~/Documents/bladeRAD_Captures/lab/"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
@@ -37,7 +37,7 @@ passive.Bw = 10e6;
 passive.Fs = passive.Bw;
 passive.max_range = 1000; %max range to cross-correlate to
 
-process_active = true;
+process_active = false;
 process_passive = false;
  
 % Parameters not configurable by user 
