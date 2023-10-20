@@ -7,26 +7,15 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 1;       % Expeiment Name
 capture_duration = 6000;    % capture duration
 Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
 pulse_duration = 2e-3;   % Desired Pulse Duration 
 Bw = 30e6;               % LFM Bandwidth 
-%save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
-save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/multistatic/s_band/"; % each experiment will save as a new folder in this directory
-exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 2.44e9;   % Central RF 
 Tx_gain = 66;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
-Rx1_gain = 0;  % [-16, 60]
-Rx2_gain = 0;  % [-16, 60]
-Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
-Rx_SDR = 2;   % SDR to use for RX
-
-% Procesing Parameters
- max_range = 1000; %max range to LPF filter data to
- processing_flag = true;
+Tx_SDR = 10;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
 
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
@@ -35,9 +24,9 @@ Rx_SDR = 2;   % SDR to use for RX
     F_Max = Bw/2;
     R_Max = beat2range(F_Max,slope);
     sample_duration = 1/Fs;
-    samples_per_pulse = pulse_duration/sample_duration
-    number_pulses = capture_duration / pulse_duration
-    number_cap_samps = capture_duration/sample_duration
+    samples_per_pulse = pulse_duration/sample_duration;
+    number_pulses = capture_duration / pulse_duration;
+    number_cap_samps = capture_duration/sample_duration;
     Fc_M = Fc/1e6;   % RF in MHz 
     Bw_M = Bw/1e6;      % BW in MHz
 
@@ -55,7 +44,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 %     figure
 %     plot(f,20*log10(abs(fftshift(fft(chirp)))/samples_per_pulse));%plot FFT of chirp to show entire spectral content
 
-%% Setup Radar
+%% Setup SDR
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
 
     % Setup Tx SDR 
