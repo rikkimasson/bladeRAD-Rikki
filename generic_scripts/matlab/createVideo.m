@@ -26,8 +26,17 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
         xlim([-inf x_limit]);   % Range Limit
         
         colormap jet;
-        saveas(fig,'/tmp/frame','png');
-        im = imread('/tmp/frame.png');
+        if ismac
+            % Code to run on Mac platform
+        elseif isunix
+            saveas(fig,'/tmp/frame','png');
+            im = imread('/tmp/frame.png');
+        elseif ispc
+            saveas(fig,'\Temp\frame','png');
+            im = imread('\Temp\frame.png');
+        else
+            disp('Platform not supported')
+        end
         im = imresize(im,[875 1200]);
         writeVideo(writerObj, im);
      end
