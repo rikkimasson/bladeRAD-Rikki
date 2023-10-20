@@ -15,8 +15,7 @@ dinfo = dir(save_directory1);
 names_cell = {dinfo.name};
 names_cell = names_cell(3:end);
 i=37
-for i = 37
-%     
+for i = 34%     
 %     % load .mat file containing experiment parameters
 %     mat_file_name = save_directory1 + i + "/Experimental Configuration.mat";
 %     load(mat_file_name);

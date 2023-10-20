@@ -8,6 +8,8 @@ switch SDR_No
         serial_No = '6469e0a2ac0f4597937fa51de169675c';
     case 3
         serial_No = 'a0193abefb6f43b2aa7c24ed137ce1f5';
+    case 4
+        serial_No = '6aa6c4dc3dbb493fbc7ff4c2560c761d';
     otherwise 
         disp("SDR Number doesn't exist - select valid number between 1-3 ")
 end

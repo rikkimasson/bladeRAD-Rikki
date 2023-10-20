@@ -5,11 +5,12 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
         '~/repos/bladeRAD/generic_scripts/ref_signals/') 
 
 % Local directory containing the radar data
-    local_save_directory =  "/media/piers/T7/15_09_2022_farm/hybrid/";
+    local_save_directory =  "/media/sdrlaptop1/T7/15_09_2022_farm/hybrid/";
 
 % Processing Flags 
-    process_active_a = true;
-    process_passive_a = true;
+    process_active_flag = true;
+    process_passive_flag = true;
+    ground_truth_flag = false;
      
 % Select the experiment you wish to process
     experiment_number = 2;
@@ -23,6 +24,7 @@ for i=experiment_number
 
 
 %% Load Ground Truth Data 
+if ground_truth_flag == true
     mat_file_name = local_save_directory  + i + "/geode1.mat";
     load(mat_file_name);
 
@@ -35,9 +37,10 @@ for i=experiment_number
         old_sample_points = 0:capture_duration;
         active_pulses_sample_points = 1:active.number_pulses;
         gt.pulses_interp_range = interp1(old_sample_points,gt.range,active_pulses_sample_points/1000,'linear');
+end
 
 %% FMCW Processing and Print RTI
-if process_active_a == true
+if process_active_flag == true
        % load refsig for deramping
         refsig = load_refsig(active.Bw_M,active.Fs,active.Fc,active.pulse_duration);    
     % load Signal, Mix and Dermap Signal  
@@ -62,11 +65,11 @@ if process_active_a == true
                   for i=2:active.number_pulses
                         MTI_Data(:,i) = beat_frequncies(:,i)-beat_frequncies(:,i-1);
                   end
-%             % IIR Filter
-%                 [b, a] = butter(10, 0.021, 'high');
-%                   for i=1:active.range_bins
-%                         MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
-%                   end
+            % IIR Filter
+                [b, a] = butter(10, 0.021, 'high');
+                  for i=1:active.range_bins
+                        MTI_Data(i,:) = filtfilt(b,a,beat_frequncies(i,:));
+                  end
 
     % Derive range and time axis 
         active.n_range_bins = size(beat_frequncies,1);
@@ -79,10 +82,12 @@ if process_active_a == true
         active.time_axis = linspace(0,size(processed_signal,2)*active.pulse_duration,size(processed_signal,2));
       
      % Plot RTI
-        RTI_plot= transpose(10*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
+        RTI_plot= transpose(20*log10(abs(beat_frequncies./max(beat_frequncies(:)))));
         figure
         fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on;
-        plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+            if ground_truth_flag == true
+                plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+            end
             ylabel('Time (s)');xlabel('Range (m)');legend('Target Ground Truth')
             title("FMCW RTI - " + Experiment_ID)
             xlim([0 200])
@@ -91,10 +96,12 @@ if process_active_a == true
             saveas(fig,fig_name)
 
      % Plot MTI RTI
-        RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
+        RTI_plot= transpose(20*log10(abs(MTI_Data./max(MTI_Data(:)))));
         figure
         fig = imagesc(active.range_axis,active.time_axis,RTI_plot,[-50,0]); hold on;
-        plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+           if ground_truth_flag == true
+              plot(gt.pulses_interp_range,active.time_axis,'-r', 'LineWidth', 2);
+           end
             ylabel('Time (s)');xlabel('Range (m)');legend('Target Ground Truth')
             title("FMCW RTI - " + Experiment_ID)
             xlim([0 200])
@@ -203,7 +210,7 @@ if process_active_a == true
 end
 
  %% Passive Processing
- if process_passive_a == true
+ if process_passive_flag == true
     passive.max_range = 50; % maximum number of range bins - xcorr shifts.
     passive.range_zero_padding = 1; % 1 = none, 2 = 100%
     passive.td_corr = true; % true = time domain xcorr; false = freq domain xcorr
@@ -319,18 +326,18 @@ end
             passive.range_axis = linspace(0,passive.max_range_m,passive.no_range_bins);
 
 
-%             % create video of  range-Doppler slices
-%              video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
-%              %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-%              video_title = "Passive Pre-DSI";
-%              dynamic_range = +inf;
-%              max_range = 200;
-%              max_doppler = 100;
-%              frame_rate = 1/(capture_duration/passive.number_cpi);    
-%              createVideo(passive.range_doppler_slices,frame_rate,...
-%                          passive.range_axis,max_range,...
-%                          passive.doppler_axis,max_doppler,...
-%                          dynamic_range,video_name,video_title);
+            % create video of  range-Doppler slices
+             video_name = exp_dir + "Range_Doppler_Slices" + Experiment_ID + ".avi";
+             %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+             video_title = "Passive Pre-DSI";
+             dynamic_range = +inf;
+             max_range = 200;
+             max_doppler = 100;
+             frame_rate = 1/(capture_duration/passive.number_cpi);    
+             createVideo(passive.range_doppler_slices,frame_rate,...
+                         passive.range_axis,max_range,...
+                         passive.doppler_axis,max_doppler,...
+                         dynamic_range,video_name,video_title);
 %                  
 %% Direct Signal Interference Cancellation
    % set DSI cancellation parameters
@@ -354,18 +361,18 @@ end
                                                threshold,p,...
                                                passive.range_axis,passive.doppler_axis);
 
-% %   % create video of CLEANed range-Doppler slices
-%      video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
-%      %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
-%      video_title = "CLEANed Passive Radar Capture";
-%      dynamic_range = 50;
-%      max_range = 100;
-%      max_doppler = 20;
-%      frame_rate = 1/(capture_duration/passive.number_cpi);    
-%      createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
-%                  passive.range_axis,max_range,...
-%                  passive.doppler_velocity_axis,max_doppler,...
-%                  dynamic_range,video_name,video_title);
+%   % create video of CLEANed range-Doppler slices
+     video_name = exp_dir + "CLEANed_range-Doppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";
+     %video_name = "passive_RangeDoppler_CLEANed_log_Exp_" + Experiment_ID + ".avi";       
+     video_title = "CLEANed Passive Radar Capture";
+     dynamic_range = 50;
+     max_range = 100;
+     max_doppler = 20;
+     frame_rate = 1/(capture_duration/passive.number_cpi);    
+     createVideo(passive.CLEANed_range_doppler_slices,frame_rate,...
+                 passive.range_axis,max_range,...
+                 passive.doppler_velocity_axis,max_doppler,...
+                 dynamic_range,video_name,video_title);
 
 end
 

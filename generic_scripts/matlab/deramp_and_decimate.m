@@ -19,13 +19,29 @@ if capture_duration < 61
         
         %% Reshape array into matrix of pulses
             pulse_matrix = reshape(raw_data,[length(raw_data)/number_pulses,number_pulses]); %reshape array to individual pulses
-            max_val = max(abs(real(raw_data)));
+            adc_max = max(real(raw_data))
+            adc_rms = rms(real(raw_data))
+            dbfs = 10*log10(adc_rms*sqrt(2)/1)
+            dbm = 30+ 20*log10(adc_rms/(sqrt(50)))
+
             clear raw_data
             figure
-            plot(real(pulse_matrix(:,1)));
-                ylabel('ADV Value (0-1)')
-                xlabel('Samples')      
-                title("Receive Channel Time Series - Max val: " + max_val);
+            t = linspace(0,0.5e-3,length(real(pulse_matrix(:,1))));
+            plot(t,real(pulse_matrix(:,1)));
+                ylabel('ADC value (V)')
+                xlabel('Time (s)');      
+                xlim([-inf +inf])
+           pwr = abs(fftshift(fft(pulse_matrix(:,200),length(pulse_matrix(:,8)))));
+%            pwr = pwelch(pulse_matrix(:,1),length(pulse_matrix(:,1)),0,'centered','power');
+           f = linspace(-15,15,length(pulse_matrix(:,8)));
+           figure
+           plot(f,20*log10(pwr./max(pwr(:))))
+           grid on; grid minor;
+           xlabel('Frequency (MHz)');
+           ylabel('Relative power (dB)');
+
+                %                 title("Receive Channel Time Series - Max val: " + adc_max);
+
 
         %% Deramp Signal
             deramped_signal = zeros(size(pulse_matrix,1),size(pulse_matrix,2));

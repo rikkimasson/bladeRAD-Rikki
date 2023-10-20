@@ -8,9 +8,9 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 
 % Capture parameters 
 Experiment_ID = 1;       % Expeiment Name
-capture_duration = 1;    % capture duration
+capture_duration = 5;    % capture duration
 Fs = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-pulse_duration = 1e-3;   % Desired Pulse Duration 
+pulse_duration = 0.5e-3;   % Desired Pulse Duration 
 Bw = 30e6;               % LFM Bandwidth 
 %save_directory = "/media/sdrlaptop1/T7/22_06_21_N0/"; % each experiment will save as a new folder in this directory
 save_directory = "~/Documents/bladeRAD_Captures/06_07_2022_farm/multistatic/s_band/"; % each experiment will save as a new folder in this directory
@@ -18,7 +18,7 @@ exp_dir = save_directory + Experiment_ID + '/';
 
 % Radar Parameters 
 Fc = 2.44e9;   % Central RF 
-Tx_gain = 50;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
+Tx_gain = 60;  % [-23.75, 66] (S-Band = 23.5 dBm) (C-Band = 15.8 dBm)
 Rx1_gain = 0;  % [-16, 60]
 Rx2_gain = 0;  % [-16, 60]
 Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
@@ -44,8 +44,14 @@ Rx_SDR = 2;   % SDR to use for RX
 
 %% Create Sawtooth Chirp for bladeRF
 chirp = saw_LFM_chirp(Bw,pulse_duration,Fs);
+% chirp = tone_generator(-10e6,pulse_duration,Fs);
+% 
 % figure
 % plot(real(chirp));
+% spectrogram(chirp)
+% spec= (fft(chirp));
+% figure
+% plot(linspace(-15e6,15e6,length(spec)),20*log10(abs(spec)))
 save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
 % clear chirp
     % spectrogram(chirp,128,100,128,Fs,'centered','yaxis') %plot spectrogram of chirp
@@ -70,7 +76,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
                                    Bw_M,...
                                    Tx_SDR,...
                                    'slave',...
-                                   2,...
+                                  3,...
                                    'tx');
     tx_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
     status = system(tx_command);
@@ -89,7 +95,7 @@ save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
                                    Fc_M,...
                                    Bw_M,...
                                    Rx_SDR,...
-                                   'slave',...
+                                   'master',...
                                    1,...
                                    'rx'); 
     if trig_flag_1 && trig_flag_2
@@ -123,11 +129,12 @@ end
 %     spectrogram(refsig,128,100,100,Fs,'centered','yaxis')
     
 %% Load Signal, Mix and Dermap Signal  
-zero_padding = 2;
+zero_padding = 1;
 lp_filter = false;
 file_location = exp_dir + 'active_' + Experiment_ID;
 [max_range_actual,deramped_signal] = deramp_and_decimate(file_location,max_range,refsig,capture_duration,number_pulses,Fs,slope,lp_filter);
 save(exp_dir + 'deramped_signal','deramped_signal')
+
 
 
 %% Window and FFT Signal 
@@ -154,10 +161,10 @@ save(exp_dir + 'deramped_signal','deramped_signal')
     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
     Range_bin = 1:size(processed_signal,1);
     time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
-    RTI_plot= transpose(10*log10(abs(processed_signal./max(processed_signal(:)))));
+    RTI_plot= transpose(20*log10(abs(processed_signal./max(processed_signal(:)))));
     figure
     fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-        xlim([0 100])
+%         xlim([0 100])
         grid on            
         colorbar
         ylabel('Time (Sec)')
@@ -165,27 +172,27 @@ save(exp_dir + 'deramped_signal','deramped_signal')
         title("FMCW RTI - " + Experiment_ID);
         fig_name = exp_dir + "FMCW_RTI_" + Experiment_ID + ".jpg";
         saveas(fig,fig_name,'jpeg') 
-% MTI RTI
-    Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
-    Range_bin = 1:size(processed_signal,1);
-    time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
-    RTI_plot= transpose(10*log10(abs(MTI_Data./max(MTI_Data(:)))));
-    figure
-    fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
-        xlim([0 100])
-        grid on            
-        colorbar
-        ylabel('Time (Sec)')
-        xlabel('Range (m)')   
-        title("MTI FMCW RTI - " + Experiment_ID);
-        fig_name = exp_dir + "MTI_FMCW_RTI_" + Experiment_ID + ".jpg";
-        saveas(fig,fig_name,'jpeg') 
+% % MTI RTI
+%     Range_axis = linspace(0,max_range_actual,size(processed_signal,1));
+%     Range_bin = 1:size(processed_signal,1);
+%     time_axis = linspace(0,size(processed_signal,2)*pulse_duration,size(processed_signal,2));
+%     RTI_plot= transpose(20*log10(abs(MTI_Data./max(MTI_Data(:)))));
+%     figure
+%     fig = imagesc(Range_axis,time_axis,RTI_plot,[-50,0]);   
+%         xlim([0 100])
+%         grid on            
+%         colorbar
+%         ylabel('Time (Sec)')
+%         xlabel('Range (m)')   
+%         title("MTI FMCW RTI - " + Experiment_ID);
+%         fig_name = exp_dir + "MTI_FMCW_RTI_" + Experiment_ID + ".jpg";
+%         saveas(fig,fig_name,'jpeg') 
 
 % plot a single pulse
     figure
     fig = plot(Range_axis,RTI_plot(10,:));
         title("Single Pulse - " + Experiment_ID);
-        xlim([0 100])
+%         xlim([0 100])
         grid on
         ylabel('Relative Power (dB)')
         xlabel('Range (m)')  
@@ -194,19 +201,33 @@ save(exp_dir + 'deramped_signal','deramped_signal')
 
  % plot phase of maximum return
     [value, pulse_rbin] = max(processed_signal(:,100)); 
-    phase_9 = angle(processed_signal(pulse_rbin,:));
-    phase_norm_9 = phase_9 - mean(phase_9(1:100));
-    phase_time = phase_9/(2*pi*Fc);
-    save(exp_dir + 'phase_norm_9', 'phase_9')
+    phase_8 = angle(processed_signal(pulse_rbin,:));
+    phase_norm_8 = phase_8 - mean(phase_8(1:100));
+    phase_time = phase_8/(2*pi*Fc);
     figure
-    fig = plot(time_axis,phase_time)
+    fig = plot(time_axis,phase_8)
     xlabel('Time (s)')
-    ylabel('phase')
+    ylabel('phase (radians)')
     fig_name = exp_dir + "Phase Series" + Experiment_ID + ".jpg";
     saveas(fig,fig_name,'jpeg') 
     
-           
-        
+    nfft = 1024;
+    figure
+    f = linspace(-0.5 * 1000, 0.5 * 1000, nfft);
+    freq_dom = fftshift(abs(fft(processed_signal(pulse_rbin,:),nfft)));
+    plot(f,20*log10(freq_dom./max(freq_dom(:))))
+    grid on; grid minor;
+    xlabel('Frequency');
+    ylabel('Relative Power (dB)')  
+    
+    hold on;
+    [pow] = pwelch(processed_signal(pulse_rbin,:),hamming(nfft),0.9,'centered','power');
+%     figure    
+    f = linspace(-0.5 * 2000, 0.5 * 2000, nfft);
+    plot(f,10*log10(pow./max(pow(:))))
+    grid on; grid minor;
+    xlabel('Frequency (Hz)');
+    ylabel('Relative Power (dB)')      
              
 %% Plot Spectrogram 
     r_start = 1;

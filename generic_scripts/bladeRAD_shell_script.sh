@@ -45,7 +45,7 @@ then
 			
 			set frequency tx '$center_freq'M;
 			set samplerate tx '$bw'M;
-			set bandwidth tx '$bw'M;
+			set bandwidth tx 56 M;
 			set gain tx1 '$tx_gain';
 
 			tx config file=/tmp/chirp.sc16q11 format=bin samples=16384 buffers=10 xfers=5 repeat='$pulses' timeout=60s delay='$delay' ;
@@ -110,6 +110,6 @@ then
 			print;
             
 			rx start;
-
+            trigger '$triggerctrl' '$chain' '$fire';
 			rx wait'
 fi
