@@ -39,7 +39,7 @@ Rx_SDR = 10;   % SDR to use for RX
     Bw_M = Bw/1e6;      % BW in MHz
 
 
-%% Setup Radar
+%% Setup SDR
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
 
     % Setup Rx SDR 
