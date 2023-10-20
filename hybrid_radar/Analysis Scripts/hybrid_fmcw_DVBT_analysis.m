@@ -10,7 +10,7 @@ addpath('~/repos/bladeRAD/generic_scripts/matlab',...
 % Processing Flags 
     process_active_flag = true;
     process_passive_flag = true;
-    ground_truth_flag = false;
+    ground_truth_flag = true;
      
 % Select the experiment you wish to process
     experiment_number = 2;
