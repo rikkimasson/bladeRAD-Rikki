@@ -6,7 +6,7 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
      fig = figure
      writerObj = VideoWriter(file_name);
      writerObj.FrameRate = frame_rate;      
-     nFrames = size(frame_array,2)
+     nFrames = size(frame_array,2);
      open(writerObj)   
         
 
@@ -32,8 +32,8 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
             saveas(fig,'/tmp/frame','png');
             im = imread('/tmp/frame.png');
         elseif ispc
-            saveas(fig,'\Temp\frame','png');
-            im = imread('\Temp\frame.png');
+            saveas(fig, tempdir + "frame",'png');
+            im = imread(tempdir + "frame",'png');
         else
             disp('Platform not supported')
         end
