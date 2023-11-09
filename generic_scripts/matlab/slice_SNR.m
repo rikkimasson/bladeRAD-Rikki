@@ -1,4 +1,4 @@
-function [signal, noise, SNR, slice_range_doppler, index_signal_max] = slice_SNR(range_doppler_slice)
+function [signal, noise, SNR, slices_range_doppler, index_signal_max] = slice_SNR(range_doppler_slice)
 
 %   This function takes a range doppler slice, a cell array containing
 %   complex numbers, uses the ABS function in MATLAB to calculate the complex
@@ -16,5 +16,5 @@ signal = val;
 index_signal_max = idx;
 noise = 20*log10(mean(complex_2_abs(:)));
 SNR = signal - noise;
-slice_range_doppler = abs_2_power;
+slices_range_doppler = abs_2_power;
 end

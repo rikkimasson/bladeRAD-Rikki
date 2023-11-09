@@ -27,6 +27,8 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
         
         colormap jet;
         if ismac
+            saveas(fig, tempdir + "frame", 'png');
+            im = imread(tempdir + "frame",'png');
             % Code to run on Mac platform
         elseif isunix
             saveas(fig,'/tmp/frame','png');
