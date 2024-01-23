@@ -19,6 +19,7 @@ function createVideo(frame_array,frame_rate, x_axis, x_limit, y_axis, y_limit, d
 %         title(video_title + ' - CPI no.: ' + i)
         ylabel('Doppler Velocity [m/s]')
         xlabel('Range (m)')   
+        clim([-dynamic_range 0]) % -dynamic_range
         c = colorbar;
         c.Label.String='Norm Power [dB]';
 
