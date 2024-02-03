@@ -17,11 +17,11 @@ abs_2_power = 20*log10(complex_2_abs); % [dB]
 signal = val;  % [dB]
 index_signal_max = idx;
 noise = 20*log10(mean(complex_2_abs_roi(:))); % [dB]
-noise_abs = mean(complex_2_abs_roi(:)); % absolute not dB
+noise_abs = mean(complex_2_abs_roi(:)); %  [linear]
 %noise = 20*log10(mean(complex_2_abs(:)));
 SNR = signal - noise; % [dB]
 slices_range_doppler = abs_2_power; % [dB]
-slices_range_doppler_abs = complex_2_abs; % [dB]
+slices_range_doppler_abs = complex_2_abs; % [linear]
 end
 
 % function [signal, noise, SNR, slices_range_doppler, index_signal_max] = slice_SNR(range_doppler_slice)
