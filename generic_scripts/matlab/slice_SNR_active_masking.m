@@ -18,15 +18,15 @@ roi_data = range_doppler_slice(roi_indices_rows, roi_indices_cols);
 complex_2_abs_roi = abs(roi_data);
 complex_2_abs = abs(range_doppler_slice);
 abs_2_power = 20*log10(complex_2_abs); % [dB]
-% abs_2_power_masked = abs_2_power;
-% abs_2_power_masked(:, 1:5) = 0; % Mask the first 5 columns = zero
-% [val, idx] = max(abs_2_power_masked,[],"all");
-[val, idx] = max(abs_2_power,[],"all");
+abs_2_power_masked = abs_2_power;
+abs_2_power_masked(:, 1:5) = 0; % Mask the first 5 columns = zero
+[val, idx] = max(abs_2_power_masked,[],"all");
+% [val, idx] = max(abs_2_power,[],"all");
 signal = val; % [dB]
 index_signal_max = idx;
 noise = 20*log10(mean(complex_2_abs_roi(:))); % [dB]
 noise_abs = mean(complex_2_abs_roi(:)); %  [linear]
-% noise = 20*log10(mean(complex_2_abs(:)));
+%noise = 20*log10(mean(complex_2_abs(:)));
 SNR = signal - noise; % [dB]
 slices_range_doppler = abs_2_power; % [dB]
 slices_range_doppler_abs = complex_2_abs; % [linear]
