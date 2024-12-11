@@ -1,7 +1,7 @@
 clear all
-addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
-        '/home/piers/repos/bladeRAD/generic_scripts',...
-        '/home/piers/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+addpath('~/Documents/bladeRAD-Rikki/generic_scripts/matlab',...
+        '~/Documents/bladeRAD-Rikki/generic_scripts',...
+        '~/Documents/bladeRAD-Rikki/generic_scripts/ref_signals/') % path to generic functions
 
 %% Parameters - Configurable by User
 
@@ -9,30 +9,31 @@ addpath('/home/piers/repos/bladeRAD/generic_scripts/matlab',...
 Experiment_ID = 0005;       % Expeiment Name
 capture_duration = 10;    % capture duration
 Bw = 15e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
-save_directory = "/home/piers/Documents/Captures/"; % each experiment will save as a new folder in this directory
-passive_max_range = 1000; %max range to cross-correlate to
+save_directory = "~/Documents/bladerad_data/Captures/"; % each experiment will save as a new folder in this directory
+passive_max_range = 1000; %max range to cross-correlate tco
 
 % Radar Parameters 
 Fc = 530e6;   % Central RF    
 Ref_gain = 47;
 Sur_gain = 60;
-Pass_SDR = 3;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
+Pass_SDR = 1;   % SDR to use for Passive Radar - labelled on RFIC Cover and bladeRAD Facia Panel
 
 % Parameters not configurable by user 
     C = physconst('LightSpeed');
     Fs = Bw;
     sample_duration = 1/Fs;
-    number_cap_samps = 2*(capture_duration/sample_duration)
+    number_cap_samps = 2*(capture_duration/sample_duration);
     RF_freq = Fc/1e6;   % RF in MHz 
     Bw_M = Bw/1e6;      % BW in MHz
-    file_size_MBytes = (number_cap_samps * 16)*2/(8*1e6) 
+    file_size_MBytes = (number_cap_samps * 16)*2/(8*1e6) ;
 
     
 %% Setup Radar
     % 1 'set clock_sel external'; 2 'set clock_out enable; 3 'set clock_ref enable'
 
     % Setup Passive SDR 
-   [trig_flag, passive_command] = create_shell_command(Experiment_ID,...
+   [trig_flag, passive_command] = create_shell_command(true,...
+                                   Experiment_ID,...
                                    number_cap_samps,... 
                                    0,...
                                    0,...

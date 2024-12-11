@@ -3,7 +3,7 @@ function [serial_No] = select_SDR(SDR_No)
 %   Detailed explanation goes here
 switch SDR_No
     case 1
-        serial_No = '4eedd4abca9b48a0a49d2a469f09b719';
+        serial_No = 'fbe4e0624c454c8e8f9453b6b35e7cbb';
     case 2
         serial_No = '6469e0a2ac0f4597937fa51de169675c';
     case 3

@@ -51,7 +51,7 @@ rxfilename=$now
 echo "$rxfilename"
 
 
-bladeRF-cli -d "*:serial=4eedd4abca9b48a0a49d2a469f09b719" -e 'set frequency rx '$center_freq'M;
+bladeRF-cli -d "*:serial=fbe4e0624c454c8e8f9453b6b35e7cbb" -e 'set frequency rx '$center_freq'M;
 		set samplerate rx '$bw'M;
 		set bandwidth rx '$bw'M;
 		set agc off; 

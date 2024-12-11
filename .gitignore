@@ -29,3 +29,12 @@ codegen/
 
 # Octave session info
 octave-workspace
+
+
+*.png
+*.jpg
+*.JPG
+*.mat
+*.fig
+*sc16q11
+

@@ -1,15 +1,15 @@
 % clear all
 % % close allCLOSE 
-addpath('~/repos/bladeRAD/generic_scripts/matlab',...
-        '~/repos/bladeRAD/generic_scripts',...
-        '~/repos/bladeRAD/generic_scripts/ref_signals/') % path to generic functions
+addpath('~/Documents/bladeRAD-Rikki/generic_scripts/matlab',...
+        '~/Documents/bladeRAD-Rikki/generic_scripts',...
+        '~/Documents/bladeRAD-Rikki/generic_scripts/ref_signals/') % path to generic functions
 
 %% Parameters - Configurable by User
 
 % Capture parameters 
 Experiment_ID = 7;    % Expeiment Name
 capture_duration = 0.1;        % capture duration
-save_directory = "/media/piers/T7/FMCW_Loopback_Range_Calibration"; % each experiment will save as a new folder in this directory
+save_directory = "~/Documents/bladerad_data/FMCW_Loopback_Range_Calibration"; % each experiment will save as a new folder in this directory
 exp_dir = save_directory + Experiment_ID + '/';
 
 
@@ -24,19 +24,19 @@ active.Rx2_gain = 0;       % [-16, 60]
 Rx_1_lna = true;
 Rx_2_lna = true;
 active.Tx_SDR = 1;   % SDR to use for TX - labelled on RFIC Cover and bladeRAD Facia Panel
-active.Rx_SDR = 2;   % SDR to use for RX
+active.Rx_SDR = 1;   % SDR to use for RX
 % Procesing Parameters
 active.max_range = 2000; %max range to LPF filter data to
 
 process_active = true;
  
 % Parameters not configurable by user 
-    C = physconst('LightSpeed');
+    C = 2.99e8;%physconst('LightSpeed');
     % FMCW parameters
     active.PRF = 1/active.pulse_duration;
     active.slope = active.Bw/active.pulse_duration;
     active.F_Max = active.Bw/2;
-    R_Max = beat2range(active.F_Max,active.slope);
+    %R_Max = (active.F_Max,active.slope);
     active.sample_duration = 1/active.Fs;
     active.active.samples_per_pulse = active.pulse_duration/active.sample_duration;
     active.number_pulses = capture_duration / active.pulse_duration;
@@ -47,7 +47,7 @@ process_active = true;
 
 %% Create Sawtooth Chirp for bladeRF
 chirp = saw_LFM_chirp(active.Bw,active.pulse_duration,active.Fs);
-save_sc16q11('/tmp/chirp.sc16q11', chirp); %save chirp to binary file
+save_sc16q11('~/Documents/bladerad_data/chirp.sc16q11', chirp); %save chirp to binary file
 clear chirp
 
 % % %% Setup clock distribution
@@ -70,9 +70,9 @@ clear chirp
 %  end
 
 data_set= createArrays(21, [100 100]);
+pause(10)
 
-
-for Experiment_ID = 101:150
+for Experiment_ID = 101:101
 
 %% Setup FMCW Radar
     % 1 'set clock_sel external'; 2 'set clock_ref enable; 3 ''
@@ -124,7 +124,7 @@ for Experiment_ID = 101:150
         make_dir = 'mkdir ' + exp_dir;
         system(make_dir);
     % move FMCW receive file to save directory
-        move_file = 'mv /tmp/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
+        move_file = 'mv ~/Documents/bladerad_data/active_' + string(Experiment_ID) + '.sc16q11 ' + exp_dir;
         rtn = system(move_file);
         if rtn == 0
             "FMCW Data Copied to Save directory"
