@@ -6,9 +6,9 @@ addpath('~/Documents/bladeRAD-Rikki/generic_scripts/matlab',...
 %% Parameters - Configurable by User
 
 % Capture parameters 
-Experiment_ID = 0005;       % Expeiment Name
-capture_duration = 10;    % capture duration
-Bw = 15e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)
+Experiment_ID = 0003;       % Expeiment Name
+capture_duration = 2;    % capture duration
+Bw = 30e6;               % Sample Rate of SDR per I & Q (in reality Fs is double this)30 no overun 40 has overun
 save_directory = "~/Documents/bladerad_data/Captures/"; % each experiment will save as a new folder in this directory
 passive_max_range = 1000; %max range to cross-correlate tco
 
@@ -45,7 +45,7 @@ Pass_SDR = 1;   % SDR to use for Passive Radar - labelled on RFIC Cover and blad
                                    Pass_SDR,...
                                    'master',...
                                    3,...
-                                   'pass');
+                                   'rx');
                                
     %passive_command = tx_command + "&"; % uncomment for non-blocking system command execution                    
     status = system(passive_command);

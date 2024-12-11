@@ -19,6 +19,7 @@ Requirements
   2. bladeRF CLI - https://github.com/Nuand/bladeRF/wiki/Getting-Started%3A-Linux
   3. Gnome-terminal - $ sudo apt install gnome-terminal
   4. MATLAB
+  sudo apt-get install matlab-support
 
 Clone this repository in a folder named 'repos' in your home directory '~/home/repos/bladeRAD' - important to get this location correct. 
 

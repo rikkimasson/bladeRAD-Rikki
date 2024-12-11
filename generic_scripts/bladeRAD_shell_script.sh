@@ -113,3 +113,5 @@ then
             trigger '$triggerctrl' '$chain' '$fire';
 			rx wait'
 fi
+
+bash
