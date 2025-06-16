@@ -37,4 +37,4 @@ octave-workspace
 *.mat
 *.fig
 *sc16q11
-
+*.txt

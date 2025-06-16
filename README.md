@@ -21,5 +21,8 @@ Requirements
   4. MATLAB
   sudo apt-get install matlab-support
 
+
+  There are a couple different ways to install the baldeRF material. I found that I ran into issues with firmware being out of date with the FPGA image provided. And I didn't want to figure out what archive version of the FPGA went with the provided firmware version so I found the bes way was to build bladeRF from source. (https://github.com/Nuand/bladeRF/wiki/Getting-Started%3A-Linux#building-bladerf-libraries-and-tools-from-source). The next step is material from the basic device verification material (https://github.com/Nuand/bladeRF/wiki/Getting-Started%3A-Verifying-Basic-Device-Operation). Once you load the FPGA with the most up to date version (https://github.com/Nuand/bladeRF/wiki/Getting-Started%3A-Verifying-Basic-Device-Operation#loading-the-fpga). You are close to being able to use Piers scripts. Everytime you power cycle the bladeRF device you will need to load the FPGA image. Also once you are connected to the device via the command line or MATLAB, there is not great port collection and release so if your MATLAB crashes you might not be able to connect to it until power cycle. Piers scripts have some path issues. In addition the serial numbers of the baldeRF devices have been hard coded so you'll need to replace them with your number in "bladeRAD-Rikki/generic_scripts/matlab/select_SDR.m". 
+
 Clone this repository in a folder named 'repos' in your home directory '~/home/repos/bladeRAD' - important to get this location correct. 
 

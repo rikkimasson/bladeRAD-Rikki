@@ -2,95 +2,157 @@
 clear 
 clc
 close all
-addpath('~/Documents/bladeRAD-Rikki/generic_scripts/matlab',...
-        '~/Documents/bladeRAD-Rikki/generic_scripts',...
-        '~/Documents/bladeRAD-Rikki/generic_scripts/ref_signals/') % path to generic functions
+addpath('../generic_scripts/matlab',...
+        '../generic_scripts',...
+        '../generic_scripts/ref_signals/') % path to generic functions
 
 
+addpath('../../RADCOM/Binary_Generation/chirplet/Chirplet_phy/')
+% exp_dir= "~/Documents/bladerad_data/Captures/5/"; 
+exp_dir= "D:/Captures/11/"; 
+Experiment_ID = 0011;       % Experiment Name
 
-exp_dir= "~/Documents/bladerad_data/Captures/5/"; 
-Experiment_ID = 0005;       % Experiment Name
-
-
+graphs=1;
 
 file_location = exp_dir + 'active_' + Experiment_ID;
 filename= file_location + ".sc16q11";
 % [ref_channel, sur_channel]  = load_passive_data(file_location);
 [ signal, signal_i, signal_q ] = load_sc16q11(filename);
 % Plot time domain signals
-figure
-fig = subplot(2,1,1);
-plot(real(ref_channel(1:4000000)));
-title("Ref channel time series");
-hold on
-subplot(2,1,2)
-plot(real(sur_channel(1:4000000)))
-title("Sur channel time series");    
-fig_name = exp_dir + "Time Domain Signals_" + Experiment_ID + ".jpg";
-saveas(fig,fig_name,'jpeg')
-% Batch process data and cross correlate  
-seg_s = 1000; % number of segments per second - analagos to PRF.
-seg_percent = 90;  % percentage of segment used for cross coreclation of 
-% survallance and reference. Will affect SNR dramatically.
-cc_matrix = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,passive_max_range,exp_dir);
-save(exp_dir + 'passive_matrix','cc_matrix')
-% RTI Plot
-RTI_plot= transpose(10*log10(abs(cc_matrix./max(cc_matrix(:)))));
-Range_bin = linspace(0,passive_max_range,size(cc_matrix,1));
-time_axis = linspace(0,capture_duration,size(cc_matrix,2));
-figure
-fig = imagesc(Range_bin,time_axis,RTI_plot,[-50,0]);
-% xlim([1 20])
-%ylim([0 0.0005])
-grid on            
-colorbar
-ylabel('Time (Sec)')
-xlabel('Range Bin')   
-fig_title = "Passive RTI - " + Experiment_ID;
-title(fig_title);
-fig_name = exp_dir + "Passive RTI_" + Experiment_ID + ".jpg";
-saveas(fig,fig_name,'jpeg')
-saveas(fig,fig_name)
-
-% CAF of entire capture
-f_axis = linspace(-seg_s/2,seg_s/2,size(cc_matrix,2));
-t_cc_matrix = transpose(cc_matrix);
-CAF = fftshift(fft(t_cc_matrix,size(t_cc_matrix,1),1),1);
-figure
-imagesc(Range_bin,f_axis,10*log10(abs(CAF./max(CAF(:)))),[-100 1]); 
-ylim([-500 500])     
-% xlim([1 20])
-colorbar
-ylabel('Doppler Shift (Hz)')
-xlabel('Range Bin')  
-title("CAF for entire capture" + Experiment_ID)
-fig_name = exp_dir + "CAF for entire capture_" + Experiment_ID + ".jpg";
-saveas(fig,fig_name,'jpeg')
-saveas(fig,fig_name)
+aaa=23445;
 
 
-% Spectrogram 
-        r_bin = 1;
-        l_fft = 2056;
-        pad_factor = 1;
-        overlap_factor = 0.99;
-        [spect,f] = spectrogram(cc_matrix(r_bin,:),l_fft,round(l_fft*overlap_factor),l_fft*pad_factor,seg_s,'centered','yaxis');
-        % spect(pad_factor*l_fft/2-1:pad_factor*l_fft/2+1,:) = 0;
-        v=dop2speed(f,C/Fc)*2.237;
-        spect= 10*log10(abs(spect./max(spect(:))));
-        figure
-        fig = imagesc(time_axis,f,spect,[-30 0]);   
-            ylim([-600 600])
-            colorbar
-            xlabel('Time (Sec)')
-            % ylabel('Radial Velocity (mph)')   
-            ylabel('Doppler Frequency (Hz)')  
-            fig_title = "Passive Spectrogram - R Bin: " + r_bin + " - " + Experiment_ID;
-            title(fig_title);
-            fig_name = exp_dir + "Passive Spectrogram_" + Experiment_ID + ".jpg";
-            saveas(fig,fig_name,'jpeg')
-            saveas(fig,fig_name)
+% figure
+% plot(real(Y_out))
+% axis([129400,129800,-inf, inf])
+% xlabel('Time (\mus)','FontSize',15)
+% ylabel('Frequency (MHz)','FontSize',15, 'Interpreter', 'tex')
+% box on
+% set(gca,'FontSize',15)
+% set(gcf,'color','w');
+% set(gca,'linewidth',2)
+% % legend('Envelope pulse', 'Peak pulse','1st min pulse')
+% % legend('boxoff')
+% axis([-inf inf, -inf ,50])
+% grid on
+% set(gca,'XMinorTick','on','YMinorTick','on')
+% hold off
+% set(gcf,'units','inches')
+% set(gca,'linewidth',2)
+% width=8;
+% height=5;
+% set(gcf,'defaultFigurePaperPositionMode','manual')
+% set(gcf, 'Position',[0 0 width height],'PaperSize',[width,height],'PaperPositionMode','auto','InvertHardcopy','off','Renderer','painters');
+% exportgraphics(gca,'fm_fmcw_inst_freq.pdf')
+if graphs
+    figure
+    hold on
+    plot(signal_i(1:10:length(signal_i)))
+end
+
+signal=signal(2516210:3061190);
+
+if graphs
+    figure
+    hold on
+    plot(real(signal))
+    plot(imag(signal))
+    xlabel('Time samples','FontSize',15)
+    ylabel('Normalized Magnitude','FontSize',15, 'Interpreter', 'tex')
+    box on
+    set(gca,'FontSize',15)
+    set(gcf,'color','w');
+    set(gca,'linewidth',2)
+    % legend('Envelope pulse', 'Peak pulse','1st min pulse')
+    % legend('boxoff')
+    % axis([-inf inf, -inf ,50])
+    grid on
+    set(gca,'XMinorTick','on','YMinorTick','on')
+end
+
+if graphs
+    [output] = display_frequency_material(signal,1063);
+end
+BW=20e6;
+Tc=500e-6;
+dt=1/25e6;
+SUB_BANDS=5;
+fc=0;
+FFT_SIZE=512;
+SNR=40;
+sampled_bw=25e6;
+
+% test_signal=awgn(signal,SNR,'measured');
+test_signal=signal;
+
+%% turning stuff to binary file stuff
+addpath("C:\Users\rw\Documents\RADCOM\Binary_Generation\Beamformer_testing")
+
+% II=real(test_signal);
+% QQ=imag(test_signal);
+% 
+% 
+% IQIQ=zeros(1,2*length(II));
+% IQIQ(1:2:length(IQIQ))=II;
+% IQIQ(2:2:length(IQIQ))=QQ;
+% decimated_signal = decimate(test_signal,4);
+
+% write_binary_to_text('input_comms_signal',test_signal)
 
 
 
-         
+
+
+
+
+
+%% end of producing binary file stuff
+
+[chirp_order_total,chirp_up_down] = chirplet_phy(test_signal,BW,Tc,dt,fc,SUB_BANDS,FFT_SIZE,graphs,sampled_bw);
+% chirp_order_total=chirp_order_total-1;
+% total_bits=[chirp_order_total,chirp_up_down];
+% temp=binaryVectorToHex(total_bits)
+load('temporay_file.mat')
+input_sequence=temp;
+packet_length=120;
+[outputArg1,outputArg2] = return_packets_from_sequence(input_sequence,packet_length);
+
+
+% packet_length=120;
+% pos_in_packet=0;
+% look_for_start_sequence=1;
+% start_sequence=0;
+% enter_packet=0;
+% packet={};
+% number_packets=0;
+% for i=1:1:length(temp)
+%     if look_for_start_sequence
+%         if temp{i}=='4'
+%             start_sequence=start_sequence+1;
+%             if start_sequence>7
+%                 enter_packet=1;
+%                 look_for_start_sequence=0;
+%                 start_sequence=0;
+%             end
+%         else
+%             start_sequence=0;
+%         end
+%     else
+%         if enter_packet
+%             if pos_in_packet<packet_length
+%                 packet=[packet,temp{i}];
+%                 pos_in_packet=pos_in_packet+1;
+%             else
+%                 % end of packet
+%                 packet=[packet,temp{i}];
+%                 enter_packet=0;
+%                 look_for_start_sequence=1;
+%                 pos_in_packet=0;
+%                 writecell(packet,sprintf("packet%d.txt",number_packets),'Delimiter',',');
+%                 number_packets=number_packets+1;
+%                 packet={};
+%             end
+%         end
+%     end
+% 
+% end

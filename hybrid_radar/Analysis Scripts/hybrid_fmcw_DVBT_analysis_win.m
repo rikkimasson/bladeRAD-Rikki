@@ -1,7 +1,7 @@
 
 % 1. You'll need to update the below to folder locations.
-   local_save_directory =  "D:\15_09_2022_farm\hybrid\"; % Local directory containing the radar data.
-   repo_directory = "C:\Users\uceebea\Documents\GitHub";
+  local_save_directory = "D:\Passive_Data\Data Files";
+  repo_directory = "C:\Users\rw\Documents\";
 
 % 2. Processing Flags - choose whether to 
    process_active_flag = true;
@@ -12,15 +12,19 @@
    experiment_number = 2;
 
 % adds paths to generic functions 
-        addpath(repo_directory + '\bladeRAD\generic_scripts\matlab',...
-                repo_directory + '\bladeRAD\generic_scripts\matlab\CFAR\',...
-                repo_directory + '\bladeRAD\generic_scripts',...
-                repo_directory + '\bladeRAD\generic_scripts\ref_signals\') 
+        % addpath('~/Documents/bladeRAD-Rikki/generic_scripts\matlab',...
+        %         '~/Documents/bladeRAD-Rikki/generic_scripts\matlab\CFAR\',...
+        %         '~/Documents/bladeRAD-Rikki/generic_scripts',...
+        %         '~/Documents/bladeRAD-Rikki/generic_scripts\ref_signals\') 
+        addpath(repo_directory + '\bladeRAD-Rikki\generic_scripts\matlab',...
+        repo_directory + '\bladeRAD-Rikki\generic_scripts\matlab\CFAR\',...
+        repo_directory + '\bladeRAD-Rikki\generic_scripts',...
+        repo_directory + '\bladeRAD-Rikki\generic_scripts\ref_signals\')
 
 for i=experiment_number
     
 %% Load .mat file containing experiment setup parameters
-        mat_file_name = local_save_directory + i + "\Experimental Configuration.mat";
+        mat_file_name = local_save_directory +  "Experimental Configuration.mat";
         load(mat_file_name);
         exp_dir = local_save_directory + i + '\';
 

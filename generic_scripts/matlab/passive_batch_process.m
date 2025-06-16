@@ -1,9 +1,10 @@
-function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,max_range,exp_dir,zero_padding,td_corr)
+function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(ref_channel,sur_channel,seg_s,seg_percent,Fs,min_range,max_range,exp_dir,zero_padding,td_corr)
 %PASSIVE_BATCH_PROCESS Summary of this function goes here
 %   seg_s : number of segments a second. 
 %   seg_percent : percentage of segment used for cross coreclation of 
 %                 survallance and reference. Will affect SNR dramatically.
-
+% ref_channel=ref_channel';
+% sur_channel=sur_channel';
 
 %% Reshape capture into segments
     % Details: segement size determines the limmit of non-ambigious Doppler
@@ -29,8 +30,13 @@ function [dec_ref_channel, self_ambg_matrix, cc_matrix] = passive_batch_process(
 
  %% Decimate segments in to smaller portions
         cc_size = seg_size*(seg_percent/100);  
-        dec_ref_channel = seg_ref_channel(1:cc_size,:);
-        dec_sur_channel = seg_sur_channel(1:cc_size,:);
+        if seg_percent>99
+            dec_ref_channel = seg_ref_channel;
+            dec_sur_channel = seg_sur_channel;
+        else
+            dec_ref_channel = seg_ref_channel(1:cc_size,:);
+            dec_sur_channel = seg_sur_channel(1:cc_size,:);
+        end
         
 %% Cross-Correlate segments of ref and sur
 if td_corr == true
@@ -102,8 +108,8 @@ else
             ref_self_ambg(:,i) = sa;    
         end
          [~,bin_zero] = max(ref_self_ambg(:,1));
-         cc_matrix = cc_matrix(bin_zero:bin_zero+max_range,:);
-         self_ambg_matrix = ref_self_ambg(bin_zero:bin_zero+max_range,:);
+         cc_matrix = cc_matrix(bin_zero+min_range:bin_zero+max_range,:);
+         self_ambg_matrix = ref_self_ambg(bin_zero+min_range:bin_zero+max_range,:);
 
       
 

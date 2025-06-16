@@ -7,6 +7,8 @@ function [number_cpi,pulses_per_cpi,range_doppler_slices] = rangeDopplerSlice(ra
   cpi_stride = round(pulses_per_cpi*(1-cpi_overlap)); % number of pulses to stride each for next CPI
   number_cpi = ceil((size(radar_matrix,2)-pulses_per_cpi)/cpi_stride);
   doppler_bins = (pulses_per_cpi*zero_padding);
+
+  % doppler_bins=2.^nextpow2(doppler_bins);
   if mod(doppler_bins,2) == 0
       doppler_bins = doppler_bins + 1;
   end
