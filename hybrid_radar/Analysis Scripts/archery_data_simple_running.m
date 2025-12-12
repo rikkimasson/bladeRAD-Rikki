@@ -9,6 +9,7 @@ pc = 3;%input(prompt);
 addpath("C:/Users/rw/Documents/RADCOM/misc_helper_functions");
 
 local_save_directory = "D:/passive_archery_data/run_5_32x_small/";
+local_save_directory = "C:/Users/rw/Downloads/run_5_32x_small/run_5_32x_small/";
 repo_directory = "C:\Users\rw\Documents\";
 
 
@@ -56,6 +57,10 @@ repo_directory + '\bladeRAD-Rikki\generic_scripts\ref_signals\')
         load(file_location+'passive_surv_output');
         data=double(data);
         sur_channel  = data(1:2:end)+1j .*data(2:2:end);
+
+        % write_binary_to_text('passive_ref',ref_channel(1:2000000),16,0);
+        % 
+        % write_binary_to_text('passive_surv',sur_channel(1:2000000),16,0);
     
        
         
@@ -68,7 +73,81 @@ repo_directory + '\bladeRAD-Rikki\generic_scripts\ref_signals\')
 
         figure,plot(real(data(1:100000)))
 
-        figure,plot(abs(fft(data)))
+        figure,plot(abs(fft(ref_channel(1:100000))))
+        
+        fs=3.84e9/8/32;
+        dt=1/fs;
+        delta=[224, 112,56,28]*1e-6;
+        dd=delta(4);
+        Tu=896e-6;
+        D=dd/dt;
+        D=413;
+        S=Tu/dt;
+        Tots=S+D;
+        B=S-D;
+        P1=zeros(1,100000);
+
+        temp=ref_channel(1:200000);
+        % frequency_fix=temp;
+        t=1:1:length(temp);
+        frequency_fix=exp(1j*0.15/S*t);
+
+        figure,
+        hold on
+        plot(real(frequency_fix))
+
+        temp=temp.*frequency_fix;
+
+        for i=1:1:100000
+            P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
+        end
+        
+        figure
+        for i=1:1:100
+            XF=fft(temp(11982+i-20:11982+i+S));        
+            scatter(real(XF(1:100)),imag(XF(1:100)))
+            drawnow
+            pause(0.5)
+
+        end
+
+        figure
+        plot(abs(P1))
+
+        S=13440;
+
+        figure
+        hold on
+        plot(real(temp(11982:11982+D)))
+        plot(real(temp(11982+S:11982+S+D)))
+    
+        figure
+        % for n=1:1:20
+        plot((angle(P1)))
+        temp2=temp.*exp(-1j*19*pi/100);
+        XF=fft(temp2(11982+D:11982+D+S));
+
+        % try resampling the frequency data
+       
+        scatter(real(XF(1:200)),imag(XF(1:200)))
+        hold on
+        scatter(real(XF(1)),imag(XF(1)),"filled")
+        scatter(real(XF(2)),imag(XF(2)),"filled")
+        scatter(real(XF(3)),imag(XF(3)),"filled")
+        % drawnow 
+        % pause(0.5)
+        % 
+        % end
+        figure
+        plot(abs((XF)))
+
+        find(real(XF(1:200))<-9000)
+        
+        figure
+        scatter(real(XF(1:500)),imag(XF(1:500)))
+        scatter(real(XF(2000:2200)),imag(XF(2000:2200)))
+
+
 
         % 
         % figure
