@@ -89,6 +89,8 @@ permanant_carriers= [0 48 54 87 141 156 192 ...
 6252 6258 6318 6381 6435 6489 6603 ...
 6795 6816];
 
+permanant_carriers=permanant_carriers+1;
+
 %% mapping from 64qam to bits
 
 map_64qam(1,1)='100000';
@@ -285,6 +287,12 @@ XX=linspace(-1-5+7,6819-5+4,length(msignal));
 XV=linspace(1,6817,6817);
 new_signal=interp1(XX,msignal,XV,"spline");
 XF_int=fft(new_signal,6817);
+XF_int_temp=fft(new_signal,6817);
+
+figure
+hold on
+plot(XV,real(new_signal))
+plot(XX,real(msignal))
 
 figure 
 hold on
@@ -354,13 +362,55 @@ hold on
 scatter(real(X_symbols_new(1:1500)),imag(X_symbols_new(1:1500)))
 figure
 hold on
-scatter(real(X_symbols_new(1:5000)),imag(X_symbols_new(1:5000)))
+scatter(real(X_symbols_new(1:6817)),imag(X_symbols_new(1:6817)))
 scatter(real(X_symbols_new(10)),imag(X_symbols_new(10)),"filled")
 scatter(real(X_symbols_new(22)),imag(X_symbols_new(22)),"filled")
 scatter(real(X_symbols_new(34)),imag(X_symbols_new(34)),"filled")
 scatter(real(X_symbols_new(46)),imag(X_symbols_new(46)),"filled")
 scatter(real(X_symbols_new(58)),imag(X_symbols_new(58)),"filled")
 scatter(real(X_symbols_new(70)),imag(X_symbols_new(70)),"filled")
+
+scale_factor=6.3636;
+sypo=[-7,-5,-3,-1,1,3,5,7]/scale_factor;
+i_symbol=zeros(1,6817);
+q_symbol=zeros(1,6817);
+
+for i=1:1:6817
+   [~,i_symbol(i)]= min(abs(real(X_symbols_new(i))-sypo));
+   [~,q_symbol(i)]= min(abs(imag(X_symbols_new(i))-sypo));
+end
+
+
+
+
+figure,
+hold on
+plot(real(new_signal))
+plot(imag(new_signal))
+
+temp3=fftshift(XF_int);
+% XF_int_temp
+
+figure
+hold on
+plot(real(temp3))
+plot(real(XF_int_temp))
+
+resignal=ifft(ifftshift(XF_int),length(new_signal));
+
+figure
+hold on
+plot(real(new_signal))
+plot(real(resignal))
+
+temp4=ifftshift(XF_int);
+temp5=(length(msignal)/6817)*[temp4(1:3409),zeros(1,length(msignal)-6817),temp4(3410:end)];
+res2_signal=ifft(temp5);
+
+figure
+hold on
+plot(real(msignal))
+plot(real(res2_signal))
 
 figure
 hold on
