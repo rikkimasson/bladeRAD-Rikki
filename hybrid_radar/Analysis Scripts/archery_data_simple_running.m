@@ -92,78 +92,78 @@ permanant_carriers= [0 48 54 87 141 156 192 ...
 permanant_carriers=permanant_carriers+1;
 
 %% mapping from 64qam to bits
+map_64qam=cell(8,8);
+map_64qam{1,1}='100000';
+map_64qam{1,2}='100010';
+map_64qam{1,3}='101010';
+map_64qam{1,4}='101000';
+map_64qam{1,5}='001000';
+map_64qam{1,6}='001010';
+map_64qam{1,7}='000010';
+map_64qam{1,8}='000000';
 
-map_64qam(1,1)='100000';
-map_64qam(1,2)='100010';
-map_64qam(1,3)='101010';
-map_64qam(1,4)='101000';
-map_64qam(1,5)='001000';
-map_64qam(1,6)='001010';
-map_64qam(1,7)='000010';
-map_64qam(1,8)='000000';
+map_64qam{2,1}='100001';
+map_64qam{2,2}='100011';
+map_64qam{2,3}='101011';
+map_64qam{2,4}='101001';
+map_64qam{2,5}='001001';
+map_64qam{2,6}='001011';
+map_64qam{2,7}='000011';
+map_64qam{2,8}='000001';
 
-map_64qam(2,1)='100001';
-map_64qam(2,2)='100011';
-map_64qam(2,3)='101011';
-map_64qam(2,4)='101001';
-map_64qam(2,5)='001001';
-map_64qam(2,6)='001011';
-map_64qam(2,7)='000011';
-map_64qam(2,8)='000001';
+map_64qam{3,1}='100101';
+map_64qam{3,2}='100111';
+map_64qam{3,3}='101111';
+map_64qam{3,4}='101101';
+map_64qam{3,5}='001101';
+map_64qam{3,6}='001111';
+map_64qam{3,7}='000111';
+map_64qam{3,8}='000101';
 
-map_64qam(3,1)='100101';
-map_64qam(3,2)='100111';
-map_64qam(3,3)='101111';
-map_64qam(3,4)='101101';
-map_64qam(3,5)='001101';
-map_64qam(3,6)='001111';
-map_64qam(3,7)='000111';
-map_64qam(3,8)='000101';
+map_64qam{4,1}='100100';
+map_64qam{4,2}='100110';
+map_64qam{4,3}='101110';
+map_64qam{4,4}='101100';
+map_64qam{4,5}='001100';
+map_64qam{4,6}='001110';
+map_64qam{4,7}='000110';
+map_64qam{4,8}='000100';
 
-map_64qam(4,1)='100100';
-map_64qam(4,2)='100110';
-map_64qam(4,3)='101110';
-map_64qam(4,4)='101100';
-map_64qam(4,5)='001100';
-map_64qam(4,6)='001110';
-map_64qam(4,7)='000110';
-map_64qam(4,8)='000100';
+map_64qam{5,1}='110100';
+map_64qam{5,2}='110110';
+map_64qam{5,3}='111110';
+map_64qam{5,4}='111100';
+map_64qam{5,5}='011100';
+map_64qam{5,6}='011110';
+map_64qam{5,7}='010110';
+map_64qam{5,8}='010100';
 
-map_64qam(5,1)='110100';
-map_64qam(5,2)='110110';
-map_64qam(5,3)='111110';
-map_64qam(5,4)='111100';
-map_64qam(5,5)='011100';
-map_64qam(5,6)='011110';
-map_64qam(5,7)='010110';
-map_64qam(5,8)='010100';
+map_64qam{6,1}='110101';
+map_64qam{6,2}='110111';
+map_64qam{6,3}='111111';
+map_64qam{6,4}='111101';
+map_64qam{6,5}='011101';
+map_64qam{6,6}='011111';
+map_64qam{6,7}='010111';
+map_64qam{6,8}='010101';
 
-map_64qam(6,1)='110101';
-map_64qam(6,2)='110111';
-map_64qam(6,3)='111111';
-map_64qam(6,4)='111101';
-map_64qam(6,5)='011101';
-map_64qam(6,6)='011111';
-map_64qam(6,7)='010111';
-map_64qam(6,8)='010101';
+map_64qam{7,1}='110001';
+map_64qam{7,2}='110011';
+map_64qam{7,3}='111011';
+map_64qam{7,4}='111001';
+map_64qam{7,5}='011001';
+map_64qam{7,6}='011011';
+map_64qam{7,7}='010011';
+map_64qam{7,8}='010001';
 
-map_64qam(7,1)='110001';
-map_64qam(7,2)='110011';
-map_64qam(7,3)='111011';
-map_64qam(7,4)='111001';
-map_64qam(7,5)='011001';
-map_64qam(7,6)='011011';
-map_64qam(7,7)='010011';
-map_64qam(7,8)='010001';
-
-map_64qam(8,1)='110000';
-map_64qam(8,2)='110010';
-map_64qam(8,3)='111010';
-map_64qam(8,4)='111000';
-map_64qam(8,5)='011000';
-map_64qam(8,6)='011010';
-map_64qam(8,7)='010010';
-map_64qam(8,8)='010000';
+map_64qam{8,1}='110000';
+map_64qam{8,2}='110010';
+map_64qam{8,3}='111010';
+map_64qam{8,4}='111000';
+map_64qam{8,5}='011000';
+map_64qam{8,6}='011010';
+map_64qam{8,7}='010010';
+map_64qam{8,8}='010000';
 
 %%
     %%
@@ -316,7 +316,10 @@ scatter(real(XF_int(190)),imag(XF_int(190)),"filled")
 
 % end
 XF_int=fftshift(XF_int);
-X_pilots_int=XF_int(10:12:end);
+temp56=10:12:6817;
+carrier_locations= unique([temp56, permanant_carriers]);
+
+X_pilots_int=XF_int(carrier_locations);
 
 figure
 hold on
@@ -337,7 +340,7 @@ prbs_seq = generate_prbs(length(XF_int));
 
 pilot_locations=(4/3)*2*(0.5-prbs_seq)+1j*0;
 
-CS=X_pilots_int./pilot_locations(10:12:end)';
+CS=X_pilots_int./pilot_locations(carrier_locations)';
 
 X_pilots_new=X_pilots_int./CS;
 
@@ -346,9 +349,9 @@ hold on
 scatter(real(X_pilots_new(1:20)),imag(X_pilots_new(1:20)),"filled")
 
 X_symbols_new=XF_int;
-pilots_ind=10:12:length(XF_int);
+% pilots_ind=10:12:length(XF_int);
 for i=1:1:6817
-    [M,II]=min(abs(i-pilots_ind));
+    [M,II]=min(abs(i-carrier_locations));
     X_symbols_new(i)=XF_int(i)./CS(II);
 
 end
@@ -360,6 +363,8 @@ scatter(real(XF_int(1:500)),imag(XF_int(1:500)))
 figure
 hold on
 scatter(real(X_symbols_new(1:1500)),imag(X_symbols_new(1:1500)))
+
+
 figure
 hold on
 scatter(real(X_symbols_new(1:6817)),imag(X_symbols_new(1:6817)))
@@ -369,6 +374,7 @@ scatter(real(X_symbols_new(34)),imag(X_symbols_new(34)),"filled")
 scatter(real(X_symbols_new(46)),imag(X_symbols_new(46)),"filled")
 scatter(real(X_symbols_new(58)),imag(X_symbols_new(58)),"filled")
 scatter(real(X_symbols_new(70)),imag(X_symbols_new(70)),"filled")
+scatter(real(X_symbols_new(permanant_carriers)),imag(X_symbols_new(permanant_carriers)),"filled",'r')
 
 scale_factor=6.3636;
 sypo=[-7,-5,-3,-1,1,3,5,7]/scale_factor;
@@ -376,12 +382,30 @@ i_symbol=zeros(1,6817);
 q_symbol=zeros(1,6817);
 
 for i=1:1:6817
-   [~,i_symbol(i)]= min(abs(real(X_symbols_new(i))-sypo));
-   [~,q_symbol(i)]= min(abs(imag(X_symbols_new(i))-sypo));
+    if any( carrier_locations== i)
+        continue 
+    else
+        [~,i_symbol(i)]= min(abs(real(X_symbols_new(i))-sypo));
+        [~,q_symbol(i)]= min(abs(imag(X_symbols_new(i))-sypo));
+    end
+end
+
+% map_64qam
+
+perfect_symbols=complex(zeros(1,6817));
+for i=1:1:6817
+    if any( carrier_locations== i)
+        % continue 
+        perfect_symbols(i)=(4/3)*2*(0.5-prbs_seq(i))+1j*0;
+    else
+        perfect_symbols(i)=sypo(i_symbol(i))+1j*sypo(q_symbol(i));
+    end
 end
 
 
-
+figure
+hold on
+scatter(real(perfect_symbols),imag(perfect_symbols))
 
 figure,
 hold on
