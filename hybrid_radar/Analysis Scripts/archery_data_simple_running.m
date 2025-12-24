@@ -270,478 +270,483 @@ Tots=S+D;
 B=S-D;
 [outputArg1] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers);
 
-temp=ref_channel(1:200000);
-
-for i=1:1:length(temp)-S-D-1
-    P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
-end
-
-figure
-plot(abs(P1))
-
-% for i=1:1:10
-msignal=temp(11982+D+2-1:11982+D+S+1);
-
-XF=fft(msignal);
-
-figure 
-scatter(real(XF(1:300)),imag(XF(1:300)))
+%% legacy stuff from when I was trying to get the demodulator working
+% temp=ref_channel(1:200000);
+% 
+% for i=1:1:length(temp)-S-D-1
+%     P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
 % end
-
-X_pilots=XF(10:12:end);
-
-figure
-plot(abs(X_pilots))
-
-
-XX=linspace(-1-5+7,6819-5+4,length(msignal));
-XV=linspace(1,6817,6817);
-new_signal=interp1(XX,msignal,XV,"spline");
-XF_int=fft(new_signal,6817);
-% XF_int_temp=fft(new_signal,6817);
-
-figure
-hold on
-plot(XV,real(new_signal))
-plot(XX,real(msignal))
-
-figure 
-hold on
-scatter(real(XF_int(1:200)),imag(XF_int(1:200)))
-scatter(real(XF_int(10)),imag(XF_int(10)),"filled")
-scatter(real(XF_int(22)),imag(XF_int(22)),"filled")
-scatter(real(XF_int(34)),imag(XF_int(34)),"filled")
-scatter(real(XF_int(46)),imag(XF_int(46)),"filled")
-scatter(real(XF_int(58)),imag(XF_int(58)),"filled")
-scatter(real(XF_int(70)),imag(XF_int(70)),"filled")
-scatter(real(XF_int(82)),imag(XF_int(82)),"filled")
-scatter(real(XF_int(94)),imag(XF_int(94)),"filled")
-scatter(real(XF_int(106)),imag(XF_int(106)),"filled")
-scatter(real(XF_int(118)),imag(XF_int(118)),"filled")
-scatter(real(XF_int(130)),imag(XF_int(130)),"filled")
-scatter(real(XF_int(142)),imag(XF_int(142)),"filled")
-scatter(real(XF_int(154)),imag(XF_int(154)),"filled")
-scatter(real(XF_int(166)),imag(XF_int(166)),"filled")
-scatter(real(XF_int(178)),imag(XF_int(178)),"filled")
-scatter(real(XF_int(190)),imag(XF_int(190)),"filled")
-
-% end
-XF_int=fftshift(XF_int);
-temp56=10:12:6817;
-carrier_locations= unique([temp56, permanant_carriers]);
-
-X_pilots_int=XF_int(carrier_locations);
-
-figure
-hold on
-scatter(real(XF_int(1:200)),imag(XF_int(1:200)))
-scatter(real(X_pilots_int(1:20)),imag(X_pilots_int(1:20)),"filled")
-scatter(real(X_pilots_int(21:40)),imag(X_pilots_int(21:40)),"filled")
-scatter(real(X_pilots_int(41:80)),imag(X_pilots_int(41:80)),"filled")
-scatter(real(X_pilots_int(81:120)),imag(X_pilots_int(81:120)),"filled")
-scatter(real(X_pilots_int(121:150)),imag(X_pilots_int(121:150)),"filled")
-scatter(real(X_pilots_int(150:180)),imag(X_pilots_int(150:180)),"filled")
-
-check_prbs=zeros(1,length(X_pilots_int));
-check_prbs(imag(X_pilots_int)<0)=1;
-figure
-plot(abs(X_pilots_int))
-
-prbs_seq = generate_prbs(length(XF_int));
-
-pilot_locations=(4/3)*2*(0.5-prbs_seq)+1j*0;
-
-CS=X_pilots_int./pilot_locations(carrier_locations)';
-
-X_pilots_new=X_pilots_int./CS;
-
-figure
-hold on
-scatter(real(X_pilots_new(1:20)),imag(X_pilots_new(1:20)),"filled")
-
-X_symbols_new=XF_int;
-% pilots_ind=10:12:length(XF_int);
-for i=1:1:6817
-    [M,II]=min(abs(i-carrier_locations));
-    X_symbols_new(i)=XF_int(i)./CS(II);
-
-end
-
-figure
-hold on
-scatter(real(XF_int(1:500)),imag(XF_int(1:500)))
-
-figure
-hold on
-scatter(real(X_symbols_new(1:1500)),imag(X_symbols_new(1:1500)))
-
-
-figure
-hold on
-scatter(real(X_symbols_new(1:6817)),imag(X_symbols_new(1:6817)))
-scatter(real(X_symbols_new(10)),imag(X_symbols_new(10)),"filled")
-scatter(real(X_symbols_new(22)),imag(X_symbols_new(22)),"filled")
-scatter(real(X_symbols_new(34)),imag(X_symbols_new(34)),"filled")
-scatter(real(X_symbols_new(46)),imag(X_symbols_new(46)),"filled")
-scatter(real(X_symbols_new(58)),imag(X_symbols_new(58)),"filled")
-scatter(real(X_symbols_new(70)),imag(X_symbols_new(70)),"filled")
-scatter(real(X_symbols_new(permanant_carriers)),imag(X_symbols_new(permanant_carriers)),"filled",'r')
-
-scale_factor=6.3636;
-sypo=[-7,-5,-3,-1,1,3,5,7]/scale_factor;
-i_symbol=zeros(1,6817);
-q_symbol=zeros(1,6817);
-
-for i=1:1:6817
-    if any( carrier_locations== i)
-        continue 
-    else
-        [~,i_symbol(i)]= min(abs(real(X_symbols_new(i))-sypo));
-        [~,q_symbol(i)]= min(abs(imag(X_symbols_new(i))-sypo));
-    end
-end
-
-% map_64qam
-
-perfect_symbols=complex(zeros(1,6817));
-for i=1:1:6817
-    if any( carrier_locations== i)
-        % continue 
-        perfect_symbols(i)=(4/3)*2*(0.5-prbs_seq(i))+1j*0;
-    else
-        perfect_symbols(i)=sypo(i_symbol(i))+1j*sypo(q_symbol(i));
-    end
-end
-
-
-figure
-hold on
-scatter(real(perfect_symbols),imag(perfect_symbols))
-
-figure
-hold on
-scatter(real(X_symbols_new(1:10)),imag(X_symbols_new(1:10)))
-
-figure
-hold on
-scatter(real(perfect_symbols(1:10)),imag(perfect_symbols(1:10)))
-
-figure,
-hold on
-plot(real(new_signal))
-plot(imag(new_signal))
-
-temp3=fftshift(XF_int);
-% XF_int_temp
-
-figure
-hold on
-plot(real(temp3))
-plot(real(XF_int_temp))
-
-resignal=ifft(ifftshift(XF_int),length(new_signal));
-
-figure
-hold on
-plot(real(new_signal))
-plot(real(resignal))
-
-temp4=ifftshift(XF_int);
-temp5=(length(msignal)/6817)*[temp4(1:3409),zeros(1,length(msignal)-6817),temp4(3410:end)];
-res2_signal=ifft(temp5);
-
-figure
-hold on
-plot(real(msignal))
-plot(real(res2_signal))
-
-
-
-temp4_cs=ifftshift(X_symbols_new);
-temp5_cs=(length(msignal)/6817)*[temp4_cs(1:3409),zeros(1,length(msignal)-6817),temp4_cs(3410:end)];
-res2_signal_cs=ifft(temp5_cs);
-
-figure
-hold on
-plot(real(msignal)/max(abs(real(msignal))))
-plot(real(res2_signal_cs)/max(abs(real(res2_signal_cs))))
-
-
-
-% perfect_symbols
-
-temp4_per=ifftshift(perfect_symbols);
-temp5_per=(length(msignal)/6817)*[temp4_per(1:3409),zeros(1,length(msignal)-6817),temp4_per(3410:end)];
-res2_signal_per=ifft(temp5_per);
-
-figure
-hold on
-plot(real(msignal)/max(abs(real(msignal))))
-plot(real(res2_signal_per)/max(abs(real(res2_signal_per))))
-
-
-
-
-
+% 
+% figure
+% plot(abs(P1))
+% 
+% % for i=1:1:10
+% msignal=temp(11982+D+2-1:11982+D+S+1);
+% 
+% XF=fft(msignal);
+% 
+% figure 
+% scatter(real(XF(1:300)),imag(XF(1:300)))
+% % end
+% 
+% X_pilots=XF(10:12:end);
+% 
+% figure
+% plot(abs(X_pilots))
+% 
+% 
+% XX=linspace(-1-5+7,6819-5+4,length(msignal));
+% XV=linspace(1,6817,6817);
+% new_signal=interp1(XX,msignal,XV,"spline");
+% XF_int=fft(new_signal,6817);
+% % XF_int_temp=fft(new_signal,6817);
 % 
 % figure
 % hold on
-% plot(prbs_seq)
-% scatter(10:12:length(XF_int),check_prbs)
-
-
-%%
-
-
-
-
-        % frequency_fix=temp;
-        t=1:1:length(temp);
-        frequency_fix=exp(1j*0.15/S*t);
-
-        figure,
-        hold on
-        plot(real(frequency_fix))
-
-        temp=temp'.*frequency_fix;
-
-        for i=1:1:100000
-            P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
-        end
+% plot(XV,real(new_signal))
+% plot(XX,real(msignal))
+% 
+% figure 
+% hold on
+% scatter(real(XF_int(1:200)),imag(XF_int(1:200)))
+% scatter(real(XF_int(10)),imag(XF_int(10)),"filled")
+% scatter(real(XF_int(22)),imag(XF_int(22)),"filled")
+% scatter(real(XF_int(34)),imag(XF_int(34)),"filled")
+% scatter(real(XF_int(46)),imag(XF_int(46)),"filled")
+% scatter(real(XF_int(58)),imag(XF_int(58)),"filled")
+% scatter(real(XF_int(70)),imag(XF_int(70)),"filled")
+% scatter(real(XF_int(82)),imag(XF_int(82)),"filled")
+% scatter(real(XF_int(94)),imag(XF_int(94)),"filled")
+% scatter(real(XF_int(106)),imag(XF_int(106)),"filled")
+% scatter(real(XF_int(118)),imag(XF_int(118)),"filled")
+% scatter(real(XF_int(130)),imag(XF_int(130)),"filled")
+% scatter(real(XF_int(142)),imag(XF_int(142)),"filled")
+% scatter(real(XF_int(154)),imag(XF_int(154)),"filled")
+% scatter(real(XF_int(166)),imag(XF_int(166)),"filled")
+% scatter(real(XF_int(178)),imag(XF_int(178)),"filled")
+% scatter(real(XF_int(190)),imag(XF_int(190)),"filled")
+% 
+% % end
+% XF_int=fftshift(XF_int);
+% temp56=10:12:6817;
+% carrier_locations= unique([temp56, permanant_carriers]);
+% 
+% X_pilots_int=XF_int(carrier_locations);
+% 
+% figure
+% hold on
+% scatter(real(XF_int(1:200)),imag(XF_int(1:200)))
+% scatter(real(X_pilots_int(1:20)),imag(X_pilots_int(1:20)),"filled")
+% scatter(real(X_pilots_int(21:40)),imag(X_pilots_int(21:40)),"filled")
+% scatter(real(X_pilots_int(41:80)),imag(X_pilots_int(41:80)),"filled")
+% scatter(real(X_pilots_int(81:120)),imag(X_pilots_int(81:120)),"filled")
+% scatter(real(X_pilots_int(121:150)),imag(X_pilots_int(121:150)),"filled")
+% scatter(real(X_pilots_int(150:180)),imag(X_pilots_int(150:180)),"filled")
+% 
+% check_prbs=zeros(1,length(X_pilots_int));
+% check_prbs(imag(X_pilots_int)<0)=1;
+% figure
+% plot(abs(X_pilots_int))
+% 
+% prbs_seq = generate_prbs(length(XF_int));
+% 
+% pilot_locations=(4/3)*2*(0.5-prbs_seq)+1j*0;
+% 
+% CS=X_pilots_int./pilot_locations(carrier_locations)';
+% 
+% X_pilots_new=X_pilots_int./CS;
+% 
+% figure
+% hold on
+% scatter(real(X_pilots_new(1:20)),imag(X_pilots_new(1:20)),"filled")
+% 
+% X_symbols_new=XF_int;
+% % pilots_ind=10:12:length(XF_int);
+% for i=1:1:6817
+%     [M,II]=min(abs(i-carrier_locations));
+%     X_symbols_new(i)=XF_int(i)./CS(II);
+% 
+% end
+% 
+% figure
+% hold on
+% scatter(real(XF_int(1:500)),imag(XF_int(1:500)))
+% 
+% figure
+% hold on
+% scatter(real(X_symbols_new(1:1500)),imag(X_symbols_new(1:1500)))
+% 
+% 
+% figure
+% hold on
+% scatter(real(X_symbols_new(1:6817)),imag(X_symbols_new(1:6817)))
+% scatter(real(X_symbols_new(10)),imag(X_symbols_new(10)),"filled")
+% scatter(real(X_symbols_new(22)),imag(X_symbols_new(22)),"filled")
+% scatter(real(X_symbols_new(34)),imag(X_symbols_new(34)),"filled")
+% scatter(real(X_symbols_new(46)),imag(X_symbols_new(46)),"filled")
+% scatter(real(X_symbols_new(58)),imag(X_symbols_new(58)),"filled")
+% scatter(real(X_symbols_new(70)),imag(X_symbols_new(70)),"filled")
+% scatter(real(X_symbols_new(permanant_carriers)),imag(X_symbols_new(permanant_carriers)),"filled",'r')
+% 
+% scale_factor=6.3636;
+% sypo=[-7,-5,-3,-1,1,3,5,7]/scale_factor;
+% i_symbol=zeros(1,6817);
+% q_symbol=zeros(1,6817);
+% 
+% for i=1:1:6817
+%     if any( carrier_locations== i)
+%         continue 
+%     else
+%         [~,i_symbol(i)]= min(abs(real(X_symbols_new(i))-sypo));
+%         [~,q_symbol(i)]= min(abs(imag(X_symbols_new(i))-sypo));
+%     end
+% end
+% 
+% % map_64qam
+% 
+% perfect_symbols=complex(zeros(1,6817));
+% for i=1:1:6817
+%     if any( carrier_locations== i)
+%         % continue 
+%         perfect_symbols(i)=(4/3)*2*(0.5-prbs_seq(i))+1j*0;
+%     else
+%         perfect_symbols(i)=sypo(i_symbol(i))+1j*sypo(q_symbol(i));
+%     end
+% end
+% 
+% 
+% figure
+% hold on
+% scatter(real(perfect_symbols),imag(perfect_symbols))
+% 
+% figure
+% hold on
+% scatter(real(X_symbols_new(1:10)),imag(X_symbols_new(1:10)))
+% 
+% figure
+% hold on
+% scatter(real(perfect_symbols(1:10)),imag(perfect_symbols(1:10)))
+% 
+% figure,
+% hold on
+% plot(real(new_signal))
+% plot(imag(new_signal))
+% 
+% temp3=fftshift(XF_int);
+% % XF_int_temp
+% 
+% figure
+% hold on
+% plot(real(temp3))
+% plot(real(XF_int_temp))
+% 
+% resignal=ifft(ifftshift(XF_int),length(new_signal));
+% 
+% figure
+% hold on
+% plot(real(new_signal))
+% plot(real(resignal))
+% 
+% temp4=ifftshift(XF_int);
+% temp5=(length(msignal)/6817)*[temp4(1:3409),zeros(1,length(msignal)-6817),temp4(3410:end)];
+% res2_signal=ifft(temp5);
+% 
+% figure
+% hold on
+% plot(real(msignal))
+% plot(real(res2_signal))
+% 
+% 
+% 
+% temp4_cs=ifftshift(X_symbols_new);
+% temp5_cs=(length(msignal)/6817)*[temp4_cs(1:3409),zeros(1,length(msignal)-6817),temp4_cs(3410:end)];
+% res2_signal_cs=ifft(temp5_cs);
+% 
+% figure
+% hold on
+% plot(real(msignal)/max(abs(real(msignal))))
+% plot(real(res2_signal_cs)/max(abs(real(res2_signal_cs))))
+% 
+% 
+% 
+% % perfect_symbols
+% 
+% temp4_per=ifftshift(perfect_symbols);
+% temp5_per=(length(msignal)/6817)*[temp4_per(1:3409),zeros(1,length(msignal)-6817),temp4_per(3410:end)];
+% res2_signal_per=ifft(temp5_per);
+% 
+% figure
+% hold on
+% plot(real(msignal)/max(abs(real(msignal))))
+% plot(real(res2_signal_per)/max(abs(real(res2_signal_per))))
+% 
+% 
+% 
+% 
+% 
+% % 
+% % figure
+% % hold on
+% % plot(prbs_seq)
+% % scatter(10:12:length(XF_int),check_prbs)
+% 
+% 
+% %%
+% 
+% 
+% 
+% 
+%         % frequency_fix=temp;
+%         t=1:1:length(temp);
+%         frequency_fix=exp(1j*0.15/S*t);
+% 
+%         figure,
+%         hold on
+%         plot(real(frequency_fix))
+% 
+%         temp=temp'.*frequency_fix;
+% 
+%         for i=1:1:100000
+%             P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
+%         end
+% 
+%         % figure
+%         % hold on
+%         for j=-2:1:2
+%             % for i =7:1:11
+%                 figure
+%                 i=8;
+%                 j
+%                 msignal=temp(11982+D:11982+D+S-2);
+%                 XX=linspace(1,6817,length(msignal));
+%                 XV=linspace(1,6817,6817);
+%                 new_signal=interp1(XX,msignal,XV,"spline");
+%                 XF_new=fft(new_signal,6817);            
+%                 scatter(real(XF_new(1:200)),imag(XF_new(1:200)))
+%                 % drawnow
+%                 % pause(1)
+% 
+%             % end
+%         end
+% 
+% 
+%                 msignal=temp(11982+D:11982+D+S-2);
+%                 XX=linspace(1,6817,length(msignal));
+%                 XV=linspace(1,6817,6817);
+%                 new_signal=interp1(XX,msignal,XV,"spline");
+%                 XF_new=fft(new_signal,6817);     
+%                 figure
+%                 hold on
+%                 scatter(real(XF_new(1:200)),imag(XF_new(1:200)))
+%                 scatter(real(XF_new(10)),imag(XF_new(10)),"filled")
+%                 scatter(real(XF_new(22)),imag(XF_new(22)),"filled")
+%                 scatter(real(XF_new(34)),imag(XF_new(34)),"filled")
+%                 scatter(real(XF_new(46)),imag(XF_new(46)),"filled")
+%                 scatter(real(XF_new(58)),imag(XF_new(58)),"filled")
+%                 scatter(real(XF_new(70)),imag(XF_new(70)),"filled")
+%                 scatter(real(XF_new(82)),imag(XF_new(82)),"filled")
+%                 scatter(real(XF_new(94)),imag(XF_new(94)),"filled")
+% 
+% 
+%                 X_pilots=XF_new(10:12:end);
+% 
+% 
+%                 figure
+%                 scatter(real(X_pilots(1:200)),imag(X_pilots(1:200)))
+% 
+%                 figure
+%                 plot(unwrap(angle(X_pilots)))
+% 
+% 
+%         figure
+%         for i=1:1:10
+%             XF=fft(temp(11982+D:11982+D+S),length(11982+D:11982+D+S)-10+i);        
+%             scatter(real(XF(500:700)),imag(XF(500:700)))
+%             drawnow
+%             pause(1)
+% 
+%         end
+% 
+%         XF=fft(temp(11982+D:11982+D+S),length(11982+D:11982+D+S)-1); 
+% 
+%         figure
+%         plot(abs(P1))
+% 
+%         S=13440;
+% 
+%         figure
+%         hold on
+%         plot(real(temp(11982:11982+D)))
+%         plot(real(temp(11982+S:11982+S+D)))
+% 
+%         figure
+%         % for n=1:1:20
+%         plot((angle(P1)))
+%         temp2=temp.*exp(-1j*19*pi/100);
+%         msignal=temp(11982+D:11982+D+S-1);
+%         XF=fft(temp2(11982+D:11982+D+S),13440);
+% 
+%         XX=linspace(1,6817,length(msignal));
+%         XV=linspace(1,6817,6817);
+%         % new_signal=interp1(XX,msignal,XV,"linear");
+%         new_signal=interp1(XX,msignal,XV,"spline");
+%         % new_signal=interp1(XX,msignal,XV,"pchip");
+% 
+%         figure
+%         plot(abs(fft(new_signal)))
+% 
+%         XF_new=fft(new_signal);
+%         figure
+%         hold on
+%         scatter(real(XF_new(1:200)),imag(XF_new(1:200))) 
+% 
+%         figure
+%         hold on
+%         scatter(real(XF_new(800:1000)),imag(XF_new(800:1000))) 
+% 
+%         figure
+%         hold on
+%         scatter(real(XF_new(6000:6200)),imag(XF_new(6000:6200))) 
+% 
+%         figure
+%         hold on
+%         scatter(real(XF_new(1201:1400)),imag(XF_new(1201:1400))) 
+% 
+%         figure, hold on
+%         plot(XX,real(msignal))
+%         plot(XV,real(new_signal))
+% 
+%         XF_new=fft(new_signal);
+% 
+%         figure
+%         plot(abs((XF)))
+% 
+%         figure
+%         hold on
+%         for i=1:1:floor(length(XF)/12)
+%             i
+%             scatter(real(XF(i*12+10)),imag(XF(i*12+10)),"filled")
+%             drawnow
+%             pause(0.1)
+%         end
+% 
+%         % maybe has to be in a different order or like fftshift
+%         figure
+%         hold on
+%         scatter(real(XF(1000:1200)),imag(XF(1000:1200))) %1050 1101 1107 1110
+%         scatter(real(XF(1050)),imag(XF(1050)),"filled")
+%         scatter(real(XF(1101)),imag(XF(1101)),"filled")
+%         scatter(real(XF(1107)),imag(XF(1107)),"filled")
+%         scatter(real(XF(1110)),imag(XF(1110)),"filled")
+% 
+%         figure
+%         hold on
+%         scatter(real(XF(1:200)),imag(XF(1:200)))
+%         scatter(real(XF(10)),imag(XF(10)),"filled")
+%         scatter(real(XF(22)),imag(XF(22)),"filled")
+%         scatter(real(XF(34)),imag(XF(34)),"filled")
+%         scatter(real(XF(46)),imag(XF(46)),"filled")
+%         scatter(real(XF(58)),imag(XF(58)),"filled")
+%         scatter(real(XF(70)),imag(XF(70)),"filled")
+%         scatter(real(XF(82)),imag(XF(82)),"filled")
+%         scatter(real(XF(94)),imag(XF(94)),"filled")
+% 
+%         scatter(real(XF(49)),imag(XF(49)),"kx")
+%         scatter(real(XF(55)),imag(XF(55)),"kx")
+%         scatter(real(XF(88)),imag(XF(88)),"kx")
+% 
+%         figure
+%         scatter(real(XF_new(500:700)),imag(XF_new(500:700)))
+%         scatter(real(XF_new(300:500)),imag(XF_new(300:500)))
+%         scatter(real(XF_new(100:200)),imag(XF_new(100:200)))
+%         scatter(real(XF_new(1000:1200)),imag(XF_new(1000:1200)))
+% 
+%         % try resampling the frequency data
+%         figure
+%         scatter(real(XF(1:500)),imag(XF(1:500)))
+%         hold on
+%         scatter(real(XF(1)),imag(XF(1)),"filled")
+%         scatter(real(XF(2)),imag(XF(2)),"filled")
+%         scatter(real(XF(3)),imag(XF(3)),"filled")
+%         % drawnow 
+%         % pause(0.5)
+%         % 
+%         % end
+%         figure
+%         plot(abs((XF)))
+% 
+%         find(real(XF(1:200))<-9000)
+% 
+%         find(real(XF_new(1:200))<-9000)
+% 
+%         figure
+%         scatter(real(XF(1:500)),imag(XF(1:500)))
+%         scatter(real(XF(2000:2200)),imag(XF(2000:2200)))
+% 
+%        length(XF(abs(XF)>1000))
+% 
+% 
+% 
+%         % 
+%         % figure
+%         % for h=1:1:2000
+%         %     mstart=h;
+%         %     mspacing=8192;
+%         %     XF=fft(ref_channel(mstart:mstart+mspacing));
+%         %     scatter(real(XF),imag(XF))
+%         % 
+%         % end
+% 
+%         % figure
+%         % plot(abs(fft(ref_channel(1:10000))))
+%         % 
+%         %  figure
+%         % plot(real((ref_channel(:))))
+%         % 
+%         % figure,plot(abs(xcorr(ref_channel(1:20000),ref_channel(1:20000))))
+%         % 
+%         % 
+%         % figure,plot(abs(xcorr(ref_channel(1:20000),ref_channel(1:20000),'unbiased')))
+%         % mshift=2986;
+%         % mout=sum(abs((ref_channel(1:20000).*conj(ref_channel(1+mshift:20000+mshift)))));
+%         % 
+%         % [out] = myxcorr(ref_channel(1:20000),ref_channel(1:20000));
+%         % 
+%         % 
+%         % figure,plot(abs(mout))
+%         % 
+%         % figure
+%         % hold on
+%         % plot(real(ref_channel(1:20000)))
+%         % plot(real((ref_channel(1+2987:20000+2987))))
+%         % 
+%         % 
+%         % temp3=zeros(1,40000);
+%         % for i=1:1:40000
+%         %     temp3(i)=(sum(ref_channel(i:i+400).*conj(ref_channel(i+2987:i+400+2987))));    
+%         % end
+%         % figure,plot(abs(temp3))
+%         % 
+%         % figure,plot(angle(temp3))
+%         % 
+%         % XF=fft(ref_channel(17994:17994+2987));
+%         % 
+%         % figure
+%         % scatter(real(XF(1:10)),imag(XF(1:10)))
+% 
+% 
+% 
+%         % [ref_matrix_fpga ,self_ambg_matrix_fpga, cc_matrix_fpga] = passive_batch_process_fpga(ref_channel,noisy_sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding,passive.td_corr);
+% 
+% 
+%         % self_ambg_matrix=self_ambg_matrix_fpga;
+%         % cc_matrix=cc_matrix_fpga;
+%         % ref_matrix= ref_matrix_fpga;
         
-        % figure
-        % hold on
-        for j=-2:1:2
-            % for i =7:1:11
-                figure
-                i=8;
-                j
-                msignal=temp(11982+D:11982+D+S-2);
-                XX=linspace(1,6817,length(msignal));
-                XV=linspace(1,6817,6817);
-                new_signal=interp1(XX,msignal,XV,"spline");
-                XF_new=fft(new_signal,6817);            
-                scatter(real(XF_new(1:200)),imag(XF_new(1:200)))
-                % drawnow
-                % pause(1)
-                
-            % end
-        end
-        
 
-                msignal=temp(11982+D:11982+D+S-2);
-                XX=linspace(1,6817,length(msignal));
-                XV=linspace(1,6817,6817);
-                new_signal=interp1(XX,msignal,XV,"spline");
-                XF_new=fft(new_signal,6817);     
-                figure
-                hold on
-                scatter(real(XF_new(1:200)),imag(XF_new(1:200)))
-                scatter(real(XF_new(10)),imag(XF_new(10)),"filled")
-                scatter(real(XF_new(22)),imag(XF_new(22)),"filled")
-                scatter(real(XF_new(34)),imag(XF_new(34)),"filled")
-                scatter(real(XF_new(46)),imag(XF_new(46)),"filled")
-                scatter(real(XF_new(58)),imag(XF_new(58)),"filled")
-                scatter(real(XF_new(70)),imag(XF_new(70)),"filled")
-                scatter(real(XF_new(82)),imag(XF_new(82)),"filled")
-                scatter(real(XF_new(94)),imag(XF_new(94)),"filled")
-
-
-                X_pilots=XF_new(10:12:end);
-
-
-                figure
-                scatter(real(X_pilots(1:200)),imag(X_pilots(1:200)))
-
-                figure
-                plot(unwrap(angle(X_pilots)))
-
-
-        figure
-        for i=1:1:10
-            XF=fft(temp(11982+D:11982+D+S),length(11982+D:11982+D+S)-10+i);        
-            scatter(real(XF(500:700)),imag(XF(500:700)))
-            drawnow
-            pause(1)
-
-        end
-
-        XF=fft(temp(11982+D:11982+D+S),length(11982+D:11982+D+S)-1); 
-
-        figure
-        plot(abs(P1))
-
-        S=13440;
-
-        figure
-        hold on
-        plot(real(temp(11982:11982+D)))
-        plot(real(temp(11982+S:11982+S+D)))
-    
-        figure
-        % for n=1:1:20
-        plot((angle(P1)))
-        temp2=temp.*exp(-1j*19*pi/100);
-        msignal=temp(11982+D:11982+D+S-1);
-        XF=fft(temp2(11982+D:11982+D+S),13440);
-
-        XX=linspace(1,6817,length(msignal));
-        XV=linspace(1,6817,6817);
-        % new_signal=interp1(XX,msignal,XV,"linear");
-        new_signal=interp1(XX,msignal,XV,"spline");
-        % new_signal=interp1(XX,msignal,XV,"pchip");
-
-        figure
-        plot(abs(fft(new_signal)))
-        
-        XF_new=fft(new_signal);
-        figure
-        hold on
-        scatter(real(XF_new(1:200)),imag(XF_new(1:200))) 
-
-        figure
-        hold on
-        scatter(real(XF_new(800:1000)),imag(XF_new(800:1000))) 
-
-        figure
-        hold on
-        scatter(real(XF_new(6000:6200)),imag(XF_new(6000:6200))) 
-
-        figure
-        hold on
-        scatter(real(XF_new(1201:1400)),imag(XF_new(1201:1400))) 
-
-        figure, hold on
-        plot(XX,real(msignal))
-        plot(XV,real(new_signal))
-
-        XF_new=fft(new_signal);
-
-        figure
-        plot(abs((XF)))
-
-        figure
-        hold on
-        for i=1:1:floor(length(XF)/12)
-            i
-            scatter(real(XF(i*12+10)),imag(XF(i*12+10)),"filled")
-            drawnow
-            pause(0.1)
-        end
-
-        % maybe has to be in a different order or like fftshift
-        figure
-        hold on
-        scatter(real(XF(1000:1200)),imag(XF(1000:1200))) %1050 1101 1107 1110
-        scatter(real(XF(1050)),imag(XF(1050)),"filled")
-        scatter(real(XF(1101)),imag(XF(1101)),"filled")
-        scatter(real(XF(1107)),imag(XF(1107)),"filled")
-        scatter(real(XF(1110)),imag(XF(1110)),"filled")
-
-        figure
-        hold on
-        scatter(real(XF(1:200)),imag(XF(1:200)))
-        scatter(real(XF(10)),imag(XF(10)),"filled")
-        scatter(real(XF(22)),imag(XF(22)),"filled")
-        scatter(real(XF(34)),imag(XF(34)),"filled")
-        scatter(real(XF(46)),imag(XF(46)),"filled")
-        scatter(real(XF(58)),imag(XF(58)),"filled")
-        scatter(real(XF(70)),imag(XF(70)),"filled")
-        scatter(real(XF(82)),imag(XF(82)),"filled")
-        scatter(real(XF(94)),imag(XF(94)),"filled")
-
-        scatter(real(XF(49)),imag(XF(49)),"kx")
-        scatter(real(XF(55)),imag(XF(55)),"kx")
-        scatter(real(XF(88)),imag(XF(88)),"kx")
-
-        figure
-        scatter(real(XF_new(500:700)),imag(XF_new(500:700)))
-        scatter(real(XF_new(300:500)),imag(XF_new(300:500)))
-        scatter(real(XF_new(100:200)),imag(XF_new(100:200)))
-        scatter(real(XF_new(1000:1200)),imag(XF_new(1000:1200)))
-
-        % try resampling the frequency data
-        figure
-        scatter(real(XF(1:500)),imag(XF(1:500)))
-        hold on
-        scatter(real(XF(1)),imag(XF(1)),"filled")
-        scatter(real(XF(2)),imag(XF(2)),"filled")
-        scatter(real(XF(3)),imag(XF(3)),"filled")
-        % drawnow 
-        % pause(0.5)
-        % 
-        % end
-        figure
-        plot(abs((XF)))
-
-        find(real(XF(1:200))<-9000)
-
-        find(real(XF_new(1:200))<-9000)
-        
-        figure
-        scatter(real(XF(1:500)),imag(XF(1:500)))
-        scatter(real(XF(2000:2200)),imag(XF(2000:2200)))
-
-       length(XF(abs(XF)>1000))
-
-
-
-        % 
-        % figure
-        % for h=1:1:2000
-        %     mstart=h;
-        %     mspacing=8192;
-        %     XF=fft(ref_channel(mstart:mstart+mspacing));
-        %     scatter(real(XF),imag(XF))
-        % 
-        % end
-
-        % figure
-        % plot(abs(fft(ref_channel(1:10000))))
-        % 
-        %  figure
-        % plot(real((ref_channel(:))))
-        % 
-        % figure,plot(abs(xcorr(ref_channel(1:20000),ref_channel(1:20000))))
-        % 
-        % 
-        % figure,plot(abs(xcorr(ref_channel(1:20000),ref_channel(1:20000),'unbiased')))
-        % mshift=2986;
-        % mout=sum(abs((ref_channel(1:20000).*conj(ref_channel(1+mshift:20000+mshift)))));
-        % 
-        % [out] = myxcorr(ref_channel(1:20000),ref_channel(1:20000));
-        % 
-        % 
-        % figure,plot(abs(mout))
-        % 
-        % figure
-        % hold on
-        % plot(real(ref_channel(1:20000)))
-        % plot(real((ref_channel(1+2987:20000+2987))))
-        % 
-        % 
-        % temp3=zeros(1,40000);
-        % for i=1:1:40000
-        %     temp3(i)=(sum(ref_channel(i:i+400).*conj(ref_channel(i+2987:i+400+2987))));    
-        % end
-        % figure,plot(abs(temp3))
-        % 
-        % figure,plot(angle(temp3))
-        % 
-        % XF=fft(ref_channel(17994:17994+2987));
-        % 
-        % figure
-        % scatter(real(XF(1:10)),imag(XF(1:10)))
-        
-
-
-        % [ref_matrix_fpga ,self_ambg_matrix_fpga, cc_matrix_fpga] = passive_batch_process_fpga(ref_channel,noisy_sur_channel,passive.seg_s,passive.seg_percent,passive.Fs,passive.max_range,exp_dir,passive.range_zero_padding,passive.td_corr);
-       
-
-        % self_ambg_matrix=self_ambg_matrix_fpga;
-        % cc_matrix=cc_matrix_fpga;
-        % ref_matrix= ref_matrix_fpga;
-        passive.Fs=15e6;
+%% back to regularly schedualed programming 
+% 
+passive.Fs=15e6;
         C=299792458;
         passive.Fc=498e6;
         capture_duration=(length(ref_channel)/passive.Fs);%15;
