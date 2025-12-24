@@ -256,7 +256,19 @@ map_64qam{8,8}='010000';
         figure
         plot(abs(XF))
 
-        %% try this again
+%% try this again
+numb_carriers=6817;
+fs=3.84e9/8/32;
+dt=1/fs;
+delta=[224, 112,56,28]*1e-6;
+dd=delta(4);
+Tu=896e-6;
+D=dd/dt;
+D=413;
+S=Tu/dt;
+Tots=S+D;
+B=S-D;
+[outputArg1,outputArg2] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers);
 
 temp=ref_channel(1:200000);
 
@@ -281,13 +293,12 @@ X_pilots=XF(10:12:end);
 figure
 plot(abs(X_pilots))
 
-% figure
-% for i=1:1:10
+
 XX=linspace(-1-5+7,6819-5+4,length(msignal));
 XV=linspace(1,6817,6817);
 new_signal=interp1(XX,msignal,XV,"spline");
 XF_int=fft(new_signal,6817);
-XF_int_temp=fft(new_signal,6817);
+% XF_int_temp=fft(new_signal,6817);
 
 figure
 hold on
@@ -407,6 +418,14 @@ figure
 hold on
 scatter(real(perfect_symbols),imag(perfect_symbols))
 
+figure
+hold on
+scatter(real(X_symbols_new(1:10)),imag(X_symbols_new(1:10)))
+
+figure
+hold on
+scatter(real(perfect_symbols(1:10)),imag(perfect_symbols(1:10)))
+
 figure,
 hold on
 plot(real(new_signal))
@@ -436,10 +455,39 @@ hold on
 plot(real(msignal))
 plot(real(res2_signal))
 
+
+
+temp4_cs=ifftshift(X_symbols_new);
+temp5_cs=(length(msignal)/6817)*[temp4_cs(1:3409),zeros(1,length(msignal)-6817),temp4_cs(3410:end)];
+res2_signal_cs=ifft(temp5_cs);
+
 figure
 hold on
-plot(prbs_seq)
-scatter(10:12:length(XF_int),check_prbs)
+plot(real(msignal)/max(abs(real(msignal))))
+plot(real(res2_signal_cs)/max(abs(real(res2_signal_cs))))
+
+
+
+% perfect_symbols
+
+temp4_per=ifftshift(perfect_symbols);
+temp5_per=(length(msignal)/6817)*[temp4_per(1:3409),zeros(1,length(msignal)-6817),temp4_per(3410:end)];
+res2_signal_per=ifft(temp5_per);
+
+figure
+hold on
+plot(real(msignal)/max(abs(real(msignal))))
+plot(real(res2_signal_per)/max(abs(real(res2_signal_per))))
+
+
+
+
+
+% 
+% figure
+% hold on
+% plot(prbs_seq)
+% scatter(10:12:length(XF_int),check_prbs)
 
 
 %%
