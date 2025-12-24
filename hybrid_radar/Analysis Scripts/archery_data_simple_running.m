@@ -268,7 +268,7 @@ D=413;
 S=Tu/dt;
 Tots=S+D;
 B=S-D;
-[outputArg1,outputArg2] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers);
+[outputArg1] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers);
 
 temp=ref_channel(1:200000);
 
