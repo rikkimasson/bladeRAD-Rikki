@@ -41,7 +41,7 @@ P1=(zeros(1,length(input)));
         if abs(m_new-m)/m<0.5 
             symbols_starts=[symbols_starts,I_new];
         else 
-            fprintf('something has gone wrong with tracking begining of frame')
+            fprintf('something has gone wrong with tracking begining of frame\n')
         end
 
     end
