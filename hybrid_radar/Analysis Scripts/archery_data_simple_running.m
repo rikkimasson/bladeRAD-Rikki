@@ -193,68 +193,66 @@ map_64qam{8,8}='010000';
         P1=zeros(1,100000);
 
         temp=ref_channel(1:200000);
-        %%
-        
-        for i=1:1:length(temp)-S-D-1
-            P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
-        end
-
-        figure
-        plot(abs(P1))
-
-        figure
-        plot(angle(P1))
-
-        %% getting the indexes of the start of the symbols
-        state=0;
-        mthreshold=8e5;%0.75*max(abs(P1));
-        down_threshold=3e5;
-        symbols_starts=[];
-        for i=1:1:length(P1)
-            if abs(P1(i))>mthreshold
-                if state==0
-                    current_peak=abs(P1(i));
-                    current_index=i;
-                    
-                elseif abs(P1(i))>current_peak
-                    current_peak=abs(P1(i));
-                    current_index=i;
-                end
-                state=1;
-                
-            else
-                if abs(P1(i))<down_threshold && state==1
-                    symbols_starts=[symbols_starts,current_index];
-                     state=0;
-                    current_peak=0;
-                end
-                % if state==1
-                %     symbols_starts=[symbols_starts,current_index];
-                % end
-                % state=0;
-                % current_peak=0;
-            end
-        end
-
-        %% do frequency aligment 
-
-        freq_avg=mean(angle(P1(symbols_starts)));
-
-        temp2=temp.*exp(+1j*freq_avg);
-
-        P2=zeros(1,100000);
-        for i=1:1:length(temp2)-S-D-1
-            P2(i)=sum(conj(temp2(i:i+D)).*temp2(i+S:i+S+D));
-        end
-
-        freq_avg=mean(angle(P2(symbols_starts)));
-        
-        %% get the slices of interest 
-        i=1;
-        XF=fft(temp(symbols_starts(i)+D:symbols_starts(i)+D+S),length(symbols_starts(i)+D:symbols_starts(i)+D+S)-1); 
-
-        figure
-        plot(abs(XF))
+%% commented out old tried stuff
+% 
+% for i=1:1:length(temp)-S-D-1
+%     P1(i)=sum(conj(temp(i:i+D)).*temp(i+S:i+S+D));
+% end
+% 
+% figure
+% plot(abs(P1))
+% 
+% figure
+% plot(angle(P1))
+% %% getting the indexes of the start of the symbols
+% state=0;
+% mthreshold=8e5;%0.75*max(abs(P1));
+% down_threshold=3e5;
+% symbols_starts=[];
+% for i=1:1:length(P1)
+%     if abs(P1(i))>mthreshold
+%         if state==0
+%             current_peak=abs(P1(i));
+%             current_index=i;
+% 
+%         elseif abs(P1(i))>current_peak
+%             current_peak=abs(P1(i));
+%             current_index=i;
+%         end
+%         state=1;
+% 
+%     else
+%         if abs(P1(i))<down_threshold && state==1
+%             symbols_starts=[symbols_starts,current_index];
+%              state=0;
+%             current_peak=0;
+%         end
+%         % if state==1
+%         %     symbols_starts=[symbols_starts,current_index];
+%         % end
+%         % state=0;
+%         % current_peak=0;
+%     end
+% end
+% 
+% %% do frequency aligment 
+% 
+% freq_avg=mean(angle(P1(symbols_starts)));
+% 
+% temp2=temp.*exp(+1j*freq_avg);
+% 
+% P2=zeros(1,100000);
+% for i=1:1:length(temp2)-S-D-1
+%     P2(i)=sum(conj(temp2(i:i+D)).*temp2(i+S:i+S+D));
+% end
+% 
+% freq_avg=mean(angle(P2(symbols_starts)));
+% %% get the slices of interest 
+% i=1;
+% XF=fft(temp(symbols_starts(i)+D:symbols_starts(i)+D+S),length(symbols_starts(i)+D:symbols_starts(i)+D+S)-1); 
+% 
+% figure
+% plot(abs(XF))
 
 %% try this again
 numb_carriers=6817;
@@ -268,7 +266,7 @@ D=413;
 S=Tu/dt;
 Tots=S+D;
 B=S-D;
-[outputArg1] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers);
+[outputArg1] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers,dt);
 
 %% legacy stuff from when I was trying to get the demodulator working
 % temp=ref_channel(1:200000);

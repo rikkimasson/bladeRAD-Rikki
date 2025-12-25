@@ -1,13 +1,34 @@
-function [symbols_starts] = find_symbol_starts(input,S,D)
+function [symbols_starts,symbol_phases] = find_symbol_starts(input,S,D,dt)
 % looks for start points of the ofdm symbols
 P1=(zeros(1,length(input)));
     for i=1:1:length(input)-S-D-1
-        P1(i)=abs(sum(conj(input(i:i+D)).*input(i+S:i+S+D)));
+        P1(i)=(sum(conj(input(i:i+D)).*input(i+S:i+S+D)));
     end
+    
+    % figure
+    % plot(abs(P1))
+    % 
+    % figure
+    % plot(angle(P1))
+    P1_angle=angle(P1);
+    P1=abs(P1);
+
+    % t=linspace(0,dt*length(P1),length(P1));
+    % corr=exp(1j*0.150455/S/dt*t)
+    % 
+    % temp=input.*corr;
+    % 
+    % for i=1:1:length(input)-S-D-1
+    %     P1_temp(i)=(sum(conj(temp(i:i+D)).*temp(i+S:i+S+D)));
+    % end
+
+    % figure
+    % plot(angle(P1_temp))
     
 
     % 
     symbols_starts=[];
+    % symbol_phases=[]
     [m,I_new]=max(P1(1:2*S));
     symbols_starts=[I_new];
     while 1
@@ -23,6 +44,11 @@ P1=(zeros(1,length(input)));
             fprintf('something has gone wrong with tracking begining of frame')
         end
 
+    end
+    
+    symbol_phases=zeros(1,length(symbols_starts));
+    for i=1:1:length(symbols_starts)
+        symbol_phases(i)=P1_angle(symbols_starts(i));
     end
 
     % state=0;
