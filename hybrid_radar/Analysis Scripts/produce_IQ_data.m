@@ -1,4 +1,4 @@
-function [res2_signal_per] = produce_IQ_data(perfect_symbols,numb_carriers,sample_length)
+function [res2_signal_per] = produce_IQ_data(perfect_symbols,numb_carriers,sample_length,CS)
 %UNTITLED11 Summary of this function goes here
 %   Detailed explanation goes here
 temp4_per=ifftshift(perfect_symbols);

@@ -91,6 +91,25 @@ permanant_carriers= [0 48 54 87 141 156 192 ...
 
 permanant_carriers=permanant_carriers+1;
 
+%% TPS carriers 
+
+% tps_carriers=[34 50 209 346 413 569 595 688 790 901 1073 1219 ...
+% 1262 1286 1469 1594 1687 1738 1754 1913 2050 2117 2273 2299 ...
+% 2392 2494 2605 2777 2923 2966 2990 3173 3298 3391];
+
+
+tps_carriers=[34 50 209 346 413 569 595 688 ...
+790 901 1073 1219 1262 1286 1469 1594 ...
+1687 1738 1754 1913 2050 2117 2273 2299 ...
+2392 2494 2605 2777 2923 2966 2990 3173 ...
+3298 3391 3442 3458 3617 3754 3821 3977 ...
+4003 4096 4198 4309 4481 4627 4670 4694 ...
+4877 5002 5095 5146 5162 5321 5458 5525 ...
+5681 5707 5800 5902 6013 6185 6331 6374 ...
+6398 6581 6706 6799];
+
+tps_carriers=tps_carriers+1;
+
 %% mapping from 64qam to bits
 map_64qam=cell(8,8);
 map_64qam{1,1}='100000';
@@ -204,8 +223,8 @@ D=413;
 S=Tu/dt;
 Tots=S+D;
 B=S-D;
-% [outputArg1] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers,dt);
-[ref_channel_ideal] = produce_ideal_ofdm_symbol(ref_channel,S,D,numb_carriers,permanant_carriers,dt);
+% [outputArg1,total_offsets] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers,tps_carriers,dt);
+[ref_channel_ideal,total_offsets] = produce_ideal_ofdm_symbol(ref_channel,S,D,numb_carriers,permanant_carriers,tps_carriers,dt);
 
 % figure,
 % hold on
@@ -263,11 +282,11 @@ noisy_sur_channel=noisy_sur_channel';
         
         
         % create video of Passive range-Doppler slices        
-        video_name = exp_dir + "passive_range-Doppler_" +'simple_running_ref_ideal' + ".avi";
+        video_name = exp_dir + "passive_range-Doppler_" +'simple_running_prefix_removal' + ".avi";
         video_title = "Passive Pre-DSI";
         dynamic_range = 80;
         max_range = 100;
-        max_doppler = 30;
+        max_doppler = 60;
         frame_rate = 1/(capture_duration/passive.number_cpi);
         createVideo(passive.range_doppler_slices,frame_rate,...
             passive.range_axis,max_range,...

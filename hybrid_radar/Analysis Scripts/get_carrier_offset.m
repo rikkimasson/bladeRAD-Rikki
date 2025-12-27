@@ -17,14 +17,16 @@ function [output_offset] = get_carrier_offset(XF_int,guess_offset, offset_probab
 
     second=max(temp2);
 
-    myguess=(B/second-1)*1000;
+    myguess=(abs(B-second)/second)*100;
 
     if (guess_offset==I)
         output_offset=I;
     elseif (offset_probability>myguess)
         output_offset=guess_offset;
+        fprintf("metrics disagree on what is carrier offset\n")
     else
         output_offset=I;
+        fprintf("metrics disagree on what is carrier offset\n")
     end
 
 end

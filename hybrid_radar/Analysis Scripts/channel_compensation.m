@@ -3,7 +3,13 @@ function [XF_comp] = channel_compensation(XF,CS, carrier_locations, numb_carrier
 %   Detailed explanation goes here
     XF_comp=XF;
     for i=1:1:numb_carriers
+        % if i==3408
+        %     jsfdhf=3;
+        % end
         [~,II]=min(abs(i-carrier_locations));
+        if II==351
+          II=352;
+        end
         XF_comp(i)=XF(i)./CS(II);
 
     end
