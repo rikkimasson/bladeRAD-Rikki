@@ -33,7 +33,7 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
 
     for i=1:1:length(symbol_starts)
         msignal=input_signal(symbol_starts(i)+D+1:symbol_starts(i)+D+S+1);
-        
+        check_me=msignal;
         t=linspace(0,dt*length(msignal),length(msignal));
         corr=exp(-1j*symbol_phases(i)/S/dt*t);
         msignal=msignal.*corr;
@@ -83,7 +83,7 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
         % interference material problems
         [CS] = get_channel_state(X_pilots_int,prbs_seq,carrier_locations);
         
-        [XF_comp] = channel_compensation(XF_int,CS, carrier_locations, numb_carriers);
+        [XF_comp,Comps] = channel_compensation(XF_int,CS, carrier_locations, numb_carriers);
             
         [i_symbol,q_symbol] = get_actual_symbols(XF_comp,numb_carriers,sypo,carrier_locations,tps_carriers);
         
@@ -98,9 +98,9 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
         % scatter(real(XF_ideal),imag(XF_ideal))
 
 
-        % figure,
-        % hold on
-        % scatter(real(XF_comp),imag(XF_comp))
+        figure,
+        hold on
+        scatter(real(XF_comp),imag(XF_comp))
         % scatter(real(XF_comp(tps_carriers)),imag(XF_comp(tps_carriers)),'filled')
         % scatter(real(XF_comp(3410:3413)),imag(XF_comp(3410:3413)),'filled')
         % scatter(real(XF_comp(indexess)),imag(XF_comp(indexess)),'filled')
@@ -118,29 +118,83 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
         % figure,plot(indexess)
         %should compensate for the frequency offset which I can get from
         %the slope of the plot of the carrier symbols
-        [output_IQ] = produce_IQ_data(XF_ideal,numb_carriers,length(msignal),CS);
+        % XF_ideal=XF_ideal.*Comps;
+        % [output_IQ] = produce_IQ_data(XF_ideal.*Comps,numb_carriers,length(msignal),CS);
+        % 
+        XF_comp=XF_comp.*Comps;
+        [output_IQ] = produce_IQ_data(XF_comp,numb_carriers,length(msignal),CS);
 
-        % [output_IQ] = produce_IQ_data(XF_comp,numb_carriers,length(msignal),CS);
+        corr=exp(1j*symbol_phases(i)/S/dt*t);
+        output_IQ=output_IQ.*corr;
 
-        % corr=exp(1j*symbol_phases(i)/S/dt*t);
-        % check_this=output_IQ.*corr;
+        % figure
+        % hold on
+        % plot(real(check_me)/max(abs(real(check_me))))
+        % plot(real(output_IQ)/max(abs(real(output_IQ))))
         % 
         % figure
         % hold on
-        % plot(real(msignal)/max(abs(real(msignal))))
+        % plot(unwrap(angle(check_me)))
+        % plot(unwrap(angle(output_IQ)))
+        % 
+
+        % temp4_per=ifftshift(XF_int);
+        % temp5_per=(length(msignal)/numb_carriers)*[temp4_per(1:3409),zeros(1,length(msignal)-numb_carriers),temp4_per(3410:end)];
+        % XF_int_IQ=ifft(temp5_per);
+        % 
+        % XF_redoCS=XF_comp.*Comps;
+        % 
+        % temp4_per=ifftshift(XF_redoCS);
+        % temp5_per=(length(msignal)/numb_carriers)*[temp4_per(1:3409),zeros(1,length(msignal)-numb_carriers),temp4_per(3410:end)];
+        % XF_redoCS_IQ=ifft(temp5_per);
+        % 
+        % XF_ideal_CS=XF_ideal.*Comps;
+        % 
+        % temp4_per=ifftshift(XF_ideal_CS);
+        % temp5_per=(length(msignal)/numb_carriers)*[temp4_per(1:3409),zeros(1,length(msignal)-numb_carriers),temp4_per(3410:end)];
+        % XF_ideal_CS_IQ=ifft(temp5_per);
+
+
+        % figure
+        % hold on
         % plot(real(output_IQ)/max(abs(real(output_IQ))))
+        % plot(real(msignal)/max(abs(real(msignal))))
+        % figure
+        % hold on
+        % plot(real(check_me)/max(abs(real(check_me))))
+        % plot(real(msignal)/max(abs(real(msignal))))
+        % % plot(real(output_IQ)/max(abs(real(output_IQ))))
+        % % plot(real(output_IQ_ideal)/max(abs(real(output_IQ_ideal))))
+        % % plot(real(XF_int_IQ)/max(abs(real(XF_int_IQ))))
+        % % plot(real(XF_redoCS_IQ)/max(abs(real(XF_redoCS_IQ))))
+        % plot(real(XF_ideal_CS_IQ)/max(abs(real(XF_ideal_CS_IQ))))
+
         % plot(real(check_this)/max(abs(real(check_this))))
         % 
         % temp=xcorr(output_IQ,msignal);
         % 
         % figure,
         % plot(abs(temp))
-        
+       
+
+        mmm=max(abs(check_me));
+        m_small=max(abs(output_IQ));
+        output_IQ=mmm/m_small*output_IQ;
+
+        % figure
+        % hold on
+        % plot(real(check_me))
+        % plot(real(output_IQ))
         
         output_signal(symbol_starts(i)+D+1:symbol_starts(i)+D+S+1)=output_IQ;
         output_signal(symbol_starts(i)-1:symbol_starts(i)+D)=output_IQ(S-D:end);
 
-        output_signal(symbol_starts(i)+D+1:symbol_starts(i)+D+S+1)=msignal;
+        % figure,
+        % hold on
+        % plot(real(output_signal(symbol_starts(i)-1:symbol_starts(i)+D+S+1)))
+        % plot(real(input_signal(symbol_starts(i)-1:symbol_starts(i)+D+S+1)))
+
+        % output_signal(symbol_starts(i)+D+1:symbol_starts(i)+D+S+1)=msignal;
         % output_signal(symbol_starts(i)-1:symbol_starts(i)+D)=msignal(S-D:end);
         % plot(real(output_signal))
     end

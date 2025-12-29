@@ -43,7 +43,7 @@ repo_directory + '\bladeRAD-Rikki\generic_scripts\ref_signals\')
         passive.min_range = 2; % maximum number of range bins - xcorr shifts.
         passive.max_range = 20; % maximum number of range bins - xcorr shifts.
         passive.range_zero_padding = 1; % 1 = none, 2 = 100%
-        passive.td_corr = false; % true = time domain xcorr; false = freq domain xcorr
+        passive.td_corr = true; % true = time domain xcorr; false = freq domain xcorr
         passive.seg_s = 2000; % number of segments per second - analagos to PRF.
         passive.seg_percent = 100; % % of segment used for xcorr.
         
@@ -226,6 +226,10 @@ B=S-D;
 % [outputArg1,total_offsets] = produce_ideal_ofdm_symbol(ref_channel(1:200000),S,D,numb_carriers,permanant_carriers,tps_carriers,dt);
 [ref_channel_ideal,total_offsets] = produce_ideal_ofdm_symbol(ref_channel,S,D,numb_carriers,permanant_carriers,tps_carriers,dt);
 
+% figure,hold on
+% plot(real(ref_channel_ideal(1:200000)))
+% plot(real(ref_channel(1:200000)))
+
 % figure,
 % hold on
 % plot(real(outputArg1))
@@ -280,9 +284,14 @@ noisy_sur_channel=noisy_sur_channel';
         passive.doppler_velocity_axis = passive.doppler_axis*passive.velocity_conv;
         passive.range_axis = linspace(passive.min_range_m,passive.max_range_m,passive.no_range_bins);
         
+        for i=1:1:length(passive.range_doppler_slices)
+           temp=passive.range_doppler_slices{i};
+           temp(501,1:21)=0;
+           passive.range_doppler_slices{i}=temp;
+        end
         
         % create video of Passive range-Doppler slices        
-        video_name = exp_dir + "passive_range-Doppler_" +'simple_running_prefix_removal' + ".avi";
+        video_name = exp_dir + "passive_range-Doppler_" +'simple_running_time_domain_ideal_freq_corr' + ".avi";
         video_title = "Passive Pre-DSI";
         dynamic_range = 80;
         max_range = 100;
