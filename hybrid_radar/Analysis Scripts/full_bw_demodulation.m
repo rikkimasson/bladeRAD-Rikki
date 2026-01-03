@@ -213,6 +213,7 @@ P1=zeros(1,100000);
 
 
 % y = bandpass(ref_channel,[10e6,50e6],fs);
+figure,plot(abs(fft(ref_channel)))
 y = lowpass(ref_channel,1e6,fs);
 figure,plot(abs(fft(y)))
 
