@@ -13,10 +13,10 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
     scale_factor=6.3636;
     sypo=[-7,-5,-3,-1,1,3,5,7]/scale_factor;
 
-    % [symbol_starts,symbol_phases]=find_symbol_starts(input_signal,S,D,dt);
-    % save("symbol_starts_data","symbol_starts","symbol_phases")
+    [symbol_starts,symbol_phases]=find_symbol_starts(input_signal,S,D,dt);
+    save("symbol_starts_data_1","symbol_starts","symbol_phases")
 
-    load("symbol_starts_data")
+    % load("symbol_starts_data")
     %
 
 
@@ -101,14 +101,20 @@ function [output_signal,total_offsets] = produce_ideal_ofdm_symbol(input_signal,
         figure,
         hold on
         scatter(real(XF_comp),imag(XF_comp))
+        scatter(real(XF_comp(3405:3410)),imag(XF_comp(3405:3410)),'filled')
+        scatter(real(XF_comp(3405)),imag(XF_comp(3405)),'filled')
+        scatter(real(XF_comp(3410)),imag(XF_comp(3410)),'filled')
         % scatter(real(XF_comp(tps_carriers)),imag(XF_comp(tps_carriers)),'filled')
         % scatter(real(XF_comp(3410:3413)),imag(XF_comp(3410:3413)),'filled')
         % scatter(real(XF_comp(indexess)),imag(XF_comp(indexess)),'filled')
-        
+        x_check=[-1.21,-1.289,-.557,-0.2616];
+        y_check=[0.255,-0.788,-0.466,-1.223];
         % x_check=0.057;%-0.0638;%-0.3923;%-0.292;
         % y_check=-0.266;%-0.078;%-0.039;%-0.53;
-        % epsilon=0.02;
-        % indx=(abs(real(XF_comp)-x_check)<epsilon & abs(imag(XF_comp)-y_check));
+        epsilon=0.0112;
+        indx=(abs(real(XF_comp)-x_check(4))<epsilon & abs(imag(XF_comp)-y_check(4)));
+        find(indx)
+        sum(indx)
 
         % indexess=0.05>imag(XF_comp) & imag(XF_comp)>-0.075 & real(XF_comp)>-1.05 & real(XF_comp)<-0.85
         % sum(indexess)
